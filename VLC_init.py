@@ -22,7 +22,7 @@ import math
 """
 
 
-class VLC:
+class VLC_init:
     def __init__(self):
         self.rxradius = 0.003  # 3mm
         self.lookuptable = {}
