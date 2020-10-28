@@ -39,12 +39,12 @@ class VLC_init:
         self.distancebtw12 = np.linalg.norm(self.tx1 - self.rx2)
         self.distancebtw21 = np.linalg.norm(self.tx2 - self.rx1)
         self.distancebtw22 = np.linalg.norm(self.tx2 - self.rx2)
-        self.delays = (self.distancebtw11/ self.c, self.distancebtw12/ self.c, self.distancebtw21 / self.c, self.distancebtw22 / self.c)
-        self.distances = ((self.distancebtw11, self.distancebtw12), (self.distancebtw21, self.distancebtw22))
-        self.R1 = [0, 0, 0, 0]
-        self.area1 = [0, 0, 0, 0]
-        self.area2 = [0, 0, 0, 0]
-        self.H = [0, 0, 0, 0]
+        self.delays = (self.distancebtw11 / self.c, self.distancebtw12 / self.c, self.distancebtw21 / self.c, self.distancebtw22 / self.c)
+        self.distances = np.array((self.distancebtw11, self.distancebtw12),(self.distancebtw21, self.distancebtw22))
+        self.R1 = np.array([[0, 0], [0, 0]])
+        self.area1 = np.array([[0, 0], [0, 0]])
+        self.area2 = np.array([[0, 0], [0, 0]])
+        self.H = np.array([[0, 0], [0, 0]])
 
 
     def update_params(self, tx_cord, rx_cord, rx_radius):
@@ -57,22 +57,18 @@ class VLC_init:
         self.rx2 = np.array((self.rxxpos[1], self.rxypos[1]))
 
     def update_lookuptable(self):
-
-        self.distancebtw11 = np.linalg.norm(self.tx1 - self.rx1)
-        self.distancebtw12 = np.linalg.norm(self.tx1 - self.rx2)
-        self.distancebtw21 = np.linalg.norm(self.tx2 - self.rx1)
-        self.distancebtw22 = np.linalg.norm(self.tx2 - self.rx2)
-        self.delays = (self.distancebtw11/ self.c, self.distancebtw12/ self.c, self.distancebtw21 / self.c, self.distancebtw22 / self.c)
-        self.distances = (self.distancebtw11, self.distancebtw12, self.distancebtw21, self.distancebtw22)
-        self.R1 = [0, 0, 0, 0]
-        self.area1 = [0, 0, 0, 0]
-        self.area2 = [0, 0, 0, 0]
-        self.H = [0, 0, 0, 0]
-        for i in range(4):
-            self.R1[i] = self.distances[i] * (1 / math.tan(math.radians(80)))
-            self.area1[i] = math.pi * self.R1[i] ** 2
-            self.area2[i] = math.pi * self.rxradius ** 2
-            self.H[i] = self.area1[i] / self.area2[i]
+        self.calc_delay()
+        self.distances = np.array([[self.distancebtw11, self.distancebtw12], [self.distancebtw21, self.distancebtw22]])
+        self.R1 = np.array([[0, 0], [0, 0]])
+        self.area1 = np.array([[0, 0], [0, 0]])
+        self.area2 = np.array([[0, 0], [0, 0]])
+        self.H = np.array([[0, 0], [0, 0]])
+        for i in range(2):
+            for j in range(2):
+                self.R1[i][j] = self.distances[i][j] * (1 / math.tan(math.radians(80)))
+                self.area1[i][j] = math.pi * self.R1[i][j] ** 2
+                self.area2[i][j] = math.pi * self.rxradius ** 2
+                self.H[i][j] = self.area1[i][j] / self.area2[i][j]
         return self.H, self.delays
 
     def calc_delay(self):
@@ -80,3 +76,7 @@ class VLC_init:
         self.distancebtw12 = np.linalg.norm(self.tx1 - self.rx2)
         self.distancebtw21 = np.linalg.norm(self.tx2 - self.rx1)
         self.distancebtw22 = np.linalg.norm(self.tx2 - self.rx2)
+        self.delays = np.array([[self.distancebtw11 / self.c, self.distancebtw12 / self.c],
+                                [self.distancebtw21 / self.c, self.distancebtw22 / self.c]])
+
+
