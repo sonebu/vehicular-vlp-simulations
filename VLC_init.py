@@ -100,7 +100,7 @@ class VLC_init:
         self.area2 = np.array([[0, 0], [0, 0]])
         self.H = np.array([[0, 0], [0, 0]])
 
-    @lru_cache()
+    @lru_cache(maxsize=None)
     def update_cords(self, tx_cord, rx_cord, rx_radius):
         self.rxradius = rx_radius  # mm
         self.trxpos, self.trypos = (tx_cord[0][0], tx_cord[1][0]), (tx_cord[0][1], tx_cord[1][1])  # meter
@@ -110,7 +110,7 @@ class VLC_init:
         self.rx1 = np.array((self.rxxpos[0], self.rxypos[0]))
         self.rx2 = np.array((self.rxxpos[1], self.rxypos[1]))
 
-    @lru_cache()
+    @lru_cache(maxsize=None)
     def update_lookuptable(self):
         self.calc_delay()
         self.update_aoa()
@@ -128,7 +128,7 @@ class VLC_init:
                 self.H[i][j] = self.area1[i][j] / self.area2[i][j]
         return self.H, self.delays
 
-    @lru_cache()
+    @lru_cache(maxsize=None)
     def update_aoa(self):
         self.aoa11 = math.atan((self.tx1[1] - self.rx1[1]) / (self.rx1[0] - self.tx1[0]))
         self.aoa12 = math.atan((self.tx1[1] - self.rx2[1]) / (self.rx2[0] - self.tx1[0]))
@@ -136,14 +136,14 @@ class VLC_init:
         self.aoa22 = math.atan((self.tx2[1] - self.rx2[1]) / (self.rx2[0] - self.tx2[0]))
         self.aoas = np.array((self.aoa11, self.aoa12), (self.aoa21, self.aoa22))
 
-    @lru_cache()
+    @lru_cache(maxsize=None)
     def update_eps(self, aoa):
         self.eps_a = self.translate(aoa, 0, 80, 1 / 4, 0)
         self.eps_c = self.eps_a
         self.eps_b = (1 - 2 * self.eps_a) / 2
         self.eps_d = self.eps_b
 
-    @lru_cache()
+    @lru_cache(maxsize=None)
     def calc_delay(self):
         self.distancebtw11 = np.linalg.norm(self.tx1 - self.rx1)
         self.distancebtw12 = np.linalg.norm(self.tx1 - self.rx2)
@@ -152,7 +152,7 @@ class VLC_init:
         self.delays = np.array([[self.distancebtw11 / self.c, self.distancebtw12 / self.c],
                                 [self.distancebtw21 / self.c, self.distancebtw22 / self.c]])
 
-    @lru_cache()
+    @lru_cache(maxsize=None)
     def translate(self, value, leftMin, leftMax, rightMin, rightMax):
         # Figure out how 'wide' each range is
         leftSpan = leftMax - leftMin
