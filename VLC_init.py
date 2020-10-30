@@ -23,15 +23,22 @@ from functools import lru_cache
 
 
 def amplitude_modulation():
-    # Carrier wave c(t)=A_c*cos(2*pi*f_c*t)
-    # Modulating wave m(t)=A_m*cos(2*pi*f_m*t)
-    # Modulated wave s(t)=A_c[1+mu*cos(2*pi*f_m*t)]cos(2*pi*f_c*t)
+    noise = np.random.normal(0, 1, 1000)
+    """
+        0 is the mean of the normal distribution you are choosing from
+        1 is the standard deviation of the normal distribution
+        100 is the number of elements you get in array noise
+    
+        Carrier wave c(t)=A_c*cos(2*pi*f_c*t)
+        Modulating wave m(t)=A_m*cos(2*pi*f_m*t)
+        Modulated wave s(t)=A_c[1+mu*cos(2*pi*f_m*t)]cos(2*pi*f_c*t)
+    """
 
     A_c = 20  # float(input('Enter carrier amplitude: '))
     f_c = 500000000000000  # float(input('Enter carrier frquency: '))
     A_m = 20  # float(input('Enter message amplitude: '))
     f_m = 40000000  # 40MHz #float(input('Enter message frquency: '))
-    modulation_index = 1   # float(input('Enter modulation index: '))
+    modulation_index = 1  # float(input('Enter modulation index: '))
 
     t = np.linspace(0, 1, 1000)
 
