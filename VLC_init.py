@@ -59,6 +59,8 @@ def amplitude_modulation():
     modulator = A_m * np.cos(2 * np.pi * f_m * t)
     product = A_c * (1 + modulation_index * np.cos(2 * np.pi * f_m * t)) * np.cos(2 * np.pi * f_c * t)
 
+    return
+    """
     plt.subplot(3, 1, 1)
     plt.title('Amplitude Modulation')
     plt.plot(modulator, 'g')
@@ -81,7 +83,7 @@ def amplitude_modulation():
     fig.set_size_inches(16, 9)
 
     fig.savefig('Amplitude Modulation.png', dpi=100)
-
+    """
 
 class VLC_init:
     def __init__(self):
@@ -110,8 +112,8 @@ class VLC_init:
         self.aoa22 = math.atan(((self.tx2[1] - self.rx2[1]) / (self.rx2[0] - self.tx2[0])))
         self.aoas = np.array(((self.aoa11, self.aoa12), (self.aoa21, self.aoa22)))
         self.eps_a, self.eps_b, self.eps_c, self.eps_d, self.phi_h = 0, 0, 0, 0, 0
-        self.delays = (self.distancebtw11 / self.c, self.distancebtw12 / self.c, self.distancebtw21 / self.c,
-                       self.distancebtw22 / self.c)
+        self.delays = np.array([[self.distancebtw11 / self.c, self.distancebtw12 / self.c],
+                                [self.distancebtw21 / self.c, self.distancebtw22 / self.c]])
         self.distances = np.array(((self.distancebtw11, self.distancebtw12), (self.distancebtw21, self.distancebtw22)))
         self.H = np.array([[0, 0], [0, 0]])
 
@@ -151,7 +153,7 @@ class VLC_init:
         for i in range(2):
             for j in range(2):
                 self.H[i][j] = self.calculate_Hij(i, j)
-        return self.H, self.delays
+        return self.H
 
     @lru_cache(maxsize=None)
     def update_aoa(self):
