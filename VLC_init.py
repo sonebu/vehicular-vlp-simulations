@@ -98,7 +98,7 @@ class VLC_init:
         self.eps_b = 0
         self.eps_c = 0
         self.eps_d = 0
-        self.phi_h = ((self.eps_b + self.eps_d) - (self.eps_a + self.eps_c))/(self.eps_a + self.eps_b + self.eps_c + self.eps_d)
+        self.phi_h = 0
 
         self.delays = (self.distancebtw11 / self.c, self.distancebtw12 / self.c, self.distancebtw21 / self.c,
                        self.distancebtw22 / self.c)
