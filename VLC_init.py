@@ -97,8 +97,7 @@ class VLC_init:
         self.rx1 = np.array((self.rxxpos[0], self.rxypos[0]))
         self.rx2 = np.array((self.rxxpos[1], self.rxypos[1]))
         self.relative_heading = 0
-        self.e_angle = 80
-        self.a_angle = 80
+        self.e_angle, self.a_angle = 80, 80
 
         self.distancebtw11 = np.linalg.norm(self.tx1 - self.rx1)
         self.distancebtw12 = np.linalg.norm(self.tx1 - self.rx2)
@@ -110,19 +109,10 @@ class VLC_init:
         self.aoa21 = math.atan(((self.tx2[1] - self.rx1[1]) / (self.rx1[0] - self.tx2[0])))
         self.aoa22 = math.atan(((self.tx2[1] - self.rx2[1]) / (self.rx2[0] - self.tx2[0])))
         self.aoas = np.array(((self.aoa11, self.aoa12), (self.aoa21, self.aoa22)))
-        self.eps_a = 0
-        self.eps_b = 0
-        self.eps_c = 0
-        self.eps_d = 0
-        self.phi_h = 0
-
-
+        self.eps_a, self.eps_b, self.eps_c, self.eps_d, self.phi_h = 0, 0, 0, 0, 0
         self.delays = (self.distancebtw11 / self.c, self.distancebtw12 / self.c, self.distancebtw21 / self.c,
                        self.distancebtw22 / self.c)
         self.distances = np.array((self.distancebtw11, self.distancebtw12), (self.distancebtw21, self.distancebtw22))
-        self.R1 = np.array([[0, 0], [0, 0]])
-        self.area1 = np.array([[0, 0], [0, 0]])
-        self.area2 = np.array([[0, 0], [0, 0]])
         self.H = np.array([[0, 0], [0, 0]])
 
     @lru_cache(maxsize=None)
@@ -135,7 +125,6 @@ class VLC_init:
         self.rx1 = np.array((self.rxxpos[0], self.rxypos[0]))
         self.rx2 = np.array((self.rxxpos[1], self.rxypos[1]))
 
-
     def calculate_Hij(self, i, j):
         """
         :assumption is that tx,rx - ground height of cars are equal.
@@ -147,8 +136,8 @@ class VLC_init:
         txpos = np.array((self.trxpos[i-1], self.trypos[i-1]))
         rxpos = np.array((self.rxxpos[j - 1], self.rxxpospos[j - 1]))
         distance = self.distances[i][j]
-        y = np.abs(txpos[1] - txpos[1])
-        x = np.abs(rxpos[0] - rxpos[0])
+        y = np.abs(txpos[1] - rxpos[1])
+        x = np.abs(txpos[0] - txpos[0])
         azimuth = math.atan(((x + self.rxradius * math.cos(self.relative_heading))/y)) - math.atan(((x - self.rxradius * math.cos(self.relative_heading))/y))
         elevation = 2*math.atan((self.rxradius/distance))
         return (elevation/(2*self.e_angle)) * (azimuth/(2*self.a_angle))
@@ -158,10 +147,6 @@ class VLC_init:
         self.calc_delay()
         self.update_aoa()
         self.update_eps()
-        self.distances = np.array([[self.distancebtw11, self.distancebtw12], [self.distancebtw21, self.distancebtw22]])
-        self.R1 = np.array([[0, 0], [0, 0]])
-        self.area1 = np.array([[0, 0], [0, 0]])
-        self.area2 = np.array([[0, 0], [0, 0]])
         self.H = np.array([[0, 0], [0, 0]])
         for i in range(2):
             for j in range(2):
@@ -191,6 +176,7 @@ class VLC_init:
         self.distancebtw12 = np.linalg.norm(self.tx1 - self.rx2)
         self.distancebtw21 = np.linalg.norm(self.tx2 - self.rx1)
         self.distancebtw22 = np.linalg.norm(self.tx2 - self.rx2)
+        self.distances = np.array([[self.distancebtw11, self.distancebtw12], [self.distancebtw21, self.distancebtw22]])
         self.delays = np.array([[self.distancebtw11 / self.c, self.distancebtw12 / self.c],
                                 [self.distancebtw21 / self.c, self.distancebtw22 / self.c]])
 
