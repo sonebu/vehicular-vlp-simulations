@@ -6,8 +6,10 @@ import multiprocessing
 import resource
 import matplotlib.pyplot as plt
 import math
-
 from functools import lru_cache
+import scipy
+from scipy.integrate import quad, dblquad, tplquad
+from numpy import *
 
 """
 *: coordinate center of cari
@@ -22,13 +24,24 @@ from functools import lru_cache
 """
 
 
+def diff_volume(p, t, r):
+    return r ** 2 * sin(p)
+
+
+def calc_volume(r1, r2, t1, t2, p1, p2):
+    # r1, r2: limits for radius (i.e. 0., 1.)
+    # t1, t2: limits for theta (i.e. 0, 2*pi)
+    # p1, p2: limits for phi (i.e. 0, pi)
+    return tplquad(diff_volume, r1, r2, lambda r: t1, lambda r: t2, lambda r, t: p1, lambda r, t: p2)[0]
+
+
 def amplitude_modulation():
     noise = np.random.normal(0, 1, 1000)
     """
         0 is the mean of the normal distribution you are choosing from
         1 is the standard deviation of the normal distribution
         100 is the number of elements you get in array noise
-    
+
         Carrier wave c(t)=A_c*cos(2*pi*f_c*t)
         Modulating wave m(t)=A_m*cos(2*pi*f_m*t)
         Modulated wave s(t)=A_c[1+mu*cos(2*pi*f_m*t)]cos(2*pi*f_c*t)
@@ -151,7 +164,7 @@ class VLC_init:
         self.eps_b = (1 - 2 * self.eps_a) / 2
         self.eps_d = self.eps_b
         self.phi_h = ((self.eps_b + self.eps_d) - (self.eps_a + self.eps_c)) / (
-                    self.eps_a + self.eps_b + self.eps_c + self.eps_d)
+                self.eps_a + self.eps_b + self.eps_c + self.eps_d)
 
     @lru_cache(maxsize=None)
     def calc_delay(self):
@@ -171,3 +184,4 @@ class VLC_init:
         valueScaled = float(value - leftMin) / float(leftSpan)
         # Convert the 0-1 range into a value in the right range.
         return rightMin + (valueScaled * rightSpan)
+
