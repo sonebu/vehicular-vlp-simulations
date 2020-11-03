@@ -89,15 +89,16 @@ class VLC_init:
         self.distancebtw21 = np.linalg.norm(self.tx2 - self.rx1)
         self.distancebtw22 = np.linalg.norm(self.tx2 - self.rx2)
 
-        self.aoa11 = math.atan((self.tx1[1] - self.rx1[1]) / (self.rx1[0] - self.tx1[0]))
-        self.aoa12 = math.atan((self.tx1[1] - self.rx2[1]) / (self.rx2[0] - self.tx1[0]))
-        self.aoa21 = math.atan((self.tx2[1] - self.rx1[1]) / (self.rx1[0] - self.tx2[0]))
-        self.aoa22 = math.atan((self.tx2[1] - self.rx2[1]) / (self.rx2[0] - self.tx2[0]))
-        self.aoas = np.array((self.aoa11, self.aoa12), (self.aoa21, self.aoa22))
+        self.aoa11 = math.atan(((self.tx1[1] - self.rx1[1]) / (self.rx1[0] - self.tx1[0])))
+        self.aoa12 = math.atan(((self.tx1[1] - self.rx2[1]) / (self.rx2[0] - self.tx1[0])))
+        self.aoa21 = math.atan(((self.tx2[1] - self.rx1[1]) / (self.rx1[0] - self.tx2[0])))
+        self.aoa22 = math.atan(((self.tx2[1] - self.rx2[1]) / (self.rx2[0] - self.tx2[0])))
+        self.aoas = np.array(((self.aoa11, self.aoa12), (self.aoa21, self.aoa22)))
         self.eps_a = 0
         self.eps_b = 0
         self.eps_c = 0
         self.eps_d = 0
+        self.phi_h = ((self.eps_b + self.eps_d) - (self.eps_a + self.eps_c))/(self.eps_a + self.eps_b + self.eps_c + self.eps_d)
 
         self.delays = (self.distancebtw11 / self.c, self.distancebtw12 / self.c, self.distancebtw21 / self.c,
                        self.distancebtw22 / self.c)
@@ -149,6 +150,8 @@ class VLC_init:
         self.eps_c = self.eps_a
         self.eps_b = (1 - 2 * self.eps_a) / 2
         self.eps_d = self.eps_b
+        self.phi_h = ((self.eps_b + self.eps_d) - (self.eps_a + self.eps_c)) / (
+                    self.eps_a + self.eps_b + self.eps_c + self.eps_d)
 
     @lru_cache(maxsize=None)
     def calc_delay(self):
