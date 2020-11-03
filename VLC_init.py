@@ -92,7 +92,7 @@ class VLC_init:
         self.c = 3 * 10 ** 8  # speed of light(m/s)
         self.trxpos, self.trypos = (-5, -5), (2, 3)  # meter
         self.tx1 = np.array((self.trxpos[0], self.trypos[0]))
-        self.tx2 = np.array((self.trxpos[0], self.trypos[0]))
+        self.tx2 = np.array((self.trxpos[1], self.trypos[1]))
         self.rxxpos, self.rxypos = (0, 0), (0, 1)
         self.rx1 = np.array((self.rxxpos[0], self.rxypos[0]))
         self.rx2 = np.array((self.rxxpos[1], self.rxypos[1]))
@@ -112,7 +112,7 @@ class VLC_init:
         self.eps_a, self.eps_b, self.eps_c, self.eps_d, self.phi_h = 0, 0, 0, 0, 0
         self.delays = (self.distancebtw11 / self.c, self.distancebtw12 / self.c, self.distancebtw21 / self.c,
                        self.distancebtw22 / self.c)
-        self.distances = np.array((self.distancebtw11, self.distancebtw12), (self.distancebtw21, self.distancebtw22))
+        self.distances = np.array(((self.distancebtw11, self.distancebtw12), (self.distancebtw21, self.distancebtw22)))
         self.H = np.array([[0, 0], [0, 0]])
 
     @lru_cache(maxsize=None)
