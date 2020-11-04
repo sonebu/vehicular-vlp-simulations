@@ -91,7 +91,7 @@ class VLC_init:
         self.lookuptable = {}
         self.alpha, self.theta = 120, 120
         self.distancecar = 1
-        self.c = 3 * 10 ** 8  # speed of light(m/s)
+        self.c = 3e8  # speed of light(m/s)
         self.trxpos, self.trypos = (-5, -5), (2, 3)  # meter
         self.tx1 = np.array((self.trxpos[0], self.trypos[0]))
         self.tx2 = np.array((self.trxpos[1], self.trypos[1]))
@@ -136,7 +136,7 @@ class VLC_init:
         :return:
         """
         txpos = np.array((self.trxpos[i-1], self.trypos[i-1]))
-        rxpos = np.array((self.rxxpos[j - 1], self.rxxpospos[j - 1]))
+        rxpos = np.array((self.rxxpos[j - 1], self.rxypos[j - 1]))
         distance = self.distances[i][j]
         y = np.abs(txpos[1] - rxpos[1])
         x = np.abs(txpos[0] - txpos[0])
@@ -148,7 +148,7 @@ class VLC_init:
     def update_lookuptable(self):
         self.calc_delay()
         self.update_aoa()
-        self.update_eps()
+#         self.update_eps(self.aoas)
         self.H = np.array([[0, 0], [0, 0]])
         for i in range(2):
             for j in range(2):
@@ -161,7 +161,7 @@ class VLC_init:
         self.aoa12 = math.atan((self.tx1[1] - self.rx2[1]) / (self.rx2[0] - self.tx1[0]))
         self.aoa21 = math.atan((self.tx2[1] - self.rx1[1]) / (self.rx1[0] - self.tx2[0]))
         self.aoa22 = math.atan((self.tx2[1] - self.rx2[1]) / (self.rx2[0] - self.tx2[0]))
-        self.aoas = np.array((self.aoa11, self.aoa12), (self.aoa21, self.aoa22))
+        self.aoas = np.array(((self.aoa11, self.aoa12), (self.aoa21, self.aoa22)))
 
     @lru_cache(maxsize=None)
     def update_eps(self, aoa):
