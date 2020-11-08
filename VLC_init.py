@@ -133,4 +133,13 @@ class VLC_init:
         valueScaled = float(value - leftMin) / float(leftSpan)
         # Convert the 0-1 range into a value in the right range.
         return rightMin + (valueScaled * rightSpan)
+    
+    def change_cords(self):
+        self.tx1 = np.array((self.trxpos[0], self.trypos[0]))
+        self.tx2 = np.array((self.trxpos[1], self.trypos[1]))
+        tx1 = -1*(self.tx1[1]-0.5)
+        ty1 = self.tx1[1]
+        tx2 = self.tx2[1]
+        ty2 = -1*(self.tx2[1]-0.5)
+        return tx1, ty1, tx2, ty2
 
