@@ -23,7 +23,6 @@ from numpy import *
                     d
 """
 
-
 def diff_volume(p, t, r):
     return r ** 2 * sin(p)
 
@@ -34,56 +33,6 @@ def calc_volume(r1, r2, t1, t2, p1, p2):
     # p1, p2: limits for phi (i.e. 0, pi)
     return tplquad(diff_volume, r1, r2, lambda r: t1, lambda r: t2, lambda r, t: p1, lambda r, t: p2)[0]
 
-
-def amplitude_modulation():
-    noise = np.random.normal(0, 1, 1000)
-    """
-        0 is the mean of the normal distribution you are choosing from
-        1 is the standard deviation of the normal distribution
-        100 is the number of elements you get in array noise
-
-        Carrier wave c(t)=A_c*cos(2*pi*f_c*t)
-        Modulating wave m(t)=A_m*cos(2*pi*f_m*t)
-        Modulated wave s(t)=A_c[1+mu*cos(2*pi*f_m*t)]cos(2*pi*f_c*t)
-    """
-
-    A_c = 20  # float(input('Enter carrier amplitude: '))
-    f_c = 500000000000000  # float(input('Enter carrier frquency: '))
-    A_m = 20  # float(input('Enter message amplitude: '))
-    f_m = 40000000  # 40MHz #float(input('Enter message frquency: '))
-    modulation_index = 1  # float(input('Enter modulation index: '))
-
-    t = np.linspace(0, 1, 1000)
-
-    carrier = A_c * np.cos(2 * np.pi * f_c * t)
-    modulator = A_m * np.cos(2 * np.pi * f_m * t)
-    product = A_c * (1 + modulation_index * np.cos(2 * np.pi * f_m * t)) * np.cos(2 * np.pi * f_c * t)
-
-    return
-    """
-    plt.subplot(3, 1, 1)
-    plt.title('Amplitude Modulation')
-    plt.plot(modulator, 'g')
-    plt.ylabel('Amplitude')
-    plt.xlabel('Message signal')
-
-    plt.subplot(3, 1, 2)
-    plt.plot(carrier, 'r')
-    plt.ylabel('Amplitude')
-    plt.xlabel('Carrier signal')
-
-    plt.subplot(3, 1, 3)
-    plt.plot(product, color="purple")
-    plt.ylabel('Amplitude')
-    plt.xlabel('AM signal')
-
-    plt.subplots_adjust(hspace=1)
-    plt.rc('font', size=15)
-    fig = plt.gcf()
-    fig.set_size_inches(16, 9)
-
-    fig.savefig('Amplitude Modulation.png', dpi=100)
-    """
 
 class VLC_init:
     def __init__(self):
@@ -110,12 +59,12 @@ class VLC_init:
         self.aoa12 = math.atan(((self.tx1[1] - self.rx2[1]) / (self.rx2[0] - self.tx1[0])))
         self.aoa21 = math.atan(((self.tx2[1] - self.rx1[1]) / (self.rx1[0] - self.tx2[0])))
         self.aoa22 = math.atan(((self.tx2[1] - self.rx2[1]) / (self.rx2[0] - self.tx2[0])))
-        self.aoas = np.array(((self.aoa11, self.aoa12), (self.aoa21, self.aoa22)))
-        self.eps_a, self.eps_b, self.eps_c, self.eps_d, self.phi_h = 0, 0, 0, 0, 0
+        self.aoas = np.array([[self.aoa11, self.aoa12], [self.aoa21, self.aoa22]])
+        self.eps_a, self.eps_b, self.eps_c, self.eps_d, self.phi_h = np.array([[0., 0.], [0., 0.]]), np.array([[0., 0.], [0., 0.]]), np.array([[0., 0.], [0., 0.]]), np.array([[0., 0.], [0., 0.]]), np.array([[0., 0.], [0., 0.]])
         self.delays = np.array([[self.distancebtw11 / self.c, self.distancebtw12 / self.c],
                                 [self.distancebtw21 / self.c, self.distancebtw22 / self.c]])
-        self.distances = np.array(((self.distancebtw11, self.distancebtw12), (self.distancebtw21, self.distancebtw22)))
-        self.H = np.array([[0, 0], [0, 0]])
+        self.distances = np.array([[self.distancebtw11, self.distancebtw12], [self.distancebtw21, self.distancebtw22]])
+        self.H = np.array([[0., 0.], [0., 0.]]).astype(longfloat)
 
     @lru_cache(maxsize=None)
     def update_cords(self, tx_cord, rx_cord, rx_radius):
@@ -128,13 +77,6 @@ class VLC_init:
         self.rx2 = np.array((self.rxxpos[1], self.rxypos[1]))
 
     def calculate_Hij(self, i, j):
-        """
-        :assumption is that tx,rx - ground height of cars are equal.
-        :param rxpos:
-        :param txpos:
-        :param rel_heading:
-        :return:
-        """
         txpos = np.array((self.trxpos[i-1], self.trypos[i-1]))
         rxpos = np.array((self.rxxpos[j - 1], self.rxypos[j - 1]))
         distance = self.distances[i][j]
@@ -148,8 +90,8 @@ class VLC_init:
     def update_lookuptable(self):
         self.calc_delay()
         self.update_aoa()
-#         self.update_eps(self.aoas)
-        self.H = np.array([[0, 0], [0, 0]])
+        self.update_eps()
+        self.H = np.array([[0., 0.], [0., 0.]]).astype(longfloat)
         for i in range(2):
             for j in range(2):
                 self.H[i][j] = self.calculate_Hij(i, j)
@@ -161,16 +103,16 @@ class VLC_init:
         self.aoa12 = math.atan((self.tx1[1] - self.rx2[1]) / (self.rx2[0] - self.tx1[0]))
         self.aoa21 = math.atan((self.tx2[1] - self.rx1[1]) / (self.rx1[0] - self.tx2[0]))
         self.aoa22 = math.atan((self.tx2[1] - self.rx2[1]) / (self.rx2[0] - self.tx2[0]))
-        self.aoas = np.array(((self.aoa11, self.aoa12), (self.aoa21, self.aoa22)))
+        self.aoas = np.array([[self.aoa11, self.aoa12], [self.aoa21, self.aoa22]])
 
     @lru_cache(maxsize=None)
-    def update_eps(self, aoa):
-        self.eps_a = self.translate(aoa, 0, self.e_angle, 1 / 4, 0)
-        self.eps_c = self.eps_a
-        self.eps_b = (1 - 2 * self.eps_a) / 2
-        self.eps_d = self.eps_b
-        self.phi_h = ((self.eps_b + self.eps_d) - (self.eps_a + self.eps_c)) / (
-                self.eps_a + self.eps_b + self.eps_c + self.eps_d)
+    def update_eps(self):
+        for i in range(2):
+            for j in range(2):
+                self.eps_a[i][j] = self.translate(self.aoas[i][j], 0, self.e_angle, 1 / 4, 0)
+                self.eps_c[i][j] = self.eps_a[i][j]
+                self.eps_b[i][j] = (1 - 2 * self.eps_a[i][j]) / 2
+                self.eps_d[i][j] = self.eps_b[i][j]
 
     @lru_cache(maxsize=None)
     def calc_delay(self):
