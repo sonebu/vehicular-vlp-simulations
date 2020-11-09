@@ -62,7 +62,7 @@ class VLC_init:
         self.H = np.array([[0., 0.], [0., 0.]]).astype(float)
 
     @lru_cache(maxsize=None)
-    def update_cords(self, tx_cord, rx_cord):
+    def update_coords(self, tx_cord, rx_cord):
         self.trxpos, self.trypos = (tx_cord[0][0], tx_cord[1][0]), (tx_cord[0][1], tx_cord[1][1])  # meter
         self.tx1 = np.array((self.trxpos[0], self.trypos[0]))
         self.tx2 = np.array((self.trxpos[1], self.trypos[1]))

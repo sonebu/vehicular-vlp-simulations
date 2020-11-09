@@ -159,7 +159,7 @@ class Pose:
         # Error calc
         # print("Error of Transmitter-1 position in x:", abs(t_x_1_act-t_x_1),", y:", abs(t_y_1_act-t_y_1))
         # print("Error of Transmitter-2 position in x, y:", abs(t_x_2_act-t_x_2),", y:", abs(t_y_2_act-t_y_2))
-        tx_pos = np.array([[self.t_x_1, self.t_y_1], [self.t_x_2, self.t_y_2]])
+        tx_pos = np.array([[self.t_x_1, self.t_x_2], [self.t_y_1, self.t_y_2]])
         return tx_pos
 
 # %%
