@@ -114,17 +114,12 @@ class RToF_pos:
         dr = dm['dr'] 
         dr_err = np.abs(self.vlc_obj.c*delays[0]/2 - dr) # since the delays are from round trips
         dr = dr[dr_err == np.min(dr_err)][0]
-        print("Distance: ", dr, "Error: ", np.min(dr_err))
         dl = dm['dl']
         dl_err = np.abs(self.vlc_obj.c*delays[1]/2 - dl)
         dl = dl[dl_err == np.min(dl_err)][0]
-        print("Distance: ", dl, "Error: ", np.min(dl_err))
 
         y = (dl**2 - dr**2 + l**2) / (2*l)
         x = -np.sqrt(dl**2 - y**2)
-
-        print("x: ", x)
-        print("y: ", y)
 
         return x,y
 

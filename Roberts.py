@@ -75,8 +75,8 @@ class Roberts:
             Y_B = Y_A / 2
             X_A = - math.sqrt(((2 * Y_A * D + ddist1 ** 2) / (2 * ddist1)) ** 2 - (D + Y_A / 2) ** 2)
 
-        print("x: ", X_A)
-        print("y: ", (0-Y_B))
+#         print("x: ", X_A)
+#         print("y: ", (0-Y_B))
         return np.array([[X_A, X_A], [(0-Y_B), (0-Y_B) + 1]])
 
     def measure_delay(self):

@@ -69,6 +69,17 @@ class VLC_init:
         self.rxxpos, self.rxypos = (rx_cord[0][0], rx_cord[1][0]), (rx_cord[0][1], rx_cord[1][1])
         self.rx1 = np.array((self.rxxpos[0], self.rxypos[0]))
         self.rx2 = np.array((self.rxxpos[1], self.rxypos[1]))
+        
+        self.distancebtw11 = np.linalg.norm(self.tx1 - self.rx1)
+        self.distancebtw12 = np.linalg.norm(self.tx1 - self.rx2)
+        self.distancebtw21 = np.linalg.norm(self.tx2 - self.rx1)
+        self.distancebtw22 = np.linalg.norm(self.tx2 - self.rx2)
+        
+        self.delays = np.array([[self.distancebtw11 / self.c, self.distancebtw12 / self.c],
+                                [self.distancebtw21 / self.c, self.distancebtw22 / self.c]])
+        self.distances = np.array([[self.distancebtw11, self.distancebtw12], [self.distancebtw21, self.distancebtw22]])
+        
+        
 
     def calculate_Hij(self, i, j):
         txpos = np.array((self.trxpos[i], self.trypos[i]))
