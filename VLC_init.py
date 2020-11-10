@@ -63,6 +63,7 @@ class VLC_init:
 
     @lru_cache(maxsize=None)
     def update_coords(self, tx_cord, rx_cord):
+        
         self.trxpos, self.trypos = (tx_cord[0][0], tx_cord[1][0]), (tx_cord[0][1], tx_cord[1][1])  # meter
         self.tx1 = np.array((self.trxpos[0], self.trypos[0]))
         self.tx2 = np.array((self.trxpos[1], self.trypos[1]))
@@ -79,6 +80,23 @@ class VLC_init:
                                 [self.distancebtw21 / self.c, self.distancebtw22 / self.c]])
         self.distances = np.array([[self.distancebtw11, self.distancebtw12], [self.distancebtw21, self.distancebtw22]])
         
+        self.aoa11 = math.atan((self.tx1[1] - self.rx1[1]) / (self.rx1[0] - self.tx1[0]))
+        self.aoa12 = math.atan((self.tx1[1] - self.rx2[1]) / (self.rx2[0] - self.tx1[0]))
+        self.aoa21 = math.atan((self.tx2[1] - self.rx1[1]) / (self.rx1[0] - self.tx2[0]))
+        self.aoa22 = math.atan((self.tx2[1] - self.rx2[1]) / (self.rx2[0] - self.tx2[0]))
+        self.aoas = np.array([[self.aoa11, self.aoa12], [self.aoa21, self.aoa22]])
+        
+        for i in range(2):
+            for j in range(2):
+                self.eps_a[i][j] = self.translate(self.aoas[i][j], 0, self.e_angle, 1 / 4, 0)
+                self.eps_c[i][j] = self.eps_a[i][j]
+                self.eps_b[i][j] = (1 - 2 * self.eps_a[i][j]) / 2
+                self.eps_d[i][j] = self.eps_b[i][j]
+                
+        self.H = np.array([[0., 0.], [0., 0.]]).astype(float)
+        for i in range(2):
+            for j in range(2):
+                self.H[i][j] = self.calculate_Hij(i, j)
         
 
     def calculate_Hij(self, i, j):
