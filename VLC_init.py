@@ -112,13 +112,39 @@ class VLC_init:
 
     @lru_cache(maxsize=None)
     def update_lookuptable(self):
-        self.calc_delay()
-        self.update_aoa()
-        self.update_eps()
+        self.distancebtw11 = np.linalg.norm(self.tx1 - self.rx1)
+        self.distancebtw12 = np.linalg.norm(self.tx1 - self.rx2)
+        self.distancebtw21 = np.linalg.norm(self.tx2 - self.rx1)
+        self.distancebtw22 = np.linalg.norm(self.tx2 - self.rx2)
+        self.distances = np.array([[self.distancebtw11, self.distancebtw12], [self.distancebtw21, self.distancebtw22]])
+        self.delays = np.array([[self.distancebtw11 / self.c, self.distancebtw12 / self.c],
+                                [self.distancebtw21 / self.c, self.distancebtw22 / self.c]])
+
+        self.aoa11 = math.atan((self.tx1[1] - self.rx1[1]) / (self.rx1[0] - self.tx1[0]))
+        self.aoa12 = math.atan((self.tx1[1] - self.rx2[1]) / (self.rx2[0] - self.tx1[0]))
+        self.aoa21 = math.atan((self.tx2[1] - self.rx1[1]) / (self.rx1[0] - self.tx2[0]))
+        self.aoa22 = math.atan((self.tx2[1] - self.rx2[1]) / (self.rx2[0] - self.tx2[0]))
+        self.aoas = np.array([[self.aoa11, self.aoa12], [self.aoa21, self.aoa22]])
+
+        for i in range(2):
+            for j in range(2):
+                self.eps_a[i][j] = self.translate(self.aoas[i][j], 0, self.e_angle, 1 / 4, 0)
+                self.eps_c[i][j] = self.eps_a[i][j]
+                self.eps_b[i][j] = (1 - 2 * self.eps_a[i][j]) / 2
+                self.eps_d[i][j] = self.eps_b[i][j]
+
         self.H = np.array([[0., 0.], [0., 0.]]).astype(float)
         for i in range(2):
             for j in range(2):
-                self.H[i][j] = self.calculate_Hij(i, j)
+                txpos = np.array((self.trxpos[i], self.trypos[i]))
+                rxpos = np.array((self.rxxpos[j], self.rxypos[j]))
+                distance = self.distances[i][j]
+                y = np.abs(txpos[1] - rxpos[1])
+                x = np.abs(txpos[0] - txpos[0])
+                azimuth = math.atan(((x + self.rxradius * math.cos(self.relative_heading)) / y)) - math.atan(
+                    ((x - self.rxradius * math.cos(self.relative_heading)) / y))
+                elevation = 2 * math.atan((self.rxradius / distance))
+                self.H[i][j] = (elevation / (2 * self.e_angle)) * (azimuth / (2 * self.a_angle))
         return self.H
 
     @lru_cache(maxsize=None)
