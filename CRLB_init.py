@@ -291,13 +291,10 @@ class CRLB_init:
             return self.tx1[1]**2 / (D**3)
         elif ij == 12:
             if(flag):
-                if(flag):
                 return 0
             else:
                 D = np.sqrt(self.tx1[0]**2 + (self.tx1[1] + self.L1)**2)
                 return ((self.tx1[1] + self.L1)**2) / (D**3)
-            else:
-                return (self.tx1[1]**2)
         elif ij == 21:
             D = np.sqrt(self.tx1[0]**2 + (self.tx1[1] - self.L2)**2)
             return (self.tx1[1] - self.L2)**2 / (D**3)
@@ -416,7 +413,7 @@ class CRLB_init:
         elif ij == 21:
             return np.sqrt(self.tx1[0]**2 + (self.tx1[1]**2 - self.L2)) / self.c
         elif ij == 22:
-            if(flag)
+            if(flag):
                 return np.sqrt(self.tx2[0]**2 + (self.tx2[1]**2 - self.L2)) / self.c
             else:
                 return np.sqrt(self.tx1[0]**2 + (self.tx1[1] + self.L1 - self.L2)**2) / self.c
@@ -445,7 +442,7 @@ class CRLB_init:
             raise ValueError("Entered tx rx values do not exist")
             
         def d_tau_d_x2(self, ij, flag):
-            if(flag) 
+            if(flag): 
                 return 0
             elif:
                 if ij == 11:    
@@ -479,7 +476,7 @@ class CRLB_init:
                 raise ValueError("Entered tx rx values do not exist")
             
         def d_tau_d_y2(self, ij, flag):
-            if(flag) 
+            if(flag): 
                 return 0
             elif:
                 if ij == 11:    
@@ -498,9 +495,9 @@ class CRLB_init:
         def quad_coeff(self, ij, q):
             
             if(q==1 or q==3):
-                const = -1 / (4*fov)
+                const = -1 / (4*self.fov)
             elif(q==2 or q==4):
-                const = 1 / (4*fov)
+                const = 1 / (4*self.fov)
             else:
                 raise ValueError("Entered q value does not exist")
                 
@@ -521,9 +518,9 @@ class CRLB_init:
             
             
             if(q==1 or q==3):
-                const = -1 / (4*fov)
+                const = -1 / (4*self.fov)
             elif(q==2 or q==4):
-                const = 1 / (4*fov)
+                const = 1 / (4*self.fov)
             else:
                 raise ValueError("Entered q value does not exist")
                 
@@ -541,9 +538,9 @@ class CRLB_init:
         def d_quad_coeff_d_x2(self, ij, q):
                                
             if(q==1 or q==3):
-                const = -1 / (4*fov)
+                const = -1 / (4*self.fov)
             elif(q==2 or q==4):
-                const = 1 / (4*fov)
+                const = 1 / (4*self.fov)
             else:
                 raise ValueError("Entered q value does not exist")
                 
@@ -561,9 +558,9 @@ class CRLB_init:
         def d_quad_coeff_d_y1(self, ij, q):
                                
             if(q==1 or q==3):
-                const = -1 / (4*fov)
+                const = -1 / (4*self.fov)
             elif(q==2 or q==4):
-                const = 1 / (4*fov)
+                const = 1 / (4*self.fov)
             else:
                 raise ValueError("Entered q value does not exist")
                 
@@ -581,9 +578,9 @@ class CRLB_init:
         def d_quad_coeff_d_y2(self, ij, q):
                                 
            if(q==1 or q==3):
-                const = -1 / (4*fov)
+                const = -1 / (4*self.fov)
             elif(q==2 or q==4):
-                const = 1 / (4*fov)
+                const = 1 / (4*self.fov)
             else:
                 raise ValueError("Entered q value does not exist")
                 
