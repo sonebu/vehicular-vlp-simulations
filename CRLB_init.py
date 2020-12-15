@@ -444,7 +444,7 @@ class CRLB_init:
         def d_tau_d_x2(self, ij, flag):
             if(flag): 
                 return 0
-            elif:
+            else:
                 if ij == 11:    
                     return 0
                 elif ij == 12:
@@ -478,7 +478,7 @@ class CRLB_init:
         def d_tau_d_y2(self, ij, flag):
             if(flag): 
                 return 0
-            elif:
+            else:
                 if ij == 11:    
                     return 0
                 elif ij == 12:
