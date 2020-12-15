@@ -525,11 +525,11 @@ class CRLB_init:
                 raise ValueError("Entered q value does not exist")
                 
             if ij == 11:    
-                return -const*(self.tx1[1] / (self.tx1[0]**2 + self.tx1[1]**2)
+                return -const*(self.tx1[1] / (self.tx1[0]**2 + self.tx1[1]**2))
             elif ij == 12:
                 return 0
             elif ij == 21:
-                return -const*((self.tx1[1] - self.L2) / (self.tx1[0]**2 + (self.tx1[1] - self.L2)**2)
+                return -const*((self.tx1[1] - self.L2) / (self.tx1[0]**2 + (self.tx1[1] - self.L2)**2))
             elif ij == 22:
                 return 0
             else:
@@ -547,11 +547,11 @@ class CRLB_init:
             if ij == 11:    
                 return 0
             elif ij == 12:
-                return -const*(self.tx2[1] / (self.tx1[0]**2 + self.tx1[1]**2)
+                return -const*(self.tx2[1] / (self.tx1[0]**2 + self.tx1[1]**2))
             elif ij == 21:
                 return 0
             elif ij == 22:
-                return -const*((self.tx2[1] - self.L2) / (self.tx2[0]**2 + (self.tx2[1] - self.L2)**2)
+                return -const*((self.tx2[1] - self.L2) / (self.tx2[0]**2 + (self.tx2[1] - self.L2)**2))
             else:
                 raise ValueError("Entered tx rx values do not exist")
                 
@@ -565,11 +565,11 @@ class CRLB_init:
                 raise ValueError("Entered q value does not exist")
                 
             if ij == 11:    
-                return const*(self.tx1[0] / (self.tx1[0]**2 + self.tx1[1]**2)
+                return const*(self.tx1[0] / (self.tx1[0]**2 + self.tx1[1]**2))
             elif ij == 12:
                 return 0
             elif ij == 21:
-                return -const*(self.tx1[0] / (self.tx1[0]**2 + (self.tx1[1] - self.L2)**2)
+                return -const*(self.tx1[0] / (self.tx1[0]**2 + (self.tx1[1] - self.L2)**2))
             elif ij == 22:
                 return 0
             else:
@@ -577,37 +577,37 @@ class CRLB_init:
                     
         def d_quad_coeff_d_y2(self, ij, q):
                                 
-           if(q==1 or q==3):
+            if(q==1 or q==3):
                 const = -1 / (4*self.fov)
             elif(q==2 or q==4):
                 const = 1 / (4*self.fov)
             else:
                 raise ValueError("Entered q value does not exist")
-                
+
             if ij == 11:    
                 return 0
             elif ij == 12:
-                return const*(self.tx2[0] / (self.tx1[0]**2 + self.tx1[1]**2)
+                return const*(self.tx2[0] / (self.tx1[0]**2 + self.tx1[1]**2))
             elif ij == 21:
                 return 0
             elif ij == 22:
-                return const*(self.tx2[0] / (self.tx2[0]**2 + (self.tx2[1] - self.L2)**2)
+                return const*(self.tx2[0] / (self.tx2[0]**2 + (self.tx2[1] - self.L2)**2))
             else:
                 raise ValueError("Entered tx rx values do not exist") 
            
           # h_ijq                    
-          def get_h_ijq(self, ij, q):
-              return self.get_h_ij(ij) * self.quad_coeff(ij, q)
+        def get_h_ijq(self, ij, q):
+            return self.get_h_ij(ij) * self.quad_coeff(ij, q)
           
           # derivatives of h_ijq           
-          def d_hq_d_x1(self, ij, q):
-              return self.d_h_d_x1(ij, True) * self.quad_coeff(ij,q) + self.get_h_ij(ij) * self.d_quad_coeff_x1(ij, q)
+        def d_hq_d_x1(self, ij, q):
+            return self.d_h_d_x1(ij, True) * self.quad_coeff(ij,q) + self.get_h_ij(ij) * self.d_quad_coeff_x1(ij, q)
                               
-          def d_hq_d_x2(self, ij, q):
-              return self.d_h_d_x2(ij, True) * self.quad_coeff(ij,q) + self.get_h_ij(ij) * self.d_quad_coeff_x2(ij, q)
+        def d_hq_d_x2(self, ij, q):
+            return self.d_h_d_x2(ij, True) * self.quad_coeff(ij,q) + self.get_h_ij(ij) * self.d_quad_coeff_x2(ij, q)
                               
-          def d_hq_d_y1(self, ij, q):
-              return self.d_h_d_y1(ij, True) * self.quad_coeff(ij,q) + self.get_h_ij(ij) * self.d_quad_coeff_y1(ij, q)
+        def d_hq_d_y1(self, ij, q):
+            return self.d_h_d_y1(ij, True) * self.quad_coeff(ij,q) + self.get_h_ij(ij) * self.d_quad_coeff_y1(ij, q)
                               
-          def d_hq_d_y2(self, ij, q):
-              return self.d_h_d_y2(ij, True) * self.quad_coeff(ij,q) + self.get_h_ij(ij) * self.d_quad_coeff_y2(ij, q)
+        def d_hq_d_y2(self, ij, q):
+            return self.d_h_d_y2(ij, True) * self.quad_coeff(ij,q) + self.get_h_ij(ij) * self.d_quad_coeff_y2(ij, q)
