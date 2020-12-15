@@ -11,11 +11,10 @@ class CRLB_init:
         self.fov = 50
 
         self.m = -np.log(2) / np.log(math.cos(math.radians(self.fov)))
-        
         self.L1 = 1
         self.L2 = 1
-        
-        self.rxxpos, self.rxypos = (0, 0), (0, L2)
+
+        self.rxxpos, self.rxypos = (0, 0), (0, self.L2)
         self.rx1 = np.array((self.rxxpos[0], self.rxypos[0]))
         self.rx2 = np.array((self.rxxpos[1], self.rxypos[1]))
         
@@ -23,59 +22,62 @@ class CRLB_init:
         self.tx1 = np.array((self.trxpos[0], self.trypos[0]))
         self.tx2 = np.array((self.trxpos[1], self.trypos[1]))
 
-    def lamb_coeff(self, ij, flag):
+    def lamb_coeff(self, ij, tx1, tx2, flag):
+        L1 = np.sqrt((tx2[0] - tx1[0]) ** 2 + (tx2[1] - tx1[1]) ** 2)
         if ij == 11:
-            return ((self.m + 1) * self.rxradius) / (2 * np.pi * (self.tx1[0]**2 + self.tx1[1]**2))
+            return ((self.m + 1) * self.rxradius) / (2 * np.pi * (tx1[0]**2 + tx1[1]**2))
         elif ij == 12:
-            if(flag):
-                return ((self.m + 1) * self.rxradius) / (2 * np.pi * (self.tx2[0]**2 + self.tx2[1]**2))
+            if flag:
+                return ((self.m + 1) * self.rxradius) / (2 * np.pi * (tx2[0]**2 + tx2[1]**2))
             else:
-                return ((self.m + 1) * self.rxradius) / (2 * np.pi * (self.tx1[0]**2 + (self.tx1[1] + self.L1)**2))
+                return ((self.m + 1) * self.rxradius) / (2 * np.pi * (tx1[0]**2 + (tx1[1] + L1)**2))
         elif ij == 21:
-            return ((self.m + 1) * self.rxradius) / (2 * np.pi * (self.tx1[0]**2 + (self.tx1[1] - self.L2)**2))
+            return ((self.m + 1) * self.rxradius) / (2 * np.pi * (tx1[0]**2 + (tx1[1] - self.L2)**2))
         elif ij == 22:
-            if(flag):
-                return ((self.m + 1) * self.rxradius) / (2 * np.pi * (self.tx2[0]**2 + (self.tx2[1] - self.L2)**2))
+            if flag:
+                return ((self.m + 1) * self.rxradius) / (2 * np.pi * (tx2[0]**2 + (tx2[1] - self.L2)**2))
             else:
-                return ((self.m + 1) * self.rxradius) / (2 * np.pi * (self.tx1[0]**2 + (self.tx1[1] + self.L1 - self.L2)**2))
+                return ((self.m + 1) * self.rxradius) / (2 * np.pi * (tx1[0]**2 + (tx1[1] + self.L1 - self.L2)**2))
         else:
             raise ValueError("Entered tx rx values do not exist for coeff")
         
-    def lamb_irrad(self, ij): 
+    def lamb_irrad(self, ij, tx1, tx2):
+        L1 = np.sqrt((tx2[0] - tx1[0]) ** 2 + (tx2[1] - tx1[1]) ** 2)
         if ij == 11:
-            return ((self.tx1[0]/ np.sqrt(self.tx1[0]**2 + self.tx1[1]**2)) * ((self.tx2[1] - self.tx1[1]) / self.L1)
-                    - (self.tx1[1] / np.sqrt(self.tx1[0]**2 + self.tx1[1]**2)) * ((self.tx2[0] - self.tx1[0]) / self.L1))
+            return ((tx1[0] / np.sqrt(tx1[0]**2 + tx1[1]**2)) * ((tx2[1] - tx1[1]) / L1)
+                    - (tx1[1] / np.sqrt(tx1[0]**2 + tx1[1]**2)) * ((tx2[0] - tx1[0]) / L1))
         elif ij == 12:
-            return ((self.tx2[0]/ np.sqrt(self.tx2[0]**2 + self.tx2[1]**2)) * ((self.tx2[1] - self.tx1[1]) / self.L1)
-                    - (self.tx2[1] / np.sqrt(self.tx2[0]**2 + self.tx2[1]**2)) * ((self.tx2[0] - self.tx1[0]) / self.L1))
+            return ((tx2[0] / np.sqrt(tx2[0]**2 + tx2[1]**2)) * ((tx2[1] - tx1[1]) / L1)
+                    - (tx2[1] / np.sqrt(tx2[0]**2 + tx2[1]**2)) * ((tx2[0] - tx1[0]) / L1))
         elif ij == 21:
-            return ((self.tx1[0]/ np.sqrt(self.tx1[0]**2 + (self.tx1[1] - self.L2)**2))
-                      * ((self.tx2[1] - self.tx1[1]) / self.L1) 
-                      - ((self.tx1[1] - self.L2) / np.sqrt(self.tx1[0]**2 + (self.tx1[1] - self.L2)**2)) 
-                      * ((self.tx2[0] - self.tx1[0]) / self.L1))
+            return ((tx1[0] / np.sqrt(tx1[0]**2 + (tx1[1] - self.L2)**2))
+                    * ((tx2[1] - tx1[1]) / L1)
+                    - ((tx1[1] - self.L2) / np.sqrt(tx1[0]**2 + (tx1[1] - self.L2)**2))
+                    * ((tx2[0] - tx1[0]) / L1))
         elif ij == 22:
-            return ((self.tx2[0]/ np.sqrt(self.tx2[0]**2 + (self.tx2[1] - self.L2)**2)) 
-                    * ((self.tx2[1] - self.tx1[1]) / self.L1) 
-                    - ((self.tx2[1] - self.L2) / np.sqrt(self.tx2[0]**2 + (self.tx2[1] - self.L2)**2)) 
-                    * ((self.tx2[0] - self.tx1[0]) / self.L1))
+            return ((tx2[0] / np.sqrt(tx2[0]**2 + (tx2[1] - self.L2)**2))
+                    * ((tx2[1] - tx1[1]) / L1)
+                    - ((tx2[1] - self.L2) / np.sqrt(tx2[0]**2 + (tx2[1] - self.L2)**2))
+                    * ((tx2[0] - tx1[0]) / L1))
         else:
             raise ValueError("Entered tx rx values do not exist for irrad angle")
 
-    def lamb_incid(self, ij, flag):
+    def lamb_incid(self, ij, tx1, tx2, flag):
+        L1 = np.sqrt((tx2[0] - tx1[0]) ** 2 + (tx2[1] - tx1[1]) ** 2)
         if ij == 11:
-            return self.tx1[0]/ np.sqrt(self.tx1[0]**2 + self.tx1[1]**2)   
+            return tx1[0] / np.sqrt(tx1[0]**2 + tx1[1]**2)
         elif ij == 12:
-            if(flag):
-                return self.tx2[0]/ np.sqrt(self.tx2[0]**2 + self.tx2[1]**2)
+            if flag:
+                return tx2[0] / np.sqrt(tx2[0]**2 + tx2[1]**2)
             else:
-                return self.tx1[0]/ np.sqrt(self.tx1[0]**2 + (self.tx1[1] + self.L1)**2)
+                return tx1[0] / np.sqrt(tx1[0]**2 + (tx1[1] + L1)**2)
         elif ij == 21:
-            return self.tx1[0]/ np.sqrt(self.tx1[0]**2 + (self.tx1[1] - self.L2)**2)
+            return tx1[0] / np.sqrt(tx1[0]**2 + (tx1[1] - self.L2)**2)
         elif ij == 22:
-            if(flag):
-                return self.tx2[0]/ np.sqrt(self.tx2[0]**2 + (self.tx2[1] - self.L2)**2)
+            if flag:
+                return tx2[0] / np.sqrt(tx2[0]**2 + (tx2[1] - self.L2)**2)
             else:
-                return self.tx1[0]/ np.sqrt(self.tx1[0]**2 + (self.tx1[1] + self.L1 - self.L2)**2)
+                return tx1[0] / np.sqrt(tx1[0]**2 + (tx1[1] + L1 - self.L2)**2)
         else:
             raise ValueError("Entered tx rx values do not exist incidence angle")
     
@@ -91,193 +93,188 @@ class CRLB_init:
     # flag == True for Bechadergue, Soner
     # flag == False for Roberts
     
-    def d_lamb_coeff_x1(self, ij, flag):
+    def d_lamb_coeff_x1(self, ij, tx1, tx2, flag):
+        L1 = np.sqrt((tx2[0] - tx1[0]) ** 2 + (tx2[1] - tx1[1]) ** 2)
         if ij == 11:
-            return -(((self.m + 1) * self.rxradius * self.tx1[0]) / np.pi * (self.tx1[0]**2 + self.tx1[1]**2)**2)
+            return -(((self.m + 1) * self.rxradius * tx1[0]) / (np.pi * (tx1[0]**2 + tx1[1]**2)**2))
         elif ij == 12:
             if(flag):
                 return 0
             else:
-                return -(((self.m + 1) * self.rxradius * self.tx1[0]) / np.pi * (self.tx1[0]**2 + (self.tx1[1] + self.L1)**2)**2)
+                return -(((self.m + 1) * self.rxradius * tx1[0]) / (np.pi * (tx1[0]**2 + (tx1[1] + self.L1)**2)**2))
         elif ij == 21:
-            return -(((self.m + 1) * self.rxradius * self.tx1[0]) / np.pi * (self.tx1[0]**2 + (self.tx1[1] - self.L2)**2)**2)
+            return -(((self.m + 1) * self.rxradius * tx1[0]) / (np.pi * (tx1[0]**2 + (tx1[1] - self.L2)**2)**2))
         elif ij == 22:
             if(flag):
                 return 0
             else:
-                return -(((self.m+1)*self.rxradius*self.tx1[0]) / np.pi * (self.tx1[0]**2+(self.tx1[1]+self.L1-self.L2)**2)**2)
+                return -(((self.m + 1)*self.rxradius * tx1[0]) / (np.pi * (tx1[0]**2+(tx1[1] + self.L1 - self.L2)**2)**2))
         else:
             raise ValueError("Entered tx rx values do not exist")
     
     # d_coeff_y1
-    def d_lamb_coeff_y1(self, ij, flag):
+    def d_lamb_coeff_y1(self, ij, tx1, tx2, flag):
         if ij == 11:
-            return -(((self.m + 1) * self.rxradius * self.tx1[1]) / np.pi * (self.tx1[0]**2 + self.tx1[1]**2)**2)
+            return -(((self.m + 1) * self.rxradius * tx1[1]) / (np.pi * (tx1[0]**2 + tx1[1]**2)**2))
         elif ij == 12:
-            if(flag):
+            if flag:
                 return 0
             else:
-                return -(((self.m+1)*self.rxradius*(self.tx1[1]+self.L1)) / np.pi * (self.tx1[0]**2+(self.tx1[1]+self.L1)**2)**2)
+                return -(((self.m + 1) * self.rxradius * (tx1[1] + self.L1)) / (np.pi * (tx1[0]**2 + (tx1[1] + self.L1)**2)**2))
         elif ij == 21:
-            return -(((self.m + 1) * self.rxradius * (self.tx1[1] - self.L2)) 
-                 / np.pi * (self.tx1[0]**2 + (self.tx1[1] - self.L2)**2)**2)
+            return -(((self.m + 1) * self.rxradius * (tx1[1] - self.L2)) / (np.pi * (tx1[0]**2 + (tx1[1] - self.L2)**2)**2))
         elif ij == 22:
-            if(flag):
+            if flag:
                 return 0
             else:
-                return -(((self.m+1)*self.rxradius*(self.tx1[1]+self.L1-self.L2)) 
-                         / np.pi * (self.tx1[0]**2+(self.tx1[1]+self.L1-self.L2)**2)**2)
+                return -(((self.m+1) * self.rxradius * (tx1[1] + self.L1 - self.L2))  / (np.pi * (tx1[0]**2 + (tx1[1] + self.L1 - self.L2)**2)**2))
         else:
             raise ValueError("Entered tx rx values do not exist")
     
     # d_coeff_x2
-    def d_lamb_coeff_x2(self, ij):
+    def d_lamb_coeff_x2(self, ij, tx1, tx2):
         if ij == 11:    
             return 0
         elif ij == 12:
-            return -(((self.m + 1) * self.rxradius * self.tx2[0]) / np.pi * (self.tx2[0]**2 + self.tx2[1]**2)**2)
+            return -(((self.m + 1) * self.rxradius * tx2[0]) / (np.pi * (tx2[0]**2 + tx2[1]**2)**2))
         elif ij == 21:
             return 0
         elif ij == 22:
-            return -(((self.m + 1) * self.rxradius * self.tx2[0]) / np.pi * (self.tx2[0]**2 + (self.tx2[1] - self.L2)**2)**2)
+            return -(((self.m + 1) * self.rxradius * tx2[0]) / (np.pi * (tx2[0]**2 + (tx2[1] - self.L2)**2)**2))
         else:
             raise ValueError("Entered tx rx values do not exist")
      
     # d_coeff_y2
-    def d_lamb_coeff_y2(self, ij):
+    def d_lamb_coeff_y2(self, ij, tx1, tx2):
         if ij == 11:
             return 0
         elif ij == 12:
-            return -(((self.m + 1) * self.rxradius * self.tx2[1]) / np.pi * (self.tx2[0]**2 + self.tx2[1]**2)**2)
+            return -(((self.m + 1) * self.rxradius * tx2[1]) / (np.pi * (tx2[0]**2 + tx2[1]**2)**2))
         elif ij == 21:
             return 0
         elif ij == 22:
-            return -(((self.m + 1) * self.rxradius * (self.tx2[1] - self.L2))
-                     / np.pi * (self.tx2[0]**2 + (self.tx2[1] - self.L2)**2)**2)
+            return -(((self.m + 1) * self.rxradius * (tx2[1] - self.L2))
+                     / (np.pi * (tx2[0]**2 + (tx2[1] - self.L2)**2)**2))
         else:
             raise ValueError("Entered tx rx values do not exist")
    
     # irrad_x1 
-    def d_lamb_irrad_x1(self, ij):
+    def d_lamb_irrad_x1(self, ij, tx1, tx2):
+        L1 = np.sqrt((tx2[0] - tx1[0]) ** 2 + (tx2[1] - tx1[1]) ** 2)
         if ij == 11:
-            L1 = np.sqrt((self.tx2[0] - self.tx1[0])**2 + (self.tx2[1] - self.tx1[1])**2)
-            D = np.sqrt(self.tx1[0]**2 + self.tx1[1]**2)
-            return ((self.tx1[1]**2 / D**3) * ((self.tx2[1] - self.tx1[1]) / L1)
-                   + (self.tx1[0]*self.tx1[1] / D**3) * ((self.tx2[0] - self.tx1[0]) / L1)
-                   + self.tx1[1] / (D * L1) 
-                   + (self.tx1[0]* (self.tx2[1] - self.tx1[1]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2))
-                   - (self.tx1[1]* (self.tx2[0] - self.tx1[0]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2)))
+            D = np.sqrt(tx1[0]**2 + tx1[1]**2)
+            return ((tx1[1]**2 / D**3) * ((tx2[1] - tx1[1]) / L1)
+                   + (tx1[0]*tx1[1] / D**3) * ((tx2[0] - tx1[0]) / L1)
+                   + tx1[1] / (D * L1) 
+                   + (tx1[0] * (tx2[1] - tx1[1]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))
+                   - (tx1[1] * (tx2[0] - tx1[0]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2)))
         elif ij == 12:
-            L1 = np.sqrt((self.tx2[0] - self.tx1[0])**2 + (self.tx2[1] - self.tx1[1])**2)
-            D = np.sqrt(self.tx2[0]**2 + self.tx2[1]**2)
-            return ((self.tx2[0]*(self.tx2[1] - self.tx1[1]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2))
-                   -(self.tx2[1]*(self.tx2[0] - self.tx1[0]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2)))
-        elif ij == 21:   
-            L1 = np.sqrt((self.tx2[0] - self.tx1[0])**2 + (self.tx2[1] - self.tx1[1])**2)
-            D = np.sqrt(self.tx1[0]**2 + (self.tx1[1]-self.L2)**2)
-            return (((self.tx1[1]-self.L2)**2 / D**3) * ((self.tx2[1] - self.tx1[1]) / L1)
-                   + (self.tx1[0]*(self.tx1[1]-self.L2) / D**3) * ((self.tx2[0] - self.tx1[0]) / L1)
-                   - (self.tx1[1]-self.L2) / (D * L1) 
-                   + (self.tx1[0] * (self.tx2[1] - self.tx1[1]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2))
-                   - ((self.tx1[1]-self.L2) * (self.tx2[0] - self.tx1[0]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2)))
+            D = np.sqrt(tx2[0]**2 + tx2[1]**2)
+            return ((tx2[0]*(tx2[1] - tx1[1]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))
+                    - (tx2[1]*(tx2[0] - tx1[0]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))
+                    + (tx2[1] / (D * L1)))
+        elif ij == 21:
+            D = np.sqrt(tx1[0]**2 + (tx1[1]-self.L2)**2)
+            return (((tx1[1] - self.L2)**2 / D**3) * ((tx2[1] - tx1[1]) / L1)
+                   + (tx1[0] * (tx1[1]-self.L2) / D**3) * ((tx2[0] - tx1[0]) / L1)
+                   - (tx1[1] - self.L2) / (D * L1)
+                   + (tx1[0] * (tx2[1] - tx1[1]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))
+                   - ((tx1[1] - self.L2) * (tx2[0] - tx1[0]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2)))
         elif ij == 22:
-            L1 = np.sqrt((self.tx2[0] - self.tx1[0])**2 + (self.tx2[1] - self.tx1[1])**2)
-            D = np.sqrt(self.tx2[0]**2 + (self.tx2[1]-self.L2)**2)
-            return ((self.tx2[0]*(self.tx2[1] - self.tx1[1]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2))
-                   - ((self.tx2[1]-self.L2)*(self.tx2[0] - self.tx1[0]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2)))
+            D = np.sqrt(tx2[0]**2 + (tx2[1]-self.L2)**2)
+            return ((tx2[0]*(tx2[1] - tx1[1]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))
+                    - ((tx2[1]-self.L2)*(tx2[0] - tx1[0]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))
+                    + (tx2[1] - self.L2) / (D * L1))
         else:
             raise ValueError("Entered tx rx values do not exist incidence angle")
     
     # irrad_y1
-    def d_lamb_irrad_y1(self, ij):
+    def d_lamb_irrad_y1(self, ij, tx1, tx2):
+        L1 = np.sqrt((tx2[0] - tx1[0]) ** 2 + (tx2[1] - tx1[1]) ** 2)
         if ij == 11:
-            L1 = np.sqrt((self.tx2[0] - self.tx1[0])**2 + (self.tx2[1] - self.tx1[1])**2)
-            D = np.sqrt(self.tx1[0]**2 + self.tx1[1]**2)
-            return (-(self.tx1[0]*self.tx1[1] / D**3) * ((self.tx2[1] - self.tx1[1]) / L1)
-                   - self.tx1[0] / (D * L1)
-                   - (self.tx1[0]**2 / D**3) * ((self.tx2[0] - self.tx1[0]) / L1)
-                   + (self.tx1[0]*(self.tx2[1] - self.tx1[1]) / D) * ((self.tx2[1] - self.tx1[1]) / L1) * (L1**(-2))
-                   - (self.tx1[1]*(self.tx2[0] - self.tx1[0]) / D) * ((self.tx2[1] - self.tx1[1]) / L1) * (L1**(-2)))
+            D = np.sqrt(tx1[0]**2 + tx1[1]**2)
+            return (-(tx1[0]*tx1[1] / D**3) * ((tx2[1] - tx1[1]) / L1)
+                   - tx1[0] / (D * L1)
+                   - (tx1[0]**2 / D**3) * ((tx2[0] - tx1[0]) / L1)
+                   + (tx1[0]*(tx2[1] - tx1[1]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
+                   - (tx1[1]*(tx2[0] - tx1[0]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2)))
         elif ij == 12:
-            L1 = np.sqrt((self.tx2[0] - self.tx1[0])**2 + (self.tx2[1] - self.tx1[1])**2)
-            D = np.sqrt(self.tx2[0]**2 + self.tx2[1]**2)
-            return ((self.tx2[0]*(self.tx2[1] - self.tx1[1]) / D) * ((self.tx2[1] - self.tx1[1]) / L1) * (L1**(-2))
-                   - (self.tx2[1]*(self.tx2[0] - self.tx1[0]) / D) * ((self.tx2[1] - self.tx1[1]) / L1) * (L1**(-2)))
+            D = np.sqrt(tx2[0]**2 + tx2[1]**2)
+            return ((tx2[0]*(tx2[1] - tx1[1]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
+                    - (tx2[1]*(tx2[0] - tx1[0]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
+                    - (tx2[0] / (D*L1)))
         elif ij == 21:
-            L1 = np.sqrt((self.tx2[0] - self.tx1[0])**2 + (self.tx2[1] - self.tx1[1])**2)
-            D = np.sqrt(self.tx1[0]**2 + (self.tx1[1]-self.L2)**2)
-            return (-(self.tx1[0]*(self.tx1[1]-self.L2) / D**3) * ((self.tx2[1] - self.tx1[1]) / L1)
-                   + self.tx1[0] / (D * L1)
-                   - ((self.tx1[0]**2 + self.tx1[1] * (self.tx1[1]-self.L2)) / D**3) * ((self.tx2[0] - self.tx1[0]) / L1)
-                   + (self.tx1[0]*(self.tx2[1] - self.tx1[1]) / D) * ((self.tx2[1] - self.tx1[1]) / L1) * (L1**(-2))
-                   - ((self.tx1[1]-self.L2)*(self.tx2[0] - self.tx1[0]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2)))
+            D = np.sqrt(tx1[0]**2 + (tx1[1]-self.L2)**2)
+            return (-(tx1[0]*(tx1[1]-self.L2) / D**3) * ((tx2[1] - tx1[1]) / L1)
+                   + tx1[0] / (D * L1)
+                   - ((tx1[0]**2 + tx1[1] * (tx1[1]-self.L2)) / D**3) * ((tx2[0] - tx1[0]) / L1)
+                   + (tx1[0]*(tx2[1] - tx1[1]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
+                   - ((tx1[1]-self.L2)*(tx2[0] - tx1[0]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2)))
         elif ij == 22:
-            L1 = np.sqrt((self.tx2[0] - self.tx1[0])**2 + (self.tx2[1] - self.tx1[1])**2)
-            D = np.sqrt(self.tx2[0]**2 + (self.tx2[1]-self.L2)**2)
-            return ((self.tx2[0]*(self.tx2[1] - self.tx1[1]) / D) * ((self.tx2[1] - self.tx1[1]) / L1) * (L1**(-2))
-                   - ((self.tx2[1]-self.L2)*(self.tx2[0] - self.tx1[0]) / D) * ((self.tx2[1] - self.tx1[1]) / L1) * (L1**(-2)))
+            D = np.sqrt(tx2[0]**2 + (tx2[1]-self.L2)**2)
+            return ((tx2[0]*(tx2[1] - tx1[1]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
+                    - ((tx2[1]-self.L2)*(tx2[0] - tx1[0]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
+                    - (tx2[0] / (D*L1)))
         else:
             raise ValueError("Entered tx rx values do not exist incidence angle")
 
     # irrad_x2
-    def d_lamb_irrad_x2(self, ij):
+    def d_lamb_irrad_x2(self, ij, tx1, tx2):
+        L1 = np.sqrt((tx2[0] - tx1[0])**2 + (tx2[1] - tx1[1])**2)
         if ij == 11:
-            L1 = np.sqrt((self.tx2[0] - self.tx1[0])**2 + (self.tx2[1] - self.tx1[1])**2)
-            D = np.sqrt(self.tx1[0]**2 + self.tx1[1]**2)
-            return (-(self.tx1[0]*(self.tx2[1] - self.tx1[1]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2))
-                   + (self.tx1[1]*(self.tx2[0] - self.tx1[0]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2)))
+            D = np.sqrt(tx1[0]**2 + tx1[1]**2)
+            return (-(tx1[0]*(tx2[1] - tx1[1]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))
+                    + (tx1[1]*(tx2[0] - tx1[0]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))
+                    - (tx1[1] / (D * L1)))
         elif ij == 12:
-            L1 = np.sqrt((self.tx2[0] - self.tx1[0])**2 + (self.tx2[1] - self.tx1[1])**2)
-            D = np.sqrt(self.tx2[0]**2 + self.tx2[1]**2)
-            return ((self.tx2[1]**2 / D**3) * ((self.tx2[1] - self.tx1[1]) / L1)
-                   + (self.tx2[0]*self.tx2[1] / D**3) * ((self.tx2[0] - self.tx1[0]) / L1)
-                   + self.tx2[1] / (D * L1) 
-                   - (self.tx2[0]*(self.tx2[1] - self.tx1[1]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2))
-                   + (self.tx2[1]*(self.tx2[0] - self.tx1[0]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2))) 
+            D = np.sqrt(tx2[0]**2 + tx2[1]**2)
+            return ((tx2[1]**2 / D**3) * ((tx2[1] - tx1[1]) / L1)
+                   + (tx2[0]*tx2[1] / D**3) * ((tx2[0] - tx1[0]) / L1)
+                   + tx2[1] / (D * L1) 
+                   - (tx2[0]*(tx2[1] - tx1[1]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))
+                   + (tx2[1]*(tx2[0] - tx1[0]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))) 
         elif ij == 21:
-            L1 = np.sqrt((self.tx2[0] - self.tx1[0])**2 + (self.tx2[1] - self.tx1[1])**2)
-            D = np.sqrt(self.tx1[0]**2 + (self.tx1[1]-self.L2)**2)
-            return (-(self.tx1[0]*(self.tx2[1] - self.tx1[1]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2))
-                   + ((self.tx1[1]-self.L2)*(self.tx2[0] - self.tx1[0]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2)))
+            D = np.sqrt(tx1[0]**2 + (tx1[1]-self.L2)**2)
+            return (-(tx1[0]*(tx2[1] - tx1[1]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))
+                    + ((tx1[1]-self.L2)*(tx2[0] - tx1[0]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))
+                    - ((tx1[1] - self.L2) / (D * L1)))
         elif ij == 22:
-            L1 = np.sqrt((self.tx2[0] - self.tx1[0])**2 + (self.tx2[1] - self.tx1[1])**2)
-            D = np.sqrt(self.tx2[0]**2 + (self.tx2[1]-self.L2)**2)
-            return (((self.tx2[1]-self.L2)**2 / D**3) * ((self.tx2[1] - self.tx1[1]) / L1)
-                   + (self.tx2[0]*(self.tx2[1]-self.L2) / D**3) * ((self.tx2[0] - self.tx1[0]) / L1)
-                   - (self.tx2[1]-self.L2) / (D * L1) 
-                   + (self.tx2[0] * (self.tx2[1] - self.tx1[1]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2))
-                   - ((self.tx2[1]-self.L2) * (self.tx2[0] - self.tx1[0]) / D) * ((self.tx2[0] - self.tx1[0]) / L1) * (L1**(-2)))
+            D = np.sqrt(tx2[0]**2 + (tx2[1]-self.L2)**2)
+            return (((tx2[1]-self.L2)**2 / D**3) * ((tx2[1] - tx1[1]) / L1)
+                   + (tx2[0]*(tx2[1]-self.L2) / D**3) * ((tx2[0] - tx1[0]) / L1)
+                   - (tx2[1]-self.L2) / (D * L1) 
+                   + (tx2[0] * (tx2[1] - tx1[1]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))
+                   - ((tx2[1]-self.L2) * (tx2[0] - tx1[0]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2)))
         else:
             raise ValueError("Entered tx rx values do not exist incidence angle")
             
     # irrad_y2
-    def d_lamb_irrad_y2(self, ij):
+    def d_lamb_irrad_y2(self, ij, tx1, tx2):
+        L1 = np.sqrt((tx2[0] - tx1[0])**2 + (tx2[1] - tx1[1])**2)
         if ij == 11:
-            L1 = np.sqrt((self.tx2[0] - self.tx1[0])**2 + (self.tx2[1] - self.tx1[1])**2)
-            D = np.sqrt(self.tx1[0]**2 + self.tx1[1]**2)
-            return (-(self.tx1[0]*(self.tx2[1] - self.tx1[1]) / D) * ((self.tx2[1] - self.tx1[1]) / L1) * (L1**(-2))
-                   + (self.tx1[1]*(self.tx2[0] - self.tx1[0]) / D) * ((self.tx2[1] - self.tx1[1]) / L1) * (L1**(-2)))
+            D = np.sqrt(tx1[0]**2 + tx1[1]**2)
+            return (-(tx1[0]*(tx2[1] - tx1[1]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
+                    + (tx1[1]*(tx2[0] - tx1[0]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
+                    + (tx1[0] / (D * L1)))
         elif ij == 12:
-            L1 = np.sqrt((self.tx2[0] - self.tx1[0])**2 + (self.tx2[1] - self.tx1[1])**2)
-            D = np.sqrt(self.tx2[0]**2 + self.tx2[1]**2)
-            return (-(self.tx2[0]*self.tx2[1] / D**3) * ((self.tx2[1] - self.tx1[1]) / L1)
-                   - self.tx2[0] / (D * L1)
-                   - (self.tx2[0]**2 / D**3) * ((self.tx2[0] - self.tx1[0]) / L1)
-                   - (self.tx2[0]*(self.tx2[1] - self.tx1[1]) / D) * ((self.tx2[1] - self.tx1[1]) / L1) * (L1**(-2))
-                   + (self.tx2[1]*(self.tx2[0] - self.tx1[0]) / D) * ((self.tx2[1] - self.tx1[1]) / L1) * (L1**(-2)))
+            D = np.sqrt(tx2[0]**2 + tx2[1]**2)
+            return (-(tx2[0]*tx2[1] / D**3) * ((tx2[1] - tx1[1]) / L1)
+                   - tx2[0] / (D * L1)
+                   - (tx2[0]**2 / D**3) * ((tx2[0] - tx1[0]) / L1)
+                   - (tx2[0]*(tx2[1] - tx1[1]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
+                   + (tx2[1]*(tx2[0] - tx1[0]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2)))
         elif ij == 21:
-            L1 = np.sqrt((self.tx2[0] - self.tx1[0])**2 + (self.tx2[1] - self.tx1[1])**2)
-            D = np.sqrt(self.tx1[0]**2 + (self.tx1[1]-self.L2)**2)
-            return (-(self.tx1[0]*(self.tx2[1] - self.tx1[1]) / D) * ((self.tx2[1] - self.tx1[1]) / L1) * (L1**(-2))
-                   + ((self.tx1[1]-self.L2)*(self.tx2[0] - self.tx1[0]) / D) * ((self.tx2[1] - self.tx1[1]) / L1) * (L1**(-2)))
+            D = np.sqrt(tx1[0]**2 + (tx1[1]-self.L2)**2)
+            return (-(tx1[0]*(tx2[1] - tx1[1]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
+                    + ((tx1[1]-self.L2)*(tx2[0] - tx1[0]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
+                    + (tx1[0] / (D * L1)))
         elif ij == 22:
-            L1 = np.sqrt((self.tx2[0] - self.tx1[0])**2 + (self.tx2[1] - self.tx1[1])**2)
-            D = np.sqrt(self.tx2[0]**2 + (self.tx2[1]-self.L2)**2)
-            return (-(self.tx2[0]*(self.tx2[1]-self.L2) / D**3) * ((self.tx2[1] - self.tx1[1]) / L1)
-                   + self.tx2[0] / (D * L1)
-                   - ((self.tx2[0]**2 + self.tx2[1] * (self.tx2[1]-self.L2)) / D**3) * ((self.tx2[0] - self.tx1[0]) / L1)
-                   + (self.tx2[0]*(self.tx2[1] - self.tx1[1]) / D) * ((self.tx2[1] - self.tx1[1]) / L1) * (L1**(-2))
-                   - ((self.tx2[1]-self.L2)*(self.tx2[0] - self.tx1[0]) / D) * ((self.tx2[1] - self.tx1[1]) / L1) * (L1**(-2)))
+            D = np.sqrt(tx2[0]**2 + (tx2[1]-self.L2)**2)
+            return (-(tx2[0]*(tx2[1]-self.L2) / D**3) * ((tx2[1] - tx1[1]) / L1)
+                   + tx2[0] / (D * L1)
+                   - ((tx2[0]**2 + tx2[1] * (tx2[1]-self.L2)) / D**3) * ((tx2[0] - tx1[0]) / L1)
+                   + (tx2[0]*(tx2[1] - tx1[1]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
+                   - ((tx2[1]-self.L2)*(tx2[0] - tx1[0]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2)))
         else: 
             raise ValueError("Entered tx rx values do not exist incidence angle")
     
@@ -285,78 +282,78 @@ class CRLB_init:
     # flag == True for Bechadergue, Soner
     # flag == False for Roberts
     
-    def d_lamb_incid_x1(self, ij, flag):
+    def d_lamb_incid_x1(self, ij, tx1, tx2, flag):
         if ij == 11:
-            D = np.sqrt(self.tx1[0]**2 + self.tx1[1]**2)
-            return self.tx1[1]**2 / (D**3)
+            D = np.sqrt(tx1[0]**2 + tx1[1]**2)
+            return tx1[1]**2 / (D**3)
         elif ij == 12:
             if(flag):
                 return 0
             else:
-                D = np.sqrt(self.tx1[0]**2 + (self.tx1[1] + self.L1)**2)
-                return ((self.tx1[1] + self.L1)**2) / (D**3)
+                D = np.sqrt(tx1[0]**2 + (tx1[1] + self.L1)**2)
+                return ((tx1[1] + self.L1)**2) / (D**3)
         elif ij == 21:
-            D = np.sqrt(self.tx1[0]**2 + (self.tx1[1] - self.L2)**2)
-            return (self.tx1[1] - self.L2)**2 / (D**3)
+            D = np.sqrt(tx1[0]**2 + (tx1[1] - self.L2)**2)
+            return (tx1[1] - self.L2)**2 / (D**3)
         elif ij == 22:
             if(flag):
                 return 0
             else:
-                D = np.sqrt(self.tx1[0]**2 + (self.tx1[1] + self.L1 - self.L2)**2)
-                return ((self.tx1[1] + self.L1 - self.L2)**2) / (D**3)
+                D = np.sqrt(tx1[0]**2 + (tx1[1] + self.L1 - self.L2)**2)
+                return ((tx1[1] + self.L1 - self.L2)**2) / (D**3)
         else: 
             raise ValueError("Entered tx rx values do not exist incidence angle")
                     
     # d_incid_y1 
-    def d_lamb_incid_y1(self, ij, flag):
+    def d_lamb_incid_y1(self, ij, tx1, tx2, flag):
         if ij == 11:
-            D = np.sqrt(self.tx1[0]**2 + self.tx1[1]**2)
-            return -(self.tx1[0]*self.tx1[1]) / (D**3)
+            D = np.sqrt(tx1[0]**2 + tx1[1]**2)
+            return -(tx1[0]*tx1[1]) / (D**3)
         elif ij == 12:
             if(flag):
                 return 0
             else:
-                D = np.sqrt(self.tx1[0]**2 + (self.tx1[1] + self.L1)**2)
-                return -(self.tx1[0]*(self.tx1[1] + self.L1)) / (D**3)
+                D = np.sqrt(tx1[0]**2 + (tx1[1] + self.L1)**2)
+                return -(tx1[0]*(tx1[1] + self.L1)) / (D**3)
         elif ij == 21:
-            D = np.sqrt(self.tx1[0]**2 + (self.tx1[1] - self.L2)**2)
-            return -(self.tx1[0]*(self.tx1[1] - self.L2)) / (D**3)
+            D = np.sqrt(tx1[0]**2 + (tx1[1] - self.L2)**2)
+            return -(tx1[0]*(tx1[1] - self.L2)) / (D**3)
         elif ij == 22:
             if(flag):
                 return 0
             else:
-                D = np.sqrt(self.tx1[0]**2 + (self.tx1[1] + self.L1 - self.L2)**2)
-                return -(self.tx1[0]*(self.tx1[1] + self.L1 - self.L2)) / (D**3)
+                D = np.sqrt(tx1[0]**2 + (tx1[1] + self.L1 - self.L2)**2)
+                return -(tx1[0]*(tx1[1] + self.L1 - self.L2)) / (D**3)
         else: 
             raise ValueError("Entered tx rx values do not exist incidence angle")
              
     # d_incid_x2 
-    def d_lamb_incid_x2(self, ij):
+    def d_lamb_incid_x2(self, ij, tx1, tx2):
         if ij == 11:
             return 0
         elif ij == 12:
-            D = np.sqrt(self.tx2[0]**2 + self.tx2[1]**2)
-            return self.tx2[1]**2 / (D**3)
+            D = np.sqrt(tx2[0]**2 + tx2[1]**2)
+            return tx2[1]**2 / (D**3)
         elif ij == 21:
             return 0
         elif ij == 22:
-            D = np.sqrt(self.tx2[0]**2 + (self.tx2[1] - self.L2)**2)
-            return (self.tx2[1] - self.L2)**2 / (D**3)
+            D = np.sqrt(tx2[0]**2 + (tx2[1] - self.L2)**2)
+            return (tx2[1] - self.L2)**2 / (D**3)
         else: 
             raise ValueError("Entered tx rx values do not exist incidence angle")
     
     # d_incid_y2 
-    def d_lamb_incid_y2(self, ij):
+    def d_lamb_incid_y2(self, ij, tx1, tx2):
         if ij == 11:
             return 0   
         elif ij == 12:
-            D = np.sqrt(self.tx2[0]**2 + self.tx2[1]**2)
-            return -(self.tx2[0]*self.tx2[1]) / (D**3) 
+            D = np.sqrt(tx2[0]**2 + tx2[1]**2)
+            return -(tx2[0]*tx2[1]) / (D**3) 
         elif ij == 21:
             return 0
         elif ij == 22:
-            D = np.sqrt(self.tx2[0]**2 + (self.tx2[1] - self.L2)**2)
-            return -(self.tx2[0]*(self.tx2[1] - self.L2)) / (D**3)  
+            D = np.sqrt(tx2[0]**2 + (tx2[1] - self.L2)**2)
+            return -(tx2[0]*(tx2[1] - self.L2)) / (D**3)  
         else: 
             raise ValueError("Entered tx rx values do not exist incidence angle")
 
@@ -365,7 +362,7 @@ class CRLB_init:
     # flag == True for Bechadergue, Soner
     # flag == False for Roberts
     
-    def d_h_d_x1(self, ij, flag):  
+    def d_h_d_x1(self, ij, tx1, tx2, flag):
         
         if(flag):
             return (self.d_lamb_coeff_x1(ij, flag) * (self.lamb_irrad(ij)**(self.m)) * self.lamb_incid(ij, flag)
@@ -375,15 +372,15 @@ class CRLB_init:
         else:
             return (self.d_lamb_coeff_x1(ij, flag) * (self.lamb_incid(ij, flag)**(self.m + 1)) 
                     + self.lamb_coeff(ij, flag) * (self.m + 1) * self.d_lamb_incid_x1(ij, flag) * (self.lamb_incid(ij, flag)**(self.m)))
-    
-    def d_h_d_x2(self, ij, flag):
+
+    def d_h_d_x2(self, ij, tx1, tx2, flag):
         
         return (self.d_lamb_coeff_x2(ij) * (self.lamb_irrad(ij)**(self.m)) * self.lamb_incid(ij, flag)
                 + (self.lamb_coeff(ij, flag) * (self.m * self.d_lamb_irrad_x2(ij) * (self.lamb_irrad(ij)**(self.m - 1)))
                    * self.lamb_incid(ij))
                 + self.lamb_coeff(ij, flag) * (self.lamb_irrad(ij)**(self.m)) * self.d_lamb_incid_x2(ij))
     
-    def d_h_d_y1(self, ij, flag):
+    def d_h_d_y1(self, ij, tx1, tx2, flag):
         
         if(flag):
             return (self.d_lamb_coeff_y1(ij, flag) * (self.lamb_irrad(ij)**(self.m)) * self.lamb_incid(ij, flag)
@@ -394,105 +391,105 @@ class CRLB_init:
             return (self.d_lamb_coeff_y1(ij, flag) * (self.lamb_incid(ij)**(self.m + 1)) 
                     + self.lamb_coeff(ij, flag) * (self.m + 1) * self.d_lamb_incid_y1(ij, flag) * (self.lamb_incid(ij, flag)**(self.m)))
     
-    def d_h_d_y2(self, ij, flag):
+    def d_h_d_y2(self, ij, tx1, tx2, flag):
         
         return (self.d_lamb_coeff_y2(ij) * (self.lamb_irrad(ij)**(self.m)) * self.lamb_incid(ij, flag)
                 + (self.lamb_coeff(ij, flag) * (self.m * self.d_lamb_irrad_y2(ij) * (self.lamb_irrad(ij)**(self.m - 1)))
                    * self.lamb_incid(ij, flag))
                 + self.lamb_coeff(ij, flag) * (self.lamb_irrad(ij)**(self.m)) * self.d_lamb_incid_y2(ij))
     
-    def tau(self, ij, flag):
+    def tau(self, ij, tx1, tx2, flag):
         
         if ij == 11:    
-            return np.sqrt(self.tx1[0]**2 + self.tx1[1]**2) / self.c
+            return np.sqrt(tx1[0]**2 + tx1[1]**2) / self.c
         elif ij == 12:
             if(flag):
-                return np.sqrt(self.tx2[0]**2 + self.tx2[1]**2) / self.c
+                return np.sqrt(tx2[0]**2 + tx2[1]**2) / self.c
             else:
-                return np.sqrt(self.tx1[0]**2 + (self.tx1[1] + self.L1)**2) / self.c
+                return np.sqrt(tx1[0]**2 + (tx1[1] + self.L1)**2) / self.c
         elif ij == 21:
-            return np.sqrt(self.tx1[0]**2 + (self.tx1[1]**2 - self.L2)) / self.c
+            return np.sqrt(tx1[0]**2 + (tx1[1]**2 - self.L2)) / self.c
         elif ij == 22:
             if(flag):
-                return np.sqrt(self.tx2[0]**2 + (self.tx2[1]**2 - self.L2)) / self.c
+                return np.sqrt(tx2[0]**2 + (tx2[1]**2 - self.L2)) / self.c
             else:
-                return np.sqrt(self.tx1[0]**2 + (self.tx1[1] + self.L1 - self.L2)**2) / self.c
+                return np.sqrt(tx1[0]**2 + (tx1[1] + self.L1 - self.L2)**2) / self.c
         else:
             raise ValueError("Entered tx rx values do not exist")
             
      # derivatives of tau:
     
-    def d_tau_d_x1(self, ij, flag):
+    def d_tau_d_x1(self, ij, tx1, tx2, flag):
         
         if ij == 11:    
-            return self.tx1[0] / (np.sqrt(self.tx1[0]**2 + self.tx1[1]**2) * self.c)
+            return tx1[0] / (np.sqrt(tx1[0]**2 + tx1[1]**2) * self.c)
         elif ij == 12:
             if(flag):
                 return 0
             else:
-                return self.tx1[0] / (np.sqrt(self.tx1[0]**2 + (self.tx1[1] + self.L1)**2) * self.c)
+                return tx1[0] / (np.sqrt(tx1[0]**2 + (tx1[1] + self.L1)**2) * self.c)
         elif ij == 21:
-            return self.tx1[0] / (np.sqrt(self.tx1[0]**2 + (self.tx1[1] - self.L2)**2) * self.c)
+            return tx1[0] / (np.sqrt(tx1[0]**2 + (tx1[1] - self.L2)**2) * self.c)
         elif ij == 22:
             if(flag):
                 return 0
             else:
-                return self.tx1[0] / (np.sqrt(self.tx1[0]**2 + (self.tx1[1] + self.L1 - self.L2)**2) * self.c)
+                return tx1[0] / (np.sqrt(tx1[0]**2 + (tx1[1] + self.L1 - self.L2)**2) * self.c)
         else:
             raise ValueError("Entered tx rx values do not exist")
             
-    def d_tau_d_x2(self, ij, flag):
+    def d_tau_d_x2(self, ij, tx1, tx2, flag):
         if(flag):
             return 0
         else:
             if ij == 11:
                 return 0
             elif ij == 12:
-                return self.tx2[0] / (np.sqrt(self.tx2[0]**2 + self.tx2[1]**2) * self.c)
+                return tx2[0] / (np.sqrt(tx2[0]**2 + tx2[1]**2) * self.c)
             elif ij == 21:
                 return 0
             elif ij == 22:
-                return self.tx2[0] / (np.sqrt(self.tx2[0]**2 + (self.tx2[1] - self.L2)**2) * self.c)
+                return tx2[0] / (np.sqrt(tx2[0]**2 + (tx2[1] - self.L2)**2) * self.c)
             else:
                 raise ValueError("Entered tx rx values do not exist")
 
-    def d_tau_d_y1(self, ij, flag):
+    def d_tau_d_y1(self, ij, tx1, tx2, flag):
 
         if ij == 11:
-            return self.tx1[1] / (np.sqrt(self.tx1[0]**2 + self.tx1[1]**2) * self.c)
+            return tx1[1] / (np.sqrt(tx1[0]**2 + tx1[1]**2) * self.c)
         elif ij == 12:
             if(flag):
                 return 0
             else:
-                return (self.tx1[1] + self.L1) / (np.sqrt(self.tx1[0]**2 + (self.tx1[1] + self.L1)**2) * self.c)
+                return (tx1[1] + self.L1) / (np.sqrt(tx1[0]**2 + (tx1[1] + self.L1)**2) * self.c)
         elif ij == 21:
-            return (self.tx1[1] - self.L2) / (np.sqrt(self.tx1[0]**2 + (self.tx1[1] - self.L2)**2) * self.c)
+            return (tx1[1] - self.L2) / (np.sqrt(tx1[0]**2 + (tx1[1] - self.L2)**2) * self.c)
         elif ij == 22:
             if(flag):
                 return 0
             else:
-                return (self.tx1[1]+self.L1-self.L2) / (np.sqrt(self.tx1[0]**2 + (self.tx1[1]+self.L1-self.L2)**2) * self.c)
+                return (tx1[1]+self.L1-self.L2) / (np.sqrt(tx1[0]**2 + (tx1[1]+self.L1-self.L2)**2) * self.c)
         else:
             raise ValueError("Entered tx rx values do not exist")
 
-    def d_tau_d_y2(self, ij, flag):
+    def d_tau_d_y2(self, ij, tx1, tx2, flag):
         if(flag):
             return 0
         else:
             if ij == 11:
                 return 0
             elif ij == 12:
-                return self.tx2[1] / (np.sqrt(self.tx2[0]**2 + self.tx2[1]**2) * self.c)
+                return tx2[1] / (np.sqrt(tx2[0]**2 + tx2[1]**2) * self.c)
             elif ij == 21:
                 return 0
             elif ij == 22:
-                return (self.tx2[1] - self.L2) / (np.sqrt(self.tx2[0]**2 + (self.tx2[1] - self.L2)**2) * self.c)
+                return (tx2[1] - self.L2) / (np.sqrt(tx2[0]**2 + (tx2[1] - self.L2)**2) * self.c)
             else:
                 raise ValueError("Entered tx rx values do not exist")
 
     # quad_coeff
 
-    def quad_coeff(self, ij, q):
+    def quad_coeff(self, ij, q, tx1, tx2):
 
         if(q==1 or q==3):
             const = -1 / (4*self.fov)
@@ -502,19 +499,19 @@ class CRLB_init:
             raise ValueError("Entered q value does not exist")
 
         if ij == 11:
-            return (1/4) + const*np.arctan(self.tx1[1] / self.tx1[0])
+            return (1/4) + const*np.arctan(tx1[1] / tx1[0])
         elif ij == 12:
-            return (1/4) + const*np.arctan(self.tx2[1] / self.tx2[0])
+            return (1/4) + const*np.arctan(tx2[1] / tx2[0])
         elif ij == 21:
-            return (1/4) + const*np.arctan((self.tx1[1] - self.L2) / self.tx1[0])
+            return (1/4) + const*np.arctan((tx1[1] - self.L2) / tx1[0])
         elif ij == 22:
-            return (1/4) + const*np.arctan((self.tx2[1] - self.L2) / self.tx2[0])
+            return (1/4) + const*np.arctan((tx2[1] - self.L2) / tx2[0])
         else:
             raise ValueError("Entered tx rx values do not exist")
 
     # derivatives of quad_coeff
     # buradan itibaren indentlere bir bakilsin
-    def d_quad_coeff_d_x1(self, ij, q):
+    def d_quad_coeff_d_x1(self, ij, q, tx1, tx2):
 
 
         if(q==1 or q==3):
@@ -525,17 +522,17 @@ class CRLB_init:
             raise ValueError("Entered q value does not exist")
 
         if ij == 11:
-            return -const*(self.tx1[1] / (self.tx1[0]**2 + self.tx1[1]**2))
+            return -const*(tx1[1] / (tx1[0]**2 + tx1[1]**2))
         elif ij == 12:
             return 0
         elif ij == 21:
-            return -const*((self.tx1[1] - self.L2) / (self.tx1[0]**2 + (self.tx1[1] - self.L2)**2))
+            return -const*((tx1[1] - self.L2) / (tx1[0]**2 + (tx1[1] - self.L2)**2))
         elif ij == 22:
             return 0
         else:
             raise ValueError("Entered tx rx values do not exist")
 
-    def d_quad_coeff_d_x2(self, ij, q):
+    def d_quad_coeff_d_x2(self, ij, q, tx1, tx2):
 
         if(q==1 or q==3):
             const = -1 / (4*self.fov)
@@ -547,15 +544,15 @@ class CRLB_init:
         if ij == 11:
             return 0
         elif ij == 12:
-            return -const*(self.tx2[1] / (self.tx1[0]**2 + self.tx1[1]**2))
+            return -const*(tx2[1] / (tx1[0]**2 + tx1[1]**2))
         elif ij == 21:
             return 0
         elif ij == 22:
-            return -const*((self.tx2[1] - self.L2) / (self.tx2[0]**2 + (self.tx2[1] - self.L2)**2))
+            return -const*((tx2[1] - self.L2) / (tx2[0]**2 + (tx2[1] - self.L2)**2))
         else:
             raise ValueError("Entered tx rx values do not exist")
 
-    def d_quad_coeff_d_y1(self, ij, q):
+    def d_quad_coeff_d_y1(self, ij, q, tx1, tx2):
 
         if(q==1 or q==3):
             const = -1 / (4*self.fov)
@@ -565,17 +562,17 @@ class CRLB_init:
             raise ValueError("Entered q value does not exist")
 
         if ij == 11:
-            return const*(self.tx1[0] / (self.tx1[0]**2 + self.tx1[1]**2))
+            return const*(tx1[0] / (tx1[0]**2 + tx1[1]**2))
         elif ij == 12:
             return 0
         elif ij == 21:
-            return -const*(self.tx1[0] / (self.tx1[0]**2 + (self.tx1[1] - self.L2)**2))
+            return -const*(tx1[0] / (tx1[0]**2 + (tx1[1] - self.L2)**2))
         elif ij == 22:
             return 0
         else:
             raise ValueError("Entered tx rx values do not exist")
 
-    def d_quad_coeff_d_y2(self, ij, q):
+    def d_quad_coeff_d_y2(self, ij, q, tx1, tx2):
 
         if(q==1 or q==3):
             const = -1 / (4*self.fov)
@@ -587,11 +584,11 @@ class CRLB_init:
         if ij == 11:
             return 0
         elif ij == 12:
-            return const*(self.tx2[0] / (self.tx1[0]**2 + self.tx1[1]**2))
+            return const*(tx2[0] / (tx1[0]**2 + tx1[1]**2))
         elif ij == 21:
             return 0
         elif ij == 22:
-            return const*(self.tx2[0] / (self.tx2[0]**2 + (self.tx2[1] - self.L2)**2))
+            return const*(tx2[0] / (tx2[0]**2 + (tx2[1] - self.L2)**2))
         else:
             raise ValueError("Entered tx rx values do not exist")
 
