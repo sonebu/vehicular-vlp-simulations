@@ -74,7 +74,6 @@ class CRLB_init:
             raise ValueError("Entered tx rx values do not exist incidence angle")
     
     def get_h_ij(self, ij, flag=True):
-        
         if(flag):
             return self.lamb_coeff(ij, flag) * (self.lamb_irrad(ij)**(self.m)) * self.lamb_incid(ij, flag)
         else:
@@ -456,7 +455,7 @@ class CRLB_init:
             raise ValueError("Entered tx rx values do not exist")
             
     # derivatives of tau:
-    def d_tau_d_param(self, k, ij, tx1, tx2, flag):
+    def get_d_tau_d_param(self, k, ij, tx1, tx2, flag):
         if k == 1:
             return self.d_tau_d_x1(ij, tx1, tx2, flag)
         elif k == 2:
@@ -656,7 +655,7 @@ class CRLB_init:
         return self.get_h_ij(ij) * self.quad_coeff(ij, q)
 
     # derivatives of h_ijq
-    def d_hij_q_d_param(self, k, ij, q):
+    def get_d_hij_q_d_param(self, k, ij, q):
         if k == 1:
             return self.d_hij_q_d_x1(ij, q)
         elif k == 2:
