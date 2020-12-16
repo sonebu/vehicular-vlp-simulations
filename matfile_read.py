@@ -2,11 +2,6 @@ from mat4py import loadmat
 from scipy.io import loadmat, matlab
 import numpy as np
 
-data = loadmat('SimulationData/v2lcRun_sm3_comparisonSoA.mat')
-#print(data)
-for k in data.keys():
-    print(k)
-
 
 def load_mat(filename):
     """
@@ -66,10 +61,6 @@ def load_mat(filename):
     return _check_vars(data)
 
 
-data = load_mat('SimulationData/v2lcRun_sm3_comparisonSoA.mat')
-print(data)
-
-
 def rec_func(data, n):
     for k in data.keys():
         str = ""
@@ -78,9 +69,3 @@ def rec_func(data, n):
         print(str, k)
         if isinstance(data[k], dict):
             rec_func(data[k], n + 1)
-
-print(rec_func(data, 0))
-
-#print(data['channel']['qrx1']['power']['tx2']['A'])
-print(type(data['channel']['qrx1']['power']['tx2']['A']))
-print(data['channel']['qrx1']['power']['tx2']['A'].shape)
