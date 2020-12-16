@@ -2,11 +2,6 @@ from mat4py import loadmat
 from scipy.io import loadmat, matlab
 import numpy as np
 
-data = loadmat('SimulationData/v2lcRun_sm3_comparisonSoA.mat')
-#print(data)
-for k in data.keys():
-    print(k)
-
 
 def load_mat(filename):
     """
@@ -66,10 +61,6 @@ def load_mat(filename):
     return _check_vars(data)
 
 
-data = load_mat('SimulationData/v2lcRun_sm3_comparisonSoA.mat')
-print(data)
-
-
 def rec_func(data, n):
     for k in data.keys():
         str = ""
@@ -79,8 +70,14 @@ def rec_func(data, n):
         if isinstance(data[k], dict):
             rec_func(data[k], n + 1)
 
-print(rec_func(data, 0))
+#data = load_mat('SimulationData/v2lcRun_sm3_comparisonSoA.mat')
+#rec_func(data, 0)
+#print(data['channel']['qrx1']['delay']['tx1'])
+#print(len(data['channel']['qrx1']['delay']['tx1']))
+#print(data['channel']['qrx1']['delay']['tx1'][-1])
+#print(data['channel']['qrx1']['delay']['tx2'])
+#p_r_factor = data['qrx']['tia']['shot_P_r_factor']
+#i_bg_factor = data['qrx']['tia']['shot_I_bg_factor']
 
-#print(data['channel']['qrx1']['power']['tx2']['A'])
-print(type(data['channel']['qrx1']['power']['tx2']['A']))
-print(data['channel']['qrx1']['power']['tx2']['A'].shape)
+#print(p_r_factor)
+#print(i_bg_factor)

@@ -29,7 +29,7 @@ def calc_volume(r1, r2, t1, t2, p1, p2):
 
 class VLC_init:
     def __init__(self):
-        self.rxradius = 0.003  # 3mm
+        self.rx_area = 0.003  # 3mm
         self.lookuptable = {}
         self.alpha, self.theta = 120, 120
         self.distancecar = 1
@@ -105,9 +105,9 @@ class VLC_init:
         distance = self.distances[i][j]
         y = np.abs(txpos[1] - rxpos[1])
         x = np.abs(txpos[0] - txpos[0])
-        azimuth = math.atan(((x + self.rxradius * math.cos(self.relative_heading)) / y)) - math.atan(
-            ((x - self.rxradius * math.cos(self.relative_heading)) / y))
-        elevation = 2 * math.atan((self.rxradius / distance))
+        azimuth = math.atan(((x + self.rx_area * math.cos(self.relative_heading)) / y)) - math.atan(
+            ((x - self.rx_area * math.cos(self.relative_heading)) / y))
+        elevation = 2 * math.atan((self.rx_area / distance))
         return (elevation / (2 * self.e_angle)) * (azimuth / (2 * self.a_angle))
 
     @lru_cache(maxsize=None)
@@ -141,9 +141,9 @@ class VLC_init:
                 distance = self.distances[i][j]
                 y = np.abs(txpos[1] - rxpos[1])
                 x = np.abs(txpos[0] - txpos[0])
-                azimuth = math.atan(((x + self.rxradius * math.cos(self.relative_heading)) / y)) - math.atan(
-                    ((x - self.rxradius * math.cos(self.relative_heading)) / y))
-                elevation = 2 * math.atan((self.rxradius / distance))
+                azimuth = math.atan(((x + self.rx_area * math.cos(self.relative_heading)) / y)) - math.atan(
+                    ((x - self.rx_area * math.cos(self.relative_heading)) / y))
+                elevation = 2 * math.atan((self.rx_area / distance))
                 self.H[i][j] = (elevation / (2 * self.e_angle)) * (azimuth / (2 * self.a_angle))
         return self.H
 
