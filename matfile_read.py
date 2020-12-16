@@ -69,3 +69,15 @@ def rec_func(data, n):
         print(str, k)
         if isinstance(data[k], dict):
             rec_func(data[k], n + 1)
+
+#data = load_mat('SimulationData/v2lcRun_sm3_comparisonSoA.mat')
+#rec_func(data, 0)
+#print(data['channel']['qrx1']['delay']['tx1'])
+#print(len(data['channel']['qrx1']['delay']['tx1']))
+#print(data['channel']['qrx1']['delay']['tx1'][-1])
+#print(data['channel']['qrx1']['delay']['tx2'])
+#p_r_factor = data['qrx']['tia']['shot_P_r_factor']
+#i_bg_factor = data['qrx']['tia']['shot_I_bg_factor']
+
+#print(p_r_factor)
+#print(i_bg_factor)
