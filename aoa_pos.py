@@ -152,8 +152,8 @@ class Pose:
         # print("Error of Transmitter-1 position in x:", abs(self.t_x_1_act-self.t_x_1),", y:", abs(self.t_y_1_act-self.t_y_1))
         # print("Error of Transmitter-2 position in x, y:", abs(self.t_x_2_act-self.t_x_2),", y:", abs(self.t_y_2_act-self.t_y_2))
         tx_pos = change_cords(np.array([[t_x_1, t_y_1], [t_x_2, t_y_2]]))
-        print("Transmitter-1 x pos is: ", tx_pos[0][0], ", y pos is : ", tx_pos[0][1])
-        print("Transmitter-2 x pos is : ", tx_pos[1][0], ", y pos is : ", tx_pos[1][1])
+        #print("Transmitter-1 x pos is: ", tx_pos[0][0], ", y pos is : ", tx_pos[0][1])
+        #print("Transmitter-2 x pos is : ", tx_pos[1][0], ", y pos is : ", tx_pos[1][1])
 
         return tx_pos
 # %%
