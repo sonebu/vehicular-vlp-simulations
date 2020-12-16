@@ -9,13 +9,11 @@ from functools import partial
 window = Tk()
 global img
 name = 'Figure/' + 'welcome' + '.png'
-name2 = 'Figure/' + 'v2lcRun_sm3_comparisonSoA' + '.png'
 
-
+input_name = 'v2lcRun_sm3_comparisonSoA'
 
 def run(sm):
     # first key text
-    input_name = ''
     if sm == 3:
         input_name = 'v2lcRun_sm3_comparisonSoA'
     elif sm == 2:
@@ -32,7 +30,7 @@ img = ImageTk.PhotoImage(Image.open(name).resize((700, 900), Image.ANTIALIAS))
 label = Label(window, image=img)
 label.grid(row=0, column=1, sticky="nsew")
 
-
+name2 = 'Figure/' + input_name + '.png'
 def show_output():
     """Save the current file as a new file."""
     img2 = ImageTk.PhotoImage(Image.open(name2))
