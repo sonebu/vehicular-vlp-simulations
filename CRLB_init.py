@@ -361,42 +361,40 @@ class CRLB_init:
     # derivatives of hij: 
     # flag == True for Bechadergue, Soner
     # flag == False for Roberts
-    
     def d_h_d_x1(self, ij, tx1, tx2, flag):
-        
-        if(flag):
-            return (self.d_lamb_coeff_x1(ij, flag) * (self.lamb_irrad(ij)**(self.m)) * self.lamb_incid(ij, flag)
+        if flag:
+            return (self.d_lamb_coeff_x1(ij, flag) * (self.lamb_irrad(ij)**self.m) * self.lamb_incid(ij, flag)
                     + (self.lamb_coeff(ij, flag) * (self.m * self.d_lamb_irrad_x1(ij) * (self.lamb_irrad(ij)**(self.m - 1)))
                        * self.lamb_incid(ij, flag))
-                    + self.lamb_coeff(ij, flag) * (self.lamb_irrad(ij)**(self.m)) * self.d_lamb_incid_x1(ij, flag))
+                    + self.lamb_coeff(ij, flag) * (self.lamb_irrad(ij)**self.m) * self.d_lamb_incid_x1(ij, flag))
         else:
             return (self.d_lamb_coeff_x1(ij, flag) * (self.lamb_incid(ij, flag)**(self.m + 1)) 
-                    + self.lamb_coeff(ij, flag) * (self.m + 1) * self.d_lamb_incid_x1(ij, flag) * (self.lamb_incid(ij, flag)**(self.m)))
+                    + self.lamb_coeff(ij, flag) * (self.m + 1) * self.d_lamb_incid_x1(ij, flag) * (self.lamb_incid(ij, flag)**self.m))
 
     def d_h_d_x2(self, ij, tx1, tx2, flag):
         
-        return (self.d_lamb_coeff_x2(ij) * (self.lamb_irrad(ij)**(self.m)) * self.lamb_incid(ij, flag)
+        return (self.d_lamb_coeff_x2(ij) * (self.lamb_irrad(ij)**self.m) * self.lamb_incid(ij, flag)
                 + (self.lamb_coeff(ij, flag) * (self.m * self.d_lamb_irrad_x2(ij) * (self.lamb_irrad(ij)**(self.m - 1)))
                    * self.lamb_incid(ij))
-                + self.lamb_coeff(ij, flag) * (self.lamb_irrad(ij)**(self.m)) * self.d_lamb_incid_x2(ij))
+                + self.lamb_coeff(ij, flag) * (self.lamb_irrad(ij)**self.m) * self.d_lamb_incid_x2(ij))
     
     def d_h_d_y1(self, ij, tx1, tx2, flag):
         
         if(flag):
-            return (self.d_lamb_coeff_y1(ij, flag) * (self.lamb_irrad(ij)**(self.m)) * self.lamb_incid(ij, flag)
+            return (self.d_lamb_coeff_y1(ij, flag) * (self.lamb_irrad(ij)**self.m) * self.lamb_incid(ij, flag)
                     + (self.lamb_coeff(ij, flag) * (self.m * self.d_lamb_irrad_y1(ij) * (self.lamb_irrad(ij)**(self.m - 1)))
                        * self.lamb_incid(ij, flag))
-                    + self.lamb_coeff(ij, flag) * (self.lamb_irrad(ij)**(self.m)) * self.d_lamb_incid_y1(ij, flag))
+                    + self.lamb_coeff(ij, flag) * (self.lamb_irrad(ij)**self.m) * self.d_lamb_incid_y1(ij, flag))
         else:
             return (self.d_lamb_coeff_y1(ij, flag) * (self.lamb_incid(ij)**(self.m + 1)) 
-                    + self.lamb_coeff(ij, flag) * (self.m + 1) * self.d_lamb_incid_y1(ij, flag) * (self.lamb_incid(ij, flag)**(self.m)))
+                    + self.lamb_coeff(ij, flag) * (self.m + 1) * self.d_lamb_incid_y1(ij, flag) * (self.lamb_incid(ij, flag)**self.m))
     
     def d_h_d_y2(self, ij, tx1, tx2, flag):
         
-        return (self.d_lamb_coeff_y2(ij) * (self.lamb_irrad(ij)**(self.m)) * self.lamb_incid(ij, flag)
+        return (self.d_lamb_coeff_y2(ij) * (self.lamb_irrad(ij)**self.m) * self.lamb_incid(ij, flag)
                 + (self.lamb_coeff(ij, flag) * (self.m * self.d_lamb_irrad_y2(ij) * (self.lamb_irrad(ij)**(self.m - 1)))
                    * self.lamb_incid(ij, flag))
-                + self.lamb_coeff(ij, flag) * (self.lamb_irrad(ij)**(self.m)) * self.d_lamb_incid_y2(ij))
+                + self.lamb_coeff(ij, flag) * (self.lamb_irrad(ij)**self.m) * self.d_lamb_incid_y2(ij))
     
     def tau(self, ij, tx1, tx2, flag):
         
@@ -592,11 +590,11 @@ class CRLB_init:
         else:
             raise ValueError("Entered tx rx values do not exist")
 
-      # h_ijq
+    # h_ijq
     def get_h_ijq(self, ij, q):
         return self.get_h_ij(ij) * self.quad_coeff(ij, q)
 
-      # derivatives of h_ijq
+    # derivatives of h_ijq
     def d_hq_d_x1(self, ij, q):
         return self.d_h_d_x1(ij, True) * self.quad_coeff(ij,q) + self.get_h_ij(ij) * self.d_quad_coeff_x1(ij, q)
 
@@ -607,4 +605,4 @@ class CRLB_init:
         return self.d_h_d_y1(ij, True) * self.quad_coeff(ij,q) + self.get_h_ij(ij) * self.d_quad_coeff_y1(ij, q)
 
     def d_hq_d_y2(self, ij, q):
-            return self.d_h_d_y2(ij, True) * self.quad_coeff(ij,q) + self.get_h_ij(ij) * self.d_quad_coeff_y2(ij, q)
+        return self.d_h_d_y2(ij, True) * self.quad_coeff(ij,q) + self.get_h_ij(ij) * self.d_quad_coeff_y2(ij, q)

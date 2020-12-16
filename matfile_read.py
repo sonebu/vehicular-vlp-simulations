@@ -81,5 +81,6 @@ def rec_func(data, n):
 
 print(rec_func(data, 0))
 
-print(data['channel']['qrx1']['power']['tx2']['A'])
+#print(data['channel']['qrx1']['power']['tx2']['A'])
 print(type(data['channel']['qrx1']['power']['tx2']['A']))
+print(data['channel']['qrx1']['power']['tx2']['A'].shape)
