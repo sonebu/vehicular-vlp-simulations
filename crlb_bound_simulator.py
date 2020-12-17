@@ -30,6 +30,7 @@ def roberts_crlb_single_instance(crlb_obj, tx1, tx2, noise_effect, delays, curr_
                                        + hsq_dtau_dk1_dtau_dk2 * E_1)
     return np.linalg.inv(fim)
 
+
 #  Bechadergue's method, CRLB calculation for a single position estimation
 def bechadergue_crlb_single_instance(crlb_obj, tx1, tx2, noise_effect, delays, curr_t, dt_vhc, max_pow, sig_freq, meas_dt):
     fim = np.zeros(shape=(4, 4))
@@ -54,6 +55,7 @@ def bechadergue_crlb_single_instance(crlb_obj, tx1, tx2, noise_effect, delays, c
                                        + (h_dh_dk1_dtau_dk2 + h_dh_dk2_dtau_dk1) * E_3 \
                                        + hsq_dtau_dk1_dtau_dk2 * E_1)
     return np.linalg.inv(fim)
+
 
 #  Soner's method, CRLB calculation for a single position estimation
 def soner_crlb_single_instance(crlb_obj, tx1, tx2, noise_effect, delays, curr_t, dt_vhc, max_pow, sig_freq, meas_dt):

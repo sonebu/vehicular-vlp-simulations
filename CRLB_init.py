@@ -3,7 +3,20 @@ import numpy as np
 
 
 class CRLB_init:
+    """
+    This class contains the equations and their derivatives for calculation of CRLB bounds for
+    three methods: Robert, Bechadergue, Soner
+    """
     def __init__(self, L_1, L_2, rx_area, rx_fov, tx_half_angle, c = 3e8):
+        """
+
+        :param L_1: distance between two tx leds
+        :param L_2: distance between two rx detectors
+        :param rx_area: area of one detector
+        :param rx_fov: field of view of the receiver detector
+        :param tx_half_angle: half angle of the tx led lighting pattern
+        :param c: speed of light
+        """
 
         self.L1 = L_1  # m
         self.L2 = L_2  # m
@@ -15,6 +28,14 @@ class CRLB_init:
         self.m = -np.log(2) / np.log(math.cos(math.radians(self.half_angle)))
 
     def lamb_coeff(self, ij, tx1, tx2, flag=True):
+        """
+        (m + 1) * A / (2 * pi * sqrt(tx_x^2 + tx_y^2))
+        :param ij:
+        :param tx1:
+        :param tx2:
+        :param flag:
+        :return:
+        """
         L1 = np.sqrt((tx2[0] - tx1[0]) ** 2 + (tx2[1] - tx1[1]) ** 2)
         if ij == 11:
             return ((self.m + 1) * self.rx_area) / (2 * np.pi * (tx1[0]**2 + tx1[1]**2))
@@ -31,7 +52,7 @@ class CRLB_init:
             else:
                 return ((self.m + 1) * self.rx_area) / (2 * np.pi * (tx1[0]**2 + (tx1[1] + self.L1 - self.L2)**2))
         else:
-            raise ValueError("Entered tx rx values do not exist for coeff")
+            raise ValueError("Entered tx rx values do not exist for lamb_coeff")
         
     def lamb_irrad(self, ij, tx1, tx2):
         L1 = np.sqrt((tx2[0] - tx1[0]) ** 2 + (tx2[1] - tx1[1]) ** 2)
@@ -42,17 +63,13 @@ class CRLB_init:
             return ((tx2[0] / np.sqrt(tx2[0]**2 + tx2[1]**2)) * ((tx2[1] - tx1[1]) / L1)
                     - (tx2[1] / np.sqrt(tx2[0]**2 + tx2[1]**2)) * ((tx2[0] - tx1[0]) / L1))
         elif ij == 21:
-            return ((tx1[0] / np.sqrt(tx1[0]**2 + (tx1[1] - self.L2)**2))
-                    * ((tx2[1] - tx1[1]) / L1)
-                    - ((tx1[1] - self.L2) / np.sqrt(tx1[0]**2 + (tx1[1] - self.L2)**2))
-                    * ((tx2[0] - tx1[0]) / L1))
+            return ((tx1[0] / np.sqrt(tx1[0]**2 + (tx1[1] - self.L2)**2)) * ((tx2[1] - tx1[1]) / L1)
+                    - ((tx1[1] - self.L2) / np.sqrt(tx1[0]**2 + (tx1[1] - self.L2)**2)) * ((tx2[0] - tx1[0]) / L1))
         elif ij == 22:
-            return ((tx2[0] / np.sqrt(tx2[0]**2 + (tx2[1] - self.L2)**2))
-                    * ((tx2[1] - tx1[1]) / L1)
-                    - ((tx2[1] - self.L2) / np.sqrt(tx2[0]**2 + (tx2[1] - self.L2)**2))
-                    * ((tx2[0] - tx1[0]) / L1))
+            return ((tx2[0] / np.sqrt(tx2[0]**2 + (tx2[1] - self.L2)**2)) * ((tx2[1] - tx1[1]) / L1)
+                    - ((tx2[1] - self.L2) / np.sqrt(tx2[0]**2 + (tx2[1] - self.L2)**2)) * ((tx2[0] - tx1[0]) / L1))
         else:
-            raise ValueError("Entered tx rx values do not exist for irrad angle")
+            raise ValueError("Entered tx rx values do not exist for irrad angle (lamb_irrad)")
 
     def lamb_incid(self, ij, tx1, tx2, flag=True):
         L1 = np.sqrt((tx2[0] - tx1[0]) ** 2 + (tx2[1] - tx1[1]) ** 2)
@@ -71,11 +88,12 @@ class CRLB_init:
             else:
                 return tx1[0] / np.sqrt(tx1[0]**2 + (tx1[1] + L1 - self.L2)**2)
         else:
-            raise ValueError("Entered tx rx values do not exist incidence angle")
+            raise ValueError("lamb_incid")
     
     def get_h_ij(self, ij, tx1, tx2, flag=True):
         if flag:
-            return self.lamb_coeff(ij, tx1, tx2, flag) * (self.lamb_irrad(ij, tx1, tx2)**self.m) * self.lamb_incid(ij, tx1, tx2, flag)
+            return self.lamb_coeff(ij, tx1, tx2, flag) * (self.lamb_irrad(ij, tx1, tx2)**self.m) \
+                   * self.lamb_incid(ij, tx1, tx2, flag)
         else:
             return self.lamb_coeff(ij, tx1, tx2, flag) * (self.lamb_incid(ij, tx1, tx2, flag)**(self.m + 1))
     
@@ -93,11 +111,9 @@ class CRLB_init:
         elif k == 4:
             return self.d_lamb_coeff_y2(self, ij, tx1, tx2)
         else:
-            raise ValueError("Entered tx rx values do not exist")
-
+            raise ValueError("get_d_lamb_coeff_d_param")
     
     def d_lamb_coeff_x1(self, ij, tx1, tx2, flag=True):
-        L1 = np.sqrt((tx2[0] - tx1[0]) ** 2 + (tx2[1] - tx1[1]) ** 2)
         if ij == 11:
             return -(((self.m + 1) * self.rx_area * tx1[0]) / (np.pi * (tx1[0]**2 + tx1[1]**2)**2))
         elif ij == 12:
@@ -113,7 +129,7 @@ class CRLB_init:
             else:
                 return -(((self.m + 1)*self.rx_area * tx1[0]) / (np.pi * (tx1[0]**2+(tx1[1] + self.L1 - self.L2)**2)**2))
         else:
-            raise ValueError("Entered tx rx values do not exist")
+            raise ValueError("d_lamb_coeff_x1")
     
     # d_coeff_y1
     def d_lamb_coeff_y1(self, ij, tx1, tx2, flag=True):
@@ -130,9 +146,10 @@ class CRLB_init:
             if flag:
                 return 0
             else:
-                return -(((self.m+1) * self.rx_area * (tx1[1] + self.L1 - self.L2))  / (np.pi * (tx1[0]**2 + (tx1[1] + self.L1 - self.L2)**2)**2))
+                return -(((self.m+1) * self.rx_area * (tx1[1] + self.L1 - self.L2))
+                         / (np.pi * (tx1[0]**2 + (tx1[1] + self.L1 - self.L2)**2)**2))
         else:
-            raise ValueError("Entered tx rx values do not exist")
+            raise ValueError("Entered tx rx values do not exist d_lamb_coeff_y1")
     
     # d_coeff_x2
     def d_lamb_coeff_x2(self, ij, tx1, tx2):
@@ -145,7 +162,7 @@ class CRLB_init:
         elif ij == 22:
             return -(((self.m + 1) * self.rx_area * tx2[0]) / (np.pi * (tx2[0]**2 + (tx2[1] - self.L2)**2)**2))
         else:
-            raise ValueError("Entered tx rx values do not exist")
+            raise ValueError("Entered tx rx values do not exist d_lamb_coeff_x2")
      
     # d_coeff_y2
     def d_lamb_coeff_y2(self, ij, tx1, tx2):
@@ -159,8 +176,7 @@ class CRLB_init:
             return -(((self.m + 1) * self.rx_area * (tx2[1] - self.L2))
                      / (np.pi * (tx2[0]**2 + (tx2[1] - self.L2)**2)**2))
         else:
-            raise ValueError("Entered tx rx values do not exist")
-
+            raise ValueError("Entered tx rx values do not exist d_lamb_coeff_y2")
 
     def get_d_lamb_irrad_d_param(self, k, ij, tx1, tx2):
         if k == 1:
@@ -246,7 +262,7 @@ class CRLB_init:
             D = np.sqrt(tx2[0]**2 + tx2[1]**2)
             return ((tx2[1]**2 / D**3) * ((tx2[1] - tx1[1]) / L1)
                    + (tx2[0]*tx2[1] / D**3) * ((tx2[0] - tx1[0]) / L1)
-                   + tx2[1] / (D * L1) 
+                   - tx2[1] / (D * L1)  # changed
                    - (tx2[0]*(tx2[1] - tx1[1]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))
                    + (tx2[1]*(tx2[0] - tx1[0]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))) 
         elif ij == 21:
@@ -259,8 +275,8 @@ class CRLB_init:
             return (((tx2[1]-self.L2)**2 / D**3) * ((tx2[1] - tx1[1]) / L1)
                    + (tx2[0]*(tx2[1]-self.L2) / D**3) * ((tx2[0] - tx1[0]) / L1)
                    - (tx2[1]-self.L2) / (D * L1) 
-                   + (tx2[0] * (tx2[1] - tx1[1]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))
-                   - ((tx2[1]-self.L2) * (tx2[0] - tx1[0]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2)))
+                   - (tx2[0] * (tx2[1] - tx1[1]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2))  # changed
+                   + ((tx2[1]-self.L2) * (tx2[0] - tx1[0]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2)))  # changed
         else:
             raise ValueError("Entered tx rx values do not exist incidence angle")
             
@@ -275,7 +291,7 @@ class CRLB_init:
         elif ij == 12:
             D = np.sqrt(tx2[0]**2 + tx2[1]**2)
             return (-(tx2[0]*tx2[1] / D**3) * ((tx2[1] - tx1[1]) / L1)
-                   - tx2[0] / (D * L1)
+                   + tx2[0] / (D * L1)  # changed
                    - (tx2[0]**2 / D**3) * ((tx2[0] - tx1[0]) / L1)
                    - (tx2[0]*(tx2[1] - tx1[1]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
                    + (tx2[1]*(tx2[0] - tx1[0]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2)))
@@ -289,8 +305,8 @@ class CRLB_init:
             return (-(tx2[0]*(tx2[1]-self.L2) / D**3) * ((tx2[1] - tx1[1]) / L1)
                    + tx2[0] / (D * L1)
                    - ((tx2[0]**2 + tx2[1] * (tx2[1]-self.L2)) / D**3) * ((tx2[0] - tx1[0]) / L1)
-                   + (tx2[0]*(tx2[1] - tx1[1]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
-                   - ((tx2[1]-self.L2)*(tx2[0] - tx1[0]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2)))
+                   - (tx2[0]*(tx2[1] - tx1[1]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))  # changed
+                   + ((tx2[1]-self.L2)*(tx2[0] - tx1[0]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2)))  # changed
         else: 
             raise ValueError("Entered tx rx values do not exist incidence angle")
     
@@ -445,10 +461,10 @@ class CRLB_init:
             else:
                 return np.sqrt(tx1[0]**2 + (tx1[1] + self.L1)**2) / self.c
         elif ij == 21:
-            return np.sqrt(tx1[0]**2 + (tx1[1]**2 - self.L2)) / self.c
+            return np.sqrt(tx1[0]**2 + (tx1[1] - self.L2)**2) / self.c
         elif ij == 22:
             if flag:
-                return np.sqrt(tx2[0]**2 + (tx2[1]**2 - self.L2)) / self.c
+                return np.sqrt(tx2[0]**2 + (tx2[1] - self.L2)**2) / self.c
             else:
                 return np.sqrt(tx1[0]**2 + (tx1[1] + self.L1 - self.L2)**2) / self.c
         else:
@@ -623,7 +639,7 @@ class CRLB_init:
         elif ij == 12:
             return 0
         elif ij == 21:
-            return -const*(tx1[0] / (tx1[0]**2 + (tx1[1] - self.L2)**2))
+            return const*(tx1[0] / (tx1[0]**2 + (tx1[1] - self.L2)**2))
         elif ij == 22:
             return 0
         else:
