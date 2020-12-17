@@ -22,11 +22,11 @@ class RToF_pos:
     def __init__(self, vlc_obj):
         
         self.vlc_obj = vlc_obj
-        self.dt = 5e-9
-        self.f = 4e6
-        self.r = 199
+        self.dt = 4e-9
+        self.f = 1e6
+        self.r = 299
         self.N = 1
-        self.t = np.arange(0, 2e-3-self.dt, self.dt)
+        self.t = np.arange(0, 5e-4-self.dt, self.dt)
     
     def gen_signals(self, f, r, N, t, delays):
 
