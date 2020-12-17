@@ -89,13 +89,12 @@ def signal_generator(current_time, dt_vhc, max_power, signal_freq, delay, measur
 
     e_1, e_2, e_3 = 0, 0, 0
 
-    for t in time:
-        s = max_power * math.sin((2 * math.pi * signal_freq * (t - delay)) % (2 * math.pi))
-        d_s_d_tau = - max_power * 2 * math.pi * signal_freq * math.cos((2 * math.pi * signal_freq * (t - delay)) % (2 * math.pi))
+    s = max_power * np.sin((2 * np.pi * signal_freq * (time - delay)) % (2 * np.pi))
+    d_s_d_tau = - max_power * 2 * np.pi * signal_freq * np.cos((2 * np.pi * signal_freq * (time - delay)) % (2 * np.pi))
 
-        e_1 += d_s_d_tau * d_s_d_tau
-        e_2 += s * s
-        e_3 = s * d_s_d_tau
+    e_1 += np.sum(np.dot(d_s_d_tau, d_s_d_tau))
+    e_2 += np.sum(np.dot(s, s))
+    e_3 = np.sum(np.dot(s, d_s_d_tau))
 
     return e_1, e_2, e_3
 
@@ -158,11 +157,9 @@ def main():
         tx2 = np.array([tx2_x[i], tx2_y[i]])
         curr_t = time[i]
         delays = np.array([[delay_11[i], delay_12[i]], [delay_21[i], delay_22[i]]])
-        fim_inverse = soner_crlb_single_instance(crlb_init_object, tx1, tx2, 1 / var_sq, delays,
+        fim_inverse = roberts_crlb_single_instance(crlb_init_object, tx1, tx2, 1 / var_sq, delays,
                                      curr_t, dt, max_power, signal_freq, measure_dt)
         print(fim_inverse)
-        if i == 100:
-            exit(0)
 
 
 if __name__ == "__main__":
