@@ -162,6 +162,8 @@ def main():
         fim_inverse = roberts_crlb_single_instance(crlb_init_object, tx1, tx2, 1 / var_sq, delays,
                                      curr_t, dt, max_power, signal_freq, measure_dt)
         print(fim_inverse)
+        if i == 10:
+            exit()
 
 
 if __name__ == "__main__":

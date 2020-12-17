@@ -238,7 +238,7 @@ class CRLB_init:
         elif ij == 21:
             D = np.sqrt(tx1[0]**2 + (tx1[1]-self.L2)**2)
             return (-(tx1[0]*(tx1[1]-self.L2) / D**3) * ((tx2[1] - tx1[1]) / L1)
-                   + tx1[0] / (D * L1)
+                   - tx1[0] / (D * L1)  # changed
                    - ((tx1[0]**2 + tx1[1] * (tx1[1]-self.L2)) / D**3) * ((tx2[0] - tx1[0]) / L1)
                    + (tx1[0]*(tx2[1] - tx1[1]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
                    - ((tx1[1]-self.L2)*(tx2[0] - tx1[0]) / D) * ((tx2[0] - tx1[0]) / L1) * (L1**(-2)))
@@ -293,8 +293,8 @@ class CRLB_init:
             return (-(tx2[0]*tx2[1] / D**3) * ((tx2[1] - tx1[1]) / L1)
                    + tx2[0] / (D * L1)  # changed
                    - (tx2[0]**2 / D**3) * ((tx2[0] - tx1[0]) / L1)
-                   - (tx2[0]*(tx2[1] - tx1[1]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
-                   + (tx2[1]*(tx2[0] - tx1[0]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2)))
+                   - (tx2[0]*(tx2[1] - tx1[1]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))  # changed
+                   + (tx2[1]*(tx2[0] - tx1[0]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2)))  # changed
         elif ij == 21:
             D = np.sqrt(tx1[0]**2 + (tx1[1]-self.L2)**2)
             return (-(tx1[0]*(tx2[1] - tx1[1]) / D) * ((tx2[1] - tx1[1]) / L1) * (L1**(-2))
