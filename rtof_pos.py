@@ -106,39 +106,42 @@ class RToF_pos:
                     M[2] = 0
                     update_flag = 0
 
-        fclk = 1 / (2 * dt)
-        dm = {'dr': ((self.vlc_obj.c / 2) * (np.asarray(counts[1]) / ((r + 1) * N * fclk))),
-              'dl': ((self.vlc_obj.c / 2) * (np.asarray(counts[2]) / ((r + 1) * N * fclk)))}
+        fclk = 1/(2*dt)
+        dm = {'d1': ((self.vlc_obj.c/2) * (np.asarray(counts[2]) / ((r+1) * N * fclk))),
+              'd2': ((self.vlc_obj.c/2) * (np.asarray(counts[1]) / ((r+1) * N * fclk)))}
 
         return dm
 
     def dist_to_pos(self, dm, delays):
         l = self.vlc_obj.distancecar
-        dr = dm['dr']
-        dr_err = np.abs(self.vlc_obj.c * delays[0] / 2 - dr)  # since the delays are from round trips
-        dr = dr[dr_err == np.min(dr_err)][0]
-        dl = dm['dl']
-        dl_err = np.abs(self.vlc_obj.c * delays[1] / 2 - dl)
-        dl = dl[dl_err == np.min(dl_err)][0]
+        d1 = dm['d1']
+        d1_err = np.abs(self.vlc_obj.c*delays[0]/2 - d1) # since the delays are from round trips
+        d1 = d1[d1_err == np.min(d1_err)][0]
+        d2 = dm['d2']
+        d2_err = np.abs(self.vlc_obj.c*delays[1]/2 - d2)
+        d2 = d2[d2_err == np.min(d2_err)][0]
 
-        y = (dl ** 2 - dr ** 2 + l ** 2) / (2 * l)
-        x = -np.sqrt(dl ** 2 - y ** 2)
+        y = (d2**2 - d1**2 + l**2) / (2*l)
+        x = -np.sqrt(d2**2 - y**2)
 
         return x, y
 
     def estimate(self):
-
-        delay1 = self.vlc_obj.delays[0][1] * 2
-        delay2 = self.vlc_obj.delays[1][1] * 2
+        
+        delay1 = self.vlc_obj.delays[0][0]*2
+        delay2 = self.vlc_obj.delays[0][1]*2
 
         delays = [delay1, delay2]
         s_e, s_r, s_h = self.gen_signals(self.f, self.r, self.N, self.t, delays)
 
-        s_r[1] *= self.vlc_obj.H[0][1]
-        s_r[2] *= self.vlc_obj.H[1][1]
+        s_r[1] *= self.vlc_obj.H[0][0]
+        s_r[2] *= self.vlc_obj.H[0][1]
         dm = self.estimate_dist(s_e, s_r, s_h, self.f, self.r, self.N, self.dt, self.t)
 
         x1, y1 = self.dist_to_pos(dm, delays)
+        
+        delay1 = self.vlc_obj.delays[1][0]*2
+        delay2 = self.vlc_obj.delays[1][1]*2
 
         delay1 = self.vlc_obj.delays[0][0] * 2
         delay2 = self.vlc_obj.delays[1][0] * 2
@@ -146,8 +149,8 @@ class RToF_pos:
         delays = [delay1, delay2]
         s_e, s_r, s_h = self.gen_signals(self.f, self.r, self.N, self.t, delays)
         # channel attenuation
-        s_r[1] *= self.vlc_obj.H[0][0]
-        s_r[2] *= self.vlc_obj.H[1][0]
+        s_r[1] *= self.vlc_obj.H[1][0]
+        s_r[2] *= self.vlc_obj.H[1][1]
         dm = self.estimate_dist(s_e, s_r, s_h, self.f, self.r, self.N, self.dt, self.t)
 
         x2, y2 = self.dist_to_pos(dm, delays)
