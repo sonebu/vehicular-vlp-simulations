@@ -12,7 +12,7 @@ from mat4py import loadmat
 from scipy.io import loadmat, matlab
 import math
 import sys
-
+import cProfile
 
 # coding: utf-8
 
@@ -20,11 +20,18 @@ import sys
 # 'v2lcRun_sm1_laneChange'
 # 'v2lcRun_sm2_platoonFormExit'
 # 'v2lcRun_sm3_comparisonSoA'
-# data_name = 'v2lcRun_sm2_platoonFormExit'
-data_name = sys.argv[1]
+
+data_name = 'v2lcRun_sm1_laneChange'
+# data_name = sys.argv[1]
 print(data_name)
 data_dir = 'SimulationData/' + data_name + '.mat'
 data = loadmat(data_dir)
+folder_name = '/1/'
+import cProfile, pstats
+profiler = cProfile.Profile()
+profiler.enable()
+
+
 
 def load_mat(filename):
     """
@@ -94,13 +101,13 @@ def rec_func(data, n):
 
 ## In[2]:
 data = load_mat(data_dir)
-#print(data)
+# print(data)
 
-#print(rec_func(data, 0))
+# print(rec_func(data, 0))
 
 # print(data['channel']['qrx1']['power']['tx2']['A'])
-#print(type(data['channel']['qrx1']['power']['tx2']['A']))
-#print(data['channel']['qrx1']['power']['tx2']['A'].shape)
+# print(type(data['channel']['qrx1']['power']['tx2']['A']))
+# print(data['channel']['qrx1']['power']['tx2']['A'].shape)
 
 ## In[2]:
 vlc_obj = VLC_init()
@@ -125,8 +132,14 @@ ego_qrx2_x = np.zeros(len(tgt_tx1_x))
 ego_qrx2_y = np.zeros(len(tgt_tx1_x)) + vlc_obj.distancecar
 
 ## In[2]:
-x_pose, y_pose, x_roberts, y_roberts, x_becha, y_becha = [], [], [], [], [], []
-x, y = [], []
+x, y, x_pose, y_pose, x_roberts, y_roberts, x_becha, y_becha = np.zeros((len(tgt_tx1_x), 2)), np.zeros((len(tgt_tx1_x),
+                                                                                                        2)), \
+                                                               np.zeros((len(tgt_tx1_x), 2)), np.zeros((len(tgt_tx1_x),
+                                                                                                        2)), \
+                                                               np.zeros((len(tgt_tx1_x), 2)), np.zeros((len(tgt_tx1_x),
+                                                                                                        2)), \
+                                                               np.zeros((len(tgt_tx1_x), 2)), np.zeros((len(tgt_tx1_x),
+                                                                                                        2))
 
 for i in range(len(tgt_tx1_x)):
     # updating the given coordinates
@@ -135,8 +148,8 @@ for i in range(len(tgt_tx1_x)):
         ((tgt_tx1_x[i], tgt_tx1_y[i]), (tgt_tx2_x[i], tgt_tx2_y[i])),
         ((ego_qrx1_x[i], ego_qrx1_y[i]), (ego_qrx2_x[i], ego_qrx2_y[i])))
     vlc_obj.update_lookuptable()
-    x.append(vlc_obj.trxpos)
-    y.append(vlc_obj.trypos)
+    x[i] = vlc_obj.trxpos
+    y[i] = vlc_obj.trypos
     vlc_obj.relative_heading = rel_hdg[i]
     # providing the environmentt to methods
     aoa = Pose(vlc_obj)
@@ -150,18 +163,31 @@ for i in range(len(tgt_tx1_x)):
     tx_tdoa = tdoa.estimate()
     print("TDoA finished")
     # storing to plot later
-    x_pose.append(tx_aoa[0])
-    y_pose.append(tx_aoa[1])
-    x_becha.append(tx_rtof[0])
-    y_becha.append(tx_rtof[1])
-    x_roberts.append(tx_tdoa[0])
-    y_roberts.append(tx_tdoa[1])
+    x_pose[i] = tx_aoa[0]
+    y_pose[i] = tx_aoa[1]
+    x_becha[i] = tx_rtof[0]
+    y_becha[i] = tx_rtof[1]
+    x_roberts[i] = tx_tdoa[0]
+    y_roberts[i] = tx_tdoa[1]
 ## In[2]:
 y_data = np.copy(y)
 x_data = np.copy(x)
 for i in range(len(y)):
     y_data[i] = y[i][0] + 0.8
     x_data[i] = x[i][0]
+
+np.savetxt('GUI_data/'+folder_name+'/x.txt', x, delimiter=',')
+np.savetxt('GUI_data/'+folder_name+'/x_pose.txt', x_pose, delimiter=',')
+np.savetxt('GUI_data/'+folder_name+'/x_becha.txt', x_becha, delimiter=',')
+np.savetxt('GUI_data/'+folder_name+'/x_roberts.txt', x_roberts, delimiter=',')
+np.savetxt('GUI_data/'+folder_name+'/x_data.txt', x_data, delimiter=',')
+np.savetxt('GUI_data/'+folder_name+'/y.txt', y, delimiter=',')
+np.savetxt('GUI_data/'+folder_name+'/y_data.txt', y_data, delimiter=',')
+np.savetxt('GUI_data/'+folder_name+'/y_becha.txt', y_becha, delimiter=',')
+np.savetxt('GUI_data/'+folder_name+'/y_roberts.txt', y_roberts, delimiter=',')
+np.savetxt('GUI_data/'+folder_name+'/y_pose.txt', y_pose, delimiter=',')
+
+
 
 plt.figure()
 plt.plot(x, y, 'o', color='green', markersize=10)
@@ -198,4 +224,6 @@ output_dir = "Figure/"
 mkdir_p(output_dir)
 name = '{}/' + data_name + '.png'
 plt.savefig(name.format(output_dir))
-
+profiler.disable()
+stats = pstats.Stats(profiler).sort_stats('ncalls')
+stats.print_stats()
