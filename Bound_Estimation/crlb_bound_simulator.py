@@ -1,11 +1,11 @@
-from Bound_Estimation.CRLB_init import *
-from Bound_Estimation.matfile_read import load_mat
+from CRLB_init import *
+from matfile_read import load_mat
 import math
 #TODO: correct Soner case for dividing variances
 
 
 # Roberts' method, CRLB calculation for a single position estimation
-def roberts_crlb_single_instance(crlb_obj, tx1, tx2, noise_effect, delays, curr_t, dt_vhc, max_pow, sig_freq, meas_dt):
+def roberts_crlb_single_instance(crlb_obj, tx1, tx2, delays, curr_t, dt_vhc, max_pow, sig_freq, meas_dt, T, i_bg, noise_factors, powers):
     flag = False
     fim = np.zeros(shape=(2,2))
 
@@ -25,6 +25,9 @@ def roberts_crlb_single_instance(crlb_obj, tx1, tx2, noise_effect, delays, curr_
                 h_dh_dk2_dtau_dk1 = - h_ij * dh_dk2 * dtau_dk1
                 hsq_dtau_dk1_dtau_dk2 = h_ij ** 2 * dtau_dk1 * dtau_dk2
 
+                p_r = np.sum(powers[i][j])
+                noise_effect = 1 / (p_r * noise_factors[0] + i_bg * noise_factors[1] + T * (noise_factors[2] + noise_factors[3]))
+
                 fim[param1][param2] += noise_effect * (dh_dk1_dh_dk2 * E_2 \
                                        + (h_dh_dk1_dtau_dk2 + h_dh_dk2_dtau_dk1) * E_3 \
                                        + hsq_dtau_dk1_dtau_dk2 * E_1)
@@ -32,7 +35,7 @@ def roberts_crlb_single_instance(crlb_obj, tx1, tx2, noise_effect, delays, curr_
 
 
 #  Bechadergue's method, CRLB calculation for a single position estimation
-def bechadergue_crlb_single_instance(crlb_obj, tx1, tx2, noise_effect, delays, curr_t, dt_vhc, max_pow, sig_freq, meas_dt):
+def bechadergue_crlb_single_instance(crlb_obj, tx1, tx2, delays, curr_t, dt_vhc, max_pow, sig_freq, meas_dt, T, i_bg, noise_factors, powers):
     fim = np.zeros(shape=(4, 4))
 
     for param1, param2 in zip(range(4), range(4)):
@@ -51,6 +54,10 @@ def bechadergue_crlb_single_instance(crlb_obj, tx1, tx2, noise_effect, delays, c
                 h_dh_dk2_dtau_dk1 = - h_ij * dh_dk2 * dtau_dk1
                 hsq_dtau_dk1_dtau_dk2 = h_ij ** 2 * dtau_dk1 * dtau_dk2
 
+                p_r = np.sum(powers[i][j])
+                noise_effect = 1 / (p_r * noise_factors[0] + i_bg * noise_factors[1] + T * (
+                            noise_factors[2] + noise_factors[3]))
+
                 fim[param1][param2] += noise_effect * (dh_dk1_dh_dk2 * E_2 \
                                        + (h_dh_dk1_dtau_dk2 + h_dh_dk2_dtau_dk1) * E_3 \
                                        + hsq_dtau_dk1_dtau_dk2 * E_1)
@@ -58,7 +65,7 @@ def bechadergue_crlb_single_instance(crlb_obj, tx1, tx2, noise_effect, delays, c
 
 
 #  Soner's method, CRLB calculation for a single position estimation
-def soner_crlb_single_instance(crlb_obj, tx1, tx2, noise_effect, delays, curr_t, dt_vhc, max_pow, sig_freq, meas_dt):
+def soner_crlb_single_instance(crlb_obj, tx1, tx2, delays, curr_t, dt_vhc, max_pow, sig_freq, meas_dt, T, i_bg, noise_factors, powers):
     fim = np.zeros(shape=(4, 4))
 
     for param1, param2 in zip(range(4), range(4)):
@@ -79,6 +86,10 @@ def soner_crlb_single_instance(crlb_obj, tx1, tx2, noise_effect, delays, curr_t,
                     h_dh_dk1_dtau_dk2 = h_ijq * dh_dk1 * dtau_dk2
                     h_dh_dk2_dtau_dk1 = h_ijq * dh_dk2 * dtau_dk1
                     hsq_dtau_dk1_dtau_dk2 = h_ijq ** 2 * dtau_dk1 * dtau_dk2
+
+                    p_r = powers[i][j][qrx]
+                    noise_effect = 1 / (p_r * noise_factors[0] + i_bg * noise_factors[1] + T * (
+                                noise_factors[2] + noise_factors[3] / 16))  # /16 comes from capacitance division
 
                     fim[param1][param2] += noise_effect * (dh_dk1_dh_dk2 * E_2 \
                                            + (h_dh_dk1_dtau_dk2 + h_dh_dk2_dtau_dk1) * E_3 \
@@ -134,17 +145,24 @@ def main():
     delay_21 = data['channel']['qrx2']['delay']['tx1']
     delay_22 = data['channel']['qrx2']['delay']['tx2']
 
+    # received power of QRXes
+    pow_qrx1_tx1 = np.array([data['channel']['qrx1']['power']['tx1']['A'], data['channel']['qrx1']['power']['tx1']['B'],
+                             data['channel']['qrx1']['power']['tx1']['C'], data['channel']['qrx1']['power']['tx1']['D']])
+    pow_qrx1_tx2 = np.array([data['channel']['qrx1']['power']['tx2']['A'], data['channel']['qrx1']['power']['tx2']['B'],
+                             data['channel']['qrx1']['power']['tx2']['C'], data['channel']['qrx1']['power']['tx2']['D']])
+    pow_qrx2_tx1 = np.array([data['channel']['qrx2']['power']['tx1']['A'], data['channel']['qrx2']['power']['tx1']['B'],
+                             data['channel']['qrx2']['power']['tx1']['C'], data['channel']['qrx2']['power']['tx1']['D']])
+    pow_qrx2_tx2 = np.array([data['channel']['qrx2']['power']['tx1']['A'], data['channel']['qrx2']['power']['tx1']['B'],
+                             data['channel']['qrx2']['power']['tx1']['C'], data['channel']['qrx2']['power']['tx1']['D']])
+
     # noise params
     T = 298  # Kelvin
+    I_bg = 750e-6  # 750 uA
     p_r_factor = data['qrx']['tia']['shot_P_r_factor']
     i_bg_factor = data['qrx']['tia']['shot_I_bg_factor']
     t_factor1 = data['qrx']['tia']['thermal_factor1']
     t_factor2 = data['qrx']['tia']['thermal_factor1']
-
-    # shot noise var
-    var_sq_shot = p_r_factor + i_bg_factor
-    var_sq_thermal = T * (t_factor1 + t_factor2)
-    var_sq = var_sq_shot + var_sq_thermal
+    noise_factors = [p_r_factor, i_bg_factor, t_factor1, t_factor2]
 
     # other params
     rx_fov = 50  # angle
@@ -159,10 +177,11 @@ def main():
         tx2 = np.array([tx2_x[i], tx2_y[i]])
         curr_t = time[i]
         delays = np.array([[delay_11[i], delay_12[i]], [delay_21[i], delay_22[i]]])
-        fim_inverse = roberts_crlb_single_instance(crlb_init_object, tx1, tx2, 1 / var_sq, delays,
-                                     curr_t, dt, max_power, signal_freq, measure_dt)
+        powers = np.array([[pow_qrx1_tx1[:, i], pow_qrx1_tx2[:, i]], [pow_qrx2_tx1[:, i], pow_qrx2_tx2[:, i]]])
+        fim_inverse = roberts_crlb_single_instance(crlb_init_object, tx1, tx2, delays,
+                                     curr_t, dt, max_power, signal_freq, measure_dt, T, I_bg, noise_factors, powers)
         print(fim_inverse)
-        if i == 10:
+        if i == 2:
             exit()
 
 
