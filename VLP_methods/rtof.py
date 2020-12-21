@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.signal as signal
 import matplotlib.pyplot as plt
-from VLC_init import *
+from VLP_methods.VLC_init import *
 # import module
 import cProfile
 

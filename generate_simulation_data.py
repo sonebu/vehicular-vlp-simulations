@@ -1,8 +1,8 @@
 # In[1]:
-from VLC_init import *
-from aoa_pos import *
-from rtof_pos import *
-from Roberts import *
+from VLP_methods.VLC_init import *
+from VLP_methods.aoa import *
+from VLP_methods.rtof import *
+from VLP_methods.tdoa import *
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.patches as mpatches

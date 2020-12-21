@@ -1,5 +1,5 @@
-from CRLB_init import *
-from matfile_read import load_mat
+from Bound_Estimation.CRLB_init import *
+from Bound_Estimation.matfile_read import load_mat
 import math
 #TODO: correct Soner case for dividing variances
 

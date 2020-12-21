@@ -1,6 +1,6 @@
 # %%
 
-from VLC_init import *
+from VLP_methods.VLC_init import *
 import math
 
 # %%
