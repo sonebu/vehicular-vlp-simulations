@@ -27,7 +27,7 @@ class RToF_pos:
         self.vlc_obj = vlc_obj
         self.dt = 5e-9
         self.f = 1e6
-        self.r = 499
+        self.r = 999
         self.N = 1
         self.t = np.arange(0, 5e-3 - self.dt, self.dt)
 
@@ -115,10 +115,10 @@ class RToF_pos:
     def dist_to_pos(self, dm, delays):
         l = self.vlc_obj.distancecar
         d1 = dm['d1']
-        d1_err = np.abs(self.vlc_obj.c*delays[0]/2 - d1) # since the delays are from round trips
+        d1_err = np.abs(self.vlc_obj.c*delays[1]/2 - d1) # since the delays are from round trips
         d1 = d1[d1_err == np.min(d1_err)][0]
         d2 = dm['d2']
-        d2_err = np.abs(self.vlc_obj.c*delays[1]/2 - d2)
+        d2_err = np.abs(self.vlc_obj.c*delays[0]/2 - d2)
         d2 = d2[d2_err == np.min(d2_err)][0]
 
         y = (d2**2 - d1**2 + l**2) / (2*l)
@@ -128,8 +128,8 @@ class RToF_pos:
 
     def estimate(self):
         
-        delay1 = self.vlc_obj.delays[0][0]*2
-        delay2 = self.vlc_obj.delays[0][1]*2
+        delay1 = self.vlc_obj.delays[0][0] * 2
+        delay2 = self.vlc_obj.delays[0][1] * 2
 
         delays = [delay1, delay2]
         s_e, s_r, s_h = self.gen_signals(self.f, self.r, self.N, self.t, delays)
@@ -139,12 +139,9 @@ class RToF_pos:
         dm = self.estimate_dist(s_e, s_r, s_h, self.f, self.r, self.N, self.dt, self.t)
 
         x1, y1 = self.dist_to_pos(dm, delays)
-        
-        delay1 = self.vlc_obj.delays[1][0]*2
-        delay2 = self.vlc_obj.delays[1][1]*2
 
-        delay1 = self.vlc_obj.delays[0][0] * 2
-        delay2 = self.vlc_obj.delays[1][0] * 2
+        delay1 = self.vlc_obj.delays[1][0] * 2
+        delay2 = self.vlc_obj.delays[1][1] * 2
 
         delays = [delay1, delay2]
         s_e, s_r, s_h = self.gen_signals(self.f, self.r, self.N, self.t, delays)
