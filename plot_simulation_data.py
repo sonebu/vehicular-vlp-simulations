@@ -123,8 +123,7 @@ for i in range(len(sm)):
     ax2.legend(handles=[green_patch, blue_patch, orange_patch, purple_patch])
     ax2.title.set_text('Fig 2: x Estimation Results')
     ax3.title.set_text('Fig 3: y Estimation Results')
-    ax3.plot(time_[i], y[i, 0], 'o', color='green')
-
+    ax3.plot(time_, y[:, 0], 'o', color='green')
     ax3.plot(time_, y_pose[:, 0], '-', color='blue')
     ax3.plot(time_, y_roberts[:, 0], '-', color='purple')
     ax3.plot(time_, y_becha[:, 0], '-', color='orange')
@@ -137,8 +136,8 @@ for i in range(len(sm)):
         ax3.set_xlim(0, 1)
         ax3.set_ylim(-4,4)
     elif fl_name == '/2/':
-        ax3.set_xlim(0,1)
-        ax3.set_ylim(-5, 5)
+        ax3.set_xlim(0, 1)
+        #ax3.set_ylim(-4, 4)
     ax3.grid()
     green_patch = mpatches.Patch(color='green', label='Actual coordinates')
     blue_patch = mpatches.Patch(color='blue', label='AoA-estimated coordinates')
