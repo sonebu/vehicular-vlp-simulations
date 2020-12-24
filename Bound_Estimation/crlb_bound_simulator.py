@@ -1,5 +1,5 @@
-from Bound_Estimation.CRLB_init import *
-from Bound_Estimation.matfile_read import load_mat
+from CRLB_init import *
+from matfile_read import load_mat
 import math
 import matplotlib.pyplot as plt
 
@@ -110,7 +110,7 @@ def signal_generator(current_time, dt_vhc, max_power, signal_freq, delay, measur
 
 
 def main():
-    data = load_mat('/Users/mervekarakas/Documents/GitRepos/elec491/SimulationData/v2lcRun_sm3_comparisonSoA.mat')
+    data = load_mat('../SimulationData/v2lcRun_sm3_comparisonSoA.mat')
 
     # vehicle parameters
     L_1 = data['vehicle']['target']['width']
@@ -169,10 +169,10 @@ def main():
     crlb_init_object = CRLB_init(L_1, L_2, rx_area, rx_fov, tx_half_angle)
 
     # calculate bounds for all elements
-    #robert_crlb_results = [np.array([]), np.array([])]
-
+    robert_crlb_results = [np.array([]), np.array([])]
     becha_crlb_results = [np.array([]), np.array([]), np.array([]), np.array([])]
     soner_crlb_results = [np.array([]), np.array([]), np.array([]), np.array([])]
+
     for i in range(len(tx1_x)):
         tx1 = np.array([tx1_x[i], tx1_y[i]])
         tx2 = np.array([tx2_x[i], tx2_y[i]])
@@ -186,42 +186,53 @@ def main():
         fim_inverse_soner = soner_crlb_single_instance(crlb_init_object, tx1, tx2, delays,
                                      curr_t, dt, max_power, signal_freq, measure_dt, T, I_bg, noise_factors, powers)
 
-        #robert_crlb_results[0] = np.append(robert_crlb_results[0], np.sqrt(fim_inverse_rob[0][0]))
-        #robert_crlb_results[1] = np.append(robert_crlb_results[1], np.sqrt(fim_inverse_rob[1][1]))
-        if i == 0:
-            robert_crlb_results_x = [np.sqrt(fim_inverse_rob[0][0])]
-            robert_crlb_results_y = [np.sqrt(fim_inverse_rob[1][1])]
-        else:
-            robert_crlb_results_x.append(np.sqrt(fim_inverse_rob[0][0]))
-            robert_crlb_results_y.append(np.sqrt(fim_inverse_rob[1][1]))
+        robert_crlb_results[0] = np.append(robert_crlb_results[0], np.sqrt(fim_inverse_rob[0][0]))
+        robert_crlb_results[1] = np.append(robert_crlb_results[1], np.sqrt(fim_inverse_rob[1][1]))
+
         becha_crlb_results[0] = np.append(becha_crlb_results[0], np.sqrt(fim_inverse_becha[0][0]))
         becha_crlb_results[1] = np.append(becha_crlb_results[1], np.sqrt(fim_inverse_becha[1][1]))
-        #becha_crlb_results[2] = np.append(becha_crlb_results[2], np.sqrt(fim_inverse_becha[2][2]))
-        #becha_crlb_results[3] = np.append(becha_crlb_results[3], np.sqrt(fim_inverse_becha[3][3]))
+        becha_crlb_results[2] = np.append(becha_crlb_results[2], np.sqrt(fim_inverse_becha[2][2]))
+        becha_crlb_results[3] = np.append(becha_crlb_results[3], np.sqrt(fim_inverse_becha[3][3]))
 
         soner_crlb_results[0] = np.append(soner_crlb_results[0], np.sqrt(fim_inverse_soner[0][0]))
         soner_crlb_results[1] = np.append(soner_crlb_results[1], np.sqrt(fim_inverse_soner[1][1]))
-        #soner_crlb_results[2] = np.append(soner_crlb_results[2], np.sqrt(fim_inverse_soner[2][2]))
-        #soner_crlb_results[3] = np.append(soner_crlb_results[3], np.sqrt(fim_inverse_soner[3][3]))
+        soner_crlb_results[2] = np.append(soner_crlb_results[2], np.sqrt(fim_inverse_soner[2][2]))
+        soner_crlb_results[3] = np.append(soner_crlb_results[3], np.sqrt(fim_inverse_soner[3][3]))
         print(i)
         if i == 10:
             break
 
     print("finished")
-    print(robert_crlb_results_x)
-    print(time[0:11])
-    plt.plot(time[0:11], robert_crlb_results_y)
-    #plt.plot(time[0:11], becha_crlb_results[0])
-    #plt.plot(time[0:11], soner_crlb_results[0])
-    #plt.ylabel('Standard Deviation')
-    #plt.xlabel('Time (s)')
 
-    #plot2 = plt.figure(2)
-    #plt.plot(time[0:11], robert_crlb_results[1])
-    #plt.plot(time[0:11], becha_crlb_results[1])
-    #plt.plot(time[0:11], soner_crlb_results[1])
-    #plt.ylabel('Standard Deviation')
-    #plt.xlabel('Time (s)')
+    plot1 = plt.figure(1)
+    plt.plot(time[0:i+1], becha_crlb_results[0])
+    plt.plot(time[0:i+1], soner_crlb_results[0])
+    plt.plot(time[0:i + 1], robert_crlb_results[0])
+    plt.ylabel('Standard Deviation')
+    plt.xlabel('Time (s)')
+    plt.title('CRLB for x1')
+
+    plot2 = plt.figure(2)
+    plt.plot(time[0:i+1], becha_crlb_results[1])
+    plt.plot(time[0:i+1], soner_crlb_results[1])
+    plt.plot(time[0:i + 1], robert_crlb_results[1])
+    plt.ylabel('Standard Deviation')
+    plt.xlabel('Time (s)')
+    plt.title('CRLB for y1')
+
+    plot1 = plt.figure(3)
+    plt.plot(time[0:i + 1], becha_crlb_results[2])
+    plt.plot(time[0:i + 1], soner_crlb_results[2])
+    plt.ylabel('Standard Deviation')
+    plt.xlabel('Time (s)')
+    plt.title('CRLB for x2')
+
+    plot2 = plt.figure(2)
+    plt.plot(time[0:i + 1], becha_crlb_results[3])
+    plt.plot(time[0:i + 1], soner_crlb_results[3])
+    plt.ylabel('Standard Deviation')
+    plt.xlabel('Time (s)')
+    plt.title('CRLB for y2')
 
     plt.show()
 
