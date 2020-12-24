@@ -4,15 +4,21 @@ from VLP_methods.aoa import *
 from VLP_methods.rtof import *
 from VLP_methods.tdoa import *
 import numpy as np
-from matplotlib import pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from math import pi
 from scipy.interpolate import interp1d
 from mat4py import loadmat
 from scipy.io import loadmat, matlab
 import math
+import matplotlib.image as mpimg
+from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
 import sys
 import cProfile
+from scipy import ndimage
+
 
 # coding: utf-8
 
@@ -21,12 +27,14 @@ import cProfile
 # 'v2lcRun_sm2_platoonFormExit'
 # 'v2lcRun_sm3_comparisonSoA'
 
-data_name = 'v2lcRun_sm1_laneChange'
+data_name = 'v2lcRun_sm3_comparisonSoA'
 # data_name = sys.argv[1]
 print(data_name)
 data_dir = 'SimulationData/' + data_name + '.mat'
 data = loadmat(data_dir)
-folder_name = '/1/'
+folder_name = '3/'
+dp = 100
+data_point = '100_point/'
 import cProfile, pstats
 profiler = cProfile.Profile()
 profiler.enable()
@@ -115,21 +123,24 @@ vlc_obj.distancecar = 1.6
 area = data['qrx']['f_QRX']['params']['area']
 vlc_obj.rxradius = math.sqrt(area) / math.pi
 rel_hdg = data['vehicle']['target_relative']['heading']
+rel_hdg = rel_hdg[::dp]
 vlc_obj.e_angle, vlc_obj.a_angle = 60, 60
+time_ = data['vehicle']['t']['values']
+time_ = time_[::dp]
 
 tgt_tx1_x = -1 * data['vehicle']['target_relative']['tx1_qrx4']['y']
-tgt_tx1_x = tgt_tx1_x[::100]
+tgt_tx1_x = tgt_tx1_x[::dp]
 tgt_tx1_y = data['vehicle']['target_relative']['tx1_qrx4']['x']
-tgt_tx1_y = tgt_tx1_y[::100]
+tgt_tx1_y = tgt_tx1_y[::dp]
 tgt_tx2_x = -1 * data['vehicle']['target_relative']['tx2_qrx3']['y']
-tgt_tx2_x = tgt_tx2_x[::100]
+tgt_tx2_x = tgt_tx2_x[::dp]
 tgt_tx2_y = data['vehicle']['target_relative']['tx2_qrx3']['x']
-tgt_tx2_y = tgt_tx2_y[::100]
+tgt_tx2_y = tgt_tx2_y[::dp]
 
 ego_qrx1_x = np.zeros(len(tgt_tx1_x))
-ego_qrx1_y = np.zeros(len(tgt_tx1_x))
+ego_qrx1_y = np.zeros(len(tgt_tx1_x)) - vlc_obj.distancecar /2
 ego_qrx2_x = np.zeros(len(tgt_tx1_x))
-ego_qrx2_y = np.zeros(len(tgt_tx1_x)) + vlc_obj.distancecar
+ego_qrx2_y = np.zeros(len(tgt_tx1_x)) + vlc_obj.distancecar /2
 
 ## In[2]:
 x, y, x_pose, y_pose, x_roberts, y_roberts, x_becha, y_becha = np.zeros((len(tgt_tx1_x), 2)), np.zeros((len(tgt_tx1_x),
@@ -173,57 +184,25 @@ for i in range(len(tgt_tx1_x)):
 y_data = np.copy(y)
 x_data = np.copy(x)
 for i in range(len(y)):
-    y_data[i] = y[i][0] + 0.8
-    x_data[i] = x[i][0]
+    y_data[i] = (y[i][0] + y[i][1])/2
+    x_data[i] = (x[i][0] + x[i][1])/2
 
-np.savetxt('GUI_data/'+folder_name+'/x.txt', x, delimiter=',')
-np.savetxt('GUI_data/'+folder_name+'/x_pose.txt', x_pose, delimiter=',')
-np.savetxt('GUI_data/'+folder_name+'/x_becha.txt', x_becha, delimiter=',')
-np.savetxt('GUI_data/'+folder_name+'/x_roberts.txt', x_roberts, delimiter=',')
-np.savetxt('GUI_data/'+folder_name+'/x_data.txt', x_data, delimiter=',')
-np.savetxt('GUI_data/'+folder_name+'/y.txt', y, delimiter=',')
-np.savetxt('GUI_data/'+folder_name+'/y_data.txt', y_data, delimiter=',')
-np.savetxt('GUI_data/'+folder_name+'/y_becha.txt', y_becha, delimiter=',')
-np.savetxt('GUI_data/'+folder_name+'/y_roberts.txt', y_roberts, delimiter=',')
-np.savetxt('GUI_data/'+folder_name+'/y_pose.txt', y_pose, delimiter=',')
+np.savetxt('GUI_data/'+data_point+folder_name+'/x.txt', x, delimiter=',')
+np.savetxt('GUI_data/'+data_point+folder_name+'/x_pose.txt', x_pose, delimiter=',')
+np.savetxt('GUI_data/'+data_point+folder_name+'/x_becha.txt', x_becha, delimiter=',')
+np.savetxt('GUI_data/'+data_point+folder_name+'/x_roberts.txt', x_roberts, delimiter=',')
+np.savetxt('GUI_data/'+data_point+folder_name+'/x_data.txt', x_data, delimiter=',')
+np.savetxt('GUI_data/'+data_point+folder_name+'/y.txt', y, delimiter=',')
+np.savetxt('GUI_data/'+data_point+folder_name+'/y_data.txt', y_data, delimiter=',')
+np.savetxt('GUI_data/'+data_point+folder_name+'/y_becha.txt', y_becha, delimiter=',')
+np.savetxt('GUI_data/'+data_point+folder_name+'/y_roberts.txt', y_roberts, delimiter=',')
+np.savetxt('GUI_data/'+data_point+folder_name+'/y_pose.txt', y_pose, delimiter=',')
+np.savetxt('GUI_data/'+data_point+folder_name+'/time.txt', time_, delimiter=',')
+np.savetxt('GUI_data/'+data_point+folder_name+'/rel_hdg.txt', rel_hdg, delimiter=',')
 
-
-
-plt.figure()
-plt.plot(x, y, 'o', color='green', markersize=10)
-plt.plot(x_becha, y_becha, 'o', color='orange', markersize=8)
-plt.plot(x_pose, y_pose, 'o', color='blue', markersize=7)
-plt.plot(x_roberts, y_roberts, 'o', color='purple', markersize=5)
-plt.plot(x_data, y_data, '--', color='red', markersize=5)
-plt.grid()
-
-green_patch = mpatches.Patch(color='green', label='Actual coordinates')
-blue_patch = mpatches.Patch(color='blue', label='AoA-estimated coordinates')
-orange_patch = mpatches.Patch(color='orange', label='RToF-estimated coordinates')
-purple_patch = mpatches.Patch(color='purple', label='TDoA-estimated coordinates')
-
-plt.legend(handles=[green_patch, blue_patch, orange_patch, purple_patch])
-plt.xlabel('x')
-plt.ylabel('y')
-
-def mkdir_p(mypath):
-    '''Creates a directory. equivalent to using mkdir -p on the command line'''
-
-    from errno import EEXIST
-    from os import makedirs, path
-
-    try:
-        makedirs(mypath)
-    except OSError as exc:  # Python >2.5
-        if exc.errno == EEXIST and path.isdir(mypath):
-            pass
-        else:
-            raise
-
-output_dir = "Figure/"
-mkdir_p(output_dir)
-name = '{}/' + data_name + '.png'
-plt.savefig(name.format(output_dir))
 profiler.disable()
 stats = pstats.Stats(profiler).sort_stats('ncalls')
-stats.print_stats()
+# stats.print_stats()
+
+
+#axs[0].plot(t1, f(t1), 'o', t2, f(t2), '-')

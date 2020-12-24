@@ -33,9 +33,9 @@ def translate(value, leftMin, leftMax, rightMin, rightMax):
 def change_cords(txpos):
     t_tx_pos = np.copy(txpos)
     t_tx_pos[0][0] = txpos[0][1]
-    t_tx_pos[1][0] = (-1 * txpos[0][0]) + 0.5
+    t_tx_pos[1][0] = (-1 * txpos[0][0]) + 0.8
     t_tx_pos[0][1] = txpos[1][1]
-    t_tx_pos[1][1] = (-1 * txpos[1][0]) + 0.5
+    t_tx_pos[1][1] = (-1 * txpos[1][0]) + 0.8
     return t_tx_pos
 
 
