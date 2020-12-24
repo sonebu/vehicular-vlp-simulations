@@ -88,7 +88,7 @@ def soner_crlb_single_instance(crlb_obj, tx1, tx2, delays, curr_t, dt_vhc, max_p
 
                     p_r = powers[i][j][qrx]
                     noise_effect = 1 / (p_r * noise_factors[0] + i_bg * noise_factors[1] + T * (
-                                noise_factors[2] + noise_factors[3] / 16))  # /16 comes from capacitance division
+                                noise_factors[2] + noise_factors[3])) # / 16))  # /16 comes from capacitance division
 
                     fim[param1][param2] += noise_effect * (dh_dk1_dh_dk2 * E_2 \
                                            + (h_dh_dk1_dtau_dk2 + h_dh_dk2_dtau_dk1) * E_3 \
@@ -201,6 +201,13 @@ def main():
         print(i)
 
     print("finished")
+    folder_name = '../GUI_data/1000_point/3/'
+    x_becha, y_becha = np.loadtxt(folder_name+'x_becha.txt', delimiter=','), np.loadtxt(folder_name+'y_becha.txt',
+                                                                                        delimiter=',')
+    x_roberts, y_roberts = np.loadtxt(folder_name+'x_roberts.txt', delimiter=','), np.loadtxt(folder_name+'y_roberts.txt',
+                                                                                              delimiter=',')
+    x_soner, y_soner = np.loadtxt(folder_name+'x_pose.txt', delimiter=','), np.loadtxt(folder_name+'y_pose.txt', delimiter=',')
+
     plt.close("all")
     plot1 = plt.figure(1)
     becha_x1, = plt.plot(time[0:i+1], becha_crlb_results[0])
@@ -226,7 +233,7 @@ def main():
     plt.ylim(1e-5,10)
     plt.yscale('log')
 
-    plot1 = plt.figure(3)
+    plot3 = plt.figure(3)
     becha_x2, = plt.plot(time[0:i + 1], becha_crlb_results[2])
     soner_x2, = plt.plot(time[0:i + 1], soner_crlb_results[2])
     ten_cm_line, = plt.plot(time[0:i + 1], 0.1*np.ones(i+1),'--')
@@ -237,7 +244,7 @@ def main():
     plt.ylim(1e-5,10)
     plt.yscale('log')
 
-    plot2 = plt.figure(4)
+    plot4 = plt.figure(4)
     becha_y2, = plt.plot(time[0:i + 1], becha_crlb_results[3])
     soner_y2, = plt.plot(time[0:i + 1], soner_crlb_results[3])
     ten_cm_line, = plt.plot(time[0:i + 1], 0.1*np.ones(i+1),'--')
@@ -248,7 +255,68 @@ def main():
     plt.ylim(1e-5,10)
     plt.yscale('log')
 
+    x1_becha, x2_becha = x_becha[:,0], x_becha[:,1]
+    y1_becha, y2_becha = y_becha[:,0], y_becha[:,1]
+
+    plot5 = plt.figure(5)
+    th_becha_x1, = plt.plot(time[0:i+1], becha_crlb_results[0], '--')
+    th_becha_x2, = plt.plot(time[0:i + 1], becha_crlb_results[2], '--')
+    th_becha_y1, = plt.plot(time[0:i+1], becha_crlb_results[1], '--')
+    th_becha_y2, = plt.plot(time[0:i + 1], becha_crlb_results[3], '--')
+    sim_becha_x1, = plt.plot(time[0:i + 1], abs(tx1_x + x1_becha)[0:i + 1])
+    sim_becha_x2, = plt.plot(time[0:i + 1], abs(tx2_x + x2_becha)[0:i + 1])
+    sim_becha_y1, = plt.plot(time[0:i + 1], abs(tx1_y - y1_becha)[0:i + 1])
+    sim_becha_y2, = plt.plot(time[0:i + 1], abs(tx2_y - y2_becha)[0:i + 1])
+    plt.ylabel('Error (m)')
+    plt.xlabel('Time (s)')
+    plt.title('CRLB vs. Simulation Results for RToF')
+    plt.legend([th_becha_x1, th_becha_x2, th_becha_y1, th_becha_y2, sim_becha_x1 , sim_becha_x2, sim_becha_y1,
+                sim_becha_y2], ['x1 (theoretical)', 'x2 (theoretical)', 'y1 (theoretical)', 'y2 (theoretical)',
+                                'x1 (simulation)', 'x2 (simulation)', 'y1 (simulation)', 'y2 (simulation)'],
+               ncol=4,loc=3)
+    plt.ylim(1e-5,2)
+    plt.yscale('log')
+
+    x1_roberts, x2_roberts = x_roberts[:,0], x_roberts[:,1]
+    y1_roberts, y2_roberts = y_roberts[:,0], y_roberts[:,1]
+
+    plot6 = plt.figure(6)
+    th_roberts_x1, = plt.plot(time[0:i+1], robert_crlb_results[0], '--')
+    th_roberts_y1, = plt.plot(time[0:i+1], robert_crlb_results[1], '--')
+    sim_roberts_x1, = plt.plot(time[0:i + 1], abs(tx1_x + x1_roberts)[0:i + 1])
+    sim_roberts_y1, = plt.plot(time[0:i + 1], abs(tx1_y - y1_roberts)[0:i + 1])
+    plt.ylabel('Error (m)')
+    plt.xlabel('Time (s)')
+    plt.title('CRLB vs. Simulation Results for TDoA')
+    plt.legend([th_roberts_x1, th_roberts_y1, sim_roberts_x1 , sim_roberts_y1],
+               ['x1 (theoretical)', 'y1 (theoretical)', 'x1 (simulation)', 'y1 (simulation)'],ncol=2,loc=3)
+    plt.ylim(1e-5,2)
+    plt.yscale('log')
+
+    x1_soner, x2_soner = x_soner[:,0], x_soner[:,1]
+    y1_soner, y2_soner = y_soner[:,0], y_soner[:,1]
+
+    plot7 = plt.figure(7)
+    th_soner_x1, = plt.plot(time[0:i+1], soner_crlb_results[0], '--')
+    th_soner_x2, = plt.plot(time[0:i + 1], soner_crlb_results[2], '--')
+    th_soner_y1, = plt.plot(time[0:i+1], soner_crlb_results[1], '--')
+    th_soner_y2, = plt.plot(time[0:i + 1], soner_crlb_results[3], '--')
+    sim_soner_x1, = plt.plot(time[0:i + 1], abs(tx1_x + x1_soner)[0:i + 1])
+    sim_soner_x2, = plt.plot(time[0:i + 1], abs(tx2_x + x2_soner)[0:i + 1])
+    sim_soner_y1, = plt.plot(time[0:i + 1], abs(tx1_y - y1_soner)[0:i + 1])
+    sim_soner_y2, = plt.plot(time[0:i + 1], abs(tx2_y - y2_soner)[0:i + 1])
+    plt.ylabel('Error (m)')
+    plt.xlabel('Time (s)')
+    plt.title('CRLB vs. Simulation Results for AoA')
+    plt.legend([th_soner_x1, th_soner_x2, th_soner_y1, th_soner_y2, sim_soner_x1 , sim_soner_x2, sim_soner_y1,
+                sim_soner_y2], ['x1 (theoretical)', 'x2 (theoretical)', 'y1 (theoretical)', 'y2 (theoretical)',
+                                'x1 (simulation)', 'x2 (simulation)', 'y1 (simulation)', 'y2 (simulation)'],
+               ncol=4,loc=3)
+    plt.ylim(1e-5,2)
+    plt.yscale('log')
     plt.show()
+
+
 
 
 if __name__ == "__main__":
