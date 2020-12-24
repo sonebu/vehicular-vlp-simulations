@@ -70,8 +70,8 @@ def rec_func(data, n):
         if isinstance(data[k], dict):
             rec_func(data[k], n + 1)
 
-data = load_mat('SimulationData/v2lcRun_sm3_comparisonSoA.mat')
-rec_func(data, 0)
+#data = load_mat('SimulationData/v2lcRun_sm3_comparisonSoA.mat')
+#rec_func(data, 0)
 #print('ego vehicle front x: ',data['vehicle']['ego']['front_center']['x'][0], ' y:',data['vehicle']['ego']['front_center']['y'][0])
 #print('ego vehicle qrx1 x:', data['vehicle']['ego']['tx4_qrx1']['x'][0], ' y:', data['vehicle']['ego']['tx4_qrx1']['y'][0])
 #print('ego vehicle qrx2 x:', data['vehicle']['ego']['tx3_qrx2']['x'][0], ' y:', data['vehicle']['ego']['tx3_qrx2']['y'][0])
