@@ -34,7 +34,7 @@ for i in range(len(sm)):
 
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(20, 20))
 
-    folder_name = 'GUI_data/100_point/' + fl_name
+    folder_name = 'GUI_data/1000_point/' + fl_name
     x, y = np.loadtxt(folder_name+'x.txt', delimiter=','), np.loadtxt(folder_name+'y.txt', delimiter=',')
     x_pose, y_pose = np.loadtxt(folder_name+'x_pose.txt', delimiter=','), np.loadtxt(folder_name+'y_pose.txt', delimiter=',')
     x_becha, y_becha = np.loadtxt(folder_name+'x_becha.txt', delimiter=','), np.loadtxt(folder_name+'y_becha.txt',
@@ -78,7 +78,7 @@ for i in range(len(sm)):
         ax1.plot(x[:, 0], y[:, 0], 'o', color='green', markersize=10)
         ax1.title.set_text('Fig.1: Relative Target Vehicle Trajectory')
         ax1.plot(x[:, 0], y[:, 0], '-', color='red', markersize=5)
-        mid = 4
+        mid = 500
         arrow_x = x[mid, 0]
         arrow_y = y[mid, 0]
         if fl_name == '/3/':
@@ -88,7 +88,7 @@ for i in range(len(sm)):
         ax1.set_ylim(-1, 4)
     elif fl_name == '/2/':
         ax1.set_xlim(-10, 1)
-        ax1.set_ylim(-5, 5)
+        ax1.set_ylim(-5, 9)
     elif fl_name == '/1/':
         ax1.set_xlim(-9, 1)
         ax1.set_ylim(-3, 3)
@@ -108,7 +108,7 @@ for i in range(len(sm)):
     ax2.set_ylabel('[m]')
     if fl_name == '/3/':
         ax2.set_ylim(x[0,0]-0.5,x[-1,0]+0.5)
-        ax2.set_xlim(0, 9)
+        ax2.set_xlim(0, 10)
     elif fl_name == '/1/':
         ax2.set_xlim(0,1)
         ax2.set_ylim(-7, -2)
@@ -131,7 +131,7 @@ for i in range(len(sm)):
     ax3.set_ylabel('[m]')
     if fl_name == '/3/':
         ax3.set_ylim(y[0,0]-1,y[-1,0]+1)
-        ax3.set_xlim(0, 9)
+        ax3.set_xlim(0, 10)
     elif fl_name == '/1/':
         ax3.set_xlim(0, 1)
         ax3.set_ylim(-4,4)
@@ -161,5 +161,5 @@ for i in range(len(sm)):
 
     output_dir = "Figure/"
     mkdir_p(output_dir)
-    name = '{}/' + input_name + '.png'
+    name = '{}/' + str(i) + input_name + '.png'
     plt.savefig(name.format(output_dir))

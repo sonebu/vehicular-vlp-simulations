@@ -42,9 +42,11 @@ def start_page(controller):
     controller.show_frame(StartPage)
 
 
+
+
 def run(sm):
     # first key text
-    global fl_name
+    global fl_name, x, y, x_pose, y_pose, x_becha, y_becha, x_roberts, y_roberts,x_data, y_data, time_, rel_hdg
     global ani
     if sm == 3:
         input_name = 'v2lcRun_sm3_comparisonSoA'
@@ -57,15 +59,36 @@ def run(sm):
         input_name = 'v2lcRun_sm1_laneChange'
         fl_name = '/1/'
 
-    #call(["python", "data_test.py", input_name])
+    folder_name = 'GUI_data/1000_point/' + fl_name
+    x, y = np.loadtxt(folder_name + 'x.txt', delimiter=','), np.loadtxt(folder_name + 'y.txt', delimiter=',')
+    x_pose, y_pose = np.loadtxt(folder_name + 'x_pose.txt', delimiter=','), np.loadtxt(folder_name + 'y_pose.txt',
+                                                                                       delimiter=',')
+    x_becha, y_becha = np.loadtxt(folder_name + 'x_becha.txt', delimiter=','), np.loadtxt(folder_name + 'y_becha.txt',
+                                                                                          delimiter=',')
+    x_roberts, y_roberts = np.loadtxt(folder_name + 'x_roberts.txt', delimiter=','), np.loadtxt(
+        folder_name + 'y_roberts.txt',
+        delimiter=',')
+    x_data, y_data = np.loadtxt(folder_name + 'x_data.txt', delimiter=','), np.loadtxt(folder_name + 'y_data.txt',
+                                                                                       delimiter=',')
+    time_ = np.loadtxt(folder_name + 'time.txt', delimiter=',')
+    rel_hdg = np.loadtxt(folder_name + 'rel_hdg.txt', delimiter=',')
+    x, y = x[::20], y[::20]
+    x_pose, y_pose = x_pose[::20], y_pose[::20]
+    x_roberts, y_roberts = x_roberts[::20], y_roberts[::20]
+    x_becha, y_becha = x_becha[::20], y_becha[::20]
+    x_data, y_data = x_data[::20], y_data[::20]
+    time_, rel_hdg = time_[::20], rel_hdg[::20]
 
     app = SeaofBTCapp()
-    ani = animation.FuncAnimation(f, animate, interval=1000)
+    ani = animation.FuncAnimation(f, animate, repeat_delay=1)
+    #ani.save('sim.mp4', writer='ffmpeg', fps=30)
+
     app.mainloop()
 
 
+
 def animate(i):
-    global res, f, ax1, ax2, ax3, fl_name
+    global res, f, ax1, ax2, ax3, fl_name, fl_name, x, y, x_pose, y_pose, x_becha, y_becha, x_roberts, y_roberts, x_data, y_data, time_, rel_hdg
     if res == TRUE:
         f.clf()
         ax1 = f.add_subplot(311)
@@ -74,37 +97,34 @@ def animate(i):
 
         res = FALSE
 
-    folder_name = 'GUI_data/100_point/' + fl_name
-    x, y = np.loadtxt(folder_name+'x.txt', delimiter=','), np.loadtxt(folder_name+'y.txt', delimiter=',')
-    x_pose, y_pose = np.loadtxt(folder_name+'x_pose.txt', delimiter=','), np.loadtxt(folder_name+'y_pose.txt', delimiter=',')
-    x_becha, y_becha = np.loadtxt(folder_name+'x_becha.txt', delimiter=','), np.loadtxt(folder_name+'y_becha.txt',
-                                                                                     delimiter=',')
-    x_roberts, y_roberts = np.loadtxt(folder_name+'x_roberts.txt', delimiter=','), np.loadtxt(folder_name+'y_roberts.txt',
-                                                                                           delimiter=',')
-    x_data, y_data = np.loadtxt(folder_name+'x_data.txt', delimiter=','), np.loadtxt(folder_name+'y_data.txt',
-                                                                                  delimiter=',')
-    time_ = np.loadtxt(folder_name + 'time.txt', delimiter=',')
-    rel_hdg = np.loadtxt(folder_name + 'rel_hdg.txt', delimiter=',')
-
 
     #f.suptitle('Fig 1: Relative Target Vehicle Trajectory \n Fig 2: x Estimation Results \n Fig 3: y Estimation Results')
-    # img_ego = ndimage.rotate(plt.imread('red_racing_car_top_view_preview.png'), 0)
+    img_ego_s = ndimage.rotate(plt.imread('red_racing_car_top_view_preview.png'), rel_hdg[0])
+
     img_tgt_s = ndimage.rotate(plt.imread('green_racing_car_top_view_preview.png'), rel_hdg[0])
-    # img_tgt_f = ndimage.rotate(plt.imread('green_racing_car_top_view_preview.png'), rel_hdg[-1]+180)
+    img_tgt_f = ndimage.rotate(plt.imread('green_racing_car_top_view_preview.png'), rel_hdg[-1])
     if fl_name == '/3/':
         ax1.add_artist(
-            AnnotationBbox(OffsetImage(plt.imread('red_racing_car_top_view_preview.png'), zoom=0.25), (0.2, -0.12),
+            AnnotationBbox(OffsetImage(img_ego_s, zoom=0.25), (0.2, -0.12),
                            frameon=False))
 
         ax1.add_artist(AnnotationBbox(OffsetImage(plt.imread('green_racing_car_top_view_preview.png'), zoom=0.08),
                                       (x[0][0] - 0.27, y[0][0] + 0.2), frameon=False))
+        if i == (len(x_data) -1):
+            ax1.add_artist(AnnotationBbox(OffsetImage(img_tgt_f, zoom=0.08),
+                                      (x[-1][0]- 0.27, y[-1][0] + 0.2), frameon=False))
+
     elif fl_name == '/2/':
         ax1.add_artist(
             AnnotationBbox(OffsetImage(plt.imread('red_racing_car_top_view_preview.png'), zoom=0.25), (0, 0),
                            frameon=False))
 
-        ax1.add_artist(AnnotationBbox(OffsetImage(plt.imread('green_racing_car_top_view_preview.png'), zoom=0.08),
+        ax1.add_artist(AnnotationBbox(OffsetImage(img_tgt_s, zoom=0.08),
                                       (x[1][0], y[1][0]), frameon=False))
+        if i == (len(x_data) - 1):
+            ax1.add_artist(AnnotationBbox(OffsetImage(img_tgt_f, zoom=0.08),
+                                      (x[-1][0], y[-1][0]), frameon=False))
+
     elif fl_name == '/1/':
         ax1.add_artist(
             AnnotationBbox(OffsetImage(plt.imread('red_racing_car_top_view_preview.png'), zoom=0.25), (0, 0),
@@ -112,6 +132,9 @@ def animate(i):
 
         ax1.add_artist(AnnotationBbox(OffsetImage(img_tgt_s, zoom=0.08),
                                       (x[0][0], y[0][0]), frameon=False))
+        if i == (len(x_data) - 1):
+            ax1.add_artist(AnnotationBbox(OffsetImage(img_tgt_f, zoom=0.08),
+                                      (x[-1][0], y[-1][0]), frameon=False))
 
 
     # ax1.add_artist(AnnotationBbox(OffsetImage(img_tgt_f, zoom=0.05), (x_data[-1][0], y_data[-1][0]), frameon=False))
@@ -120,15 +143,15 @@ def animate(i):
             ax1.plot(x[i, 0], y[i, 0], 'o', color='green', markersize=10)
             ax1.title.set_text('Fig.1: Relative Target Vehicle Trajectory')
             ax1.plot(x[i, 0], y[i, 0], '-', color='red', markersize=5)
-            mid = 4
+
     else:
         ax1.plot(x[i, 0], y[i, 0], 'o', color='green', markersize=10)
         ax1.title.set_text('Fig.1: Relative Target Vehicle Trajectory')
         ax1.plot(x[i, 0], y[i, 0], '-', color='red', markersize=5)
-        mid = 4
+        mid = 25
         arrow_x = x[mid, 0]
         arrow_y = y[mid, 0]
-        if i == mid and fl_name == '/1/':
+        if i == mid and fl_name == '/3/':
             ax1.arrow(arrow_x, arrow_y, -0.5, 0, width=0.05)
     if fl_name == '/3/':
         ax1.set_xlim(-8, 1)
@@ -138,7 +161,7 @@ def animate(i):
         ax1.set_ylim(-5, 5)
     elif fl_name == '/1/':
         ax1.set_xlim(-9, 1)
-        ax1.set_ylim(-3, 3)
+        ax1.set_ylim(-3, 6)
     ax1.grid()
     green_patch = mpatches.Patch(color='green', label='Target Vehicle')
     red_patch = mpatches.Patch(color='red', label='Ego Vehicle')
@@ -155,7 +178,7 @@ def animate(i):
     ax2.set_ylabel('[m]')
     if fl_name == '/3/':
         ax2.set_ylim(x[0,0]-0.5,x[-1,0]+0.5)
-        ax2.set_xlim(0, 9)
+        ax2.set_xlim(0, 10)
     elif fl_name == '/1/':
         ax2.set_xlim(0,1)
         ax2.set_ylim(-7, -2)
@@ -179,7 +202,7 @@ def animate(i):
     ax3.set_ylabel('[m]')
     if fl_name == '/3/':
         ax3.set_ylim(y[0,0]-1,y[-1,0]+1)
-        ax3.set_xlim(0, 9)
+        ax3.set_xlim(0, 10)
     elif fl_name == '/1/':
         ax3.set_xlim(0, 1)
         ax3.set_ylim(-4,4)
