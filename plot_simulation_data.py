@@ -34,7 +34,7 @@ for i in range(len(sm)):
 
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(20, 20))
 
-    folder_name = 'GUI_data/1000_point/' + fl_name
+    folder_name = 'GUI_data/100_point/' + fl_name
     x, y = np.loadtxt(folder_name+'x.txt', delimiter=','), np.loadtxt(folder_name+'y.txt', delimiter=',')
     x_pose, y_pose = np.loadtxt(folder_name+'x_pose.txt', delimiter=','), np.loadtxt(folder_name+'y_pose.txt', delimiter=',')
     x_becha, y_becha = np.loadtxt(folder_name+'x_becha.txt', delimiter=','), np.loadtxt(folder_name+'y_becha.txt',
@@ -78,7 +78,7 @@ for i in range(len(sm)):
         ax1.plot(x[:, 0], y[:, 0], 'o', color='green', markersize=10)
         ax1.title.set_text('Fig.1: Relative Target Vehicle Trajectory')
         ax1.plot(x[:, 0], y[:, 0], '-', color='red', markersize=5)
-        mid = 500
+        mid = 4
         arrow_x = x[mid, 0]
         arrow_y = y[mid, 0]
         if fl_name == '/3/':

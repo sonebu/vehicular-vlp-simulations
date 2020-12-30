@@ -202,7 +202,7 @@ for i in range(len(data_names)):
     np.savetxt('GUI_data/'+data_point+folder_name+'y_pose.txt', y_pose, delimiter=',')
     np.savetxt('GUI_data/'+data_point+folder_name+'time.txt', time_, delimiter=',')
     np.savetxt('GUI_data/'+data_point+folder_name+'rel_hdg.txt', rel_hdg, delimiter=',')
-
+    print(time_)
     profiler.disable()
     stats = pstats.Stats(profiler).sort_stats('ncalls')
     # stats.print_stats()

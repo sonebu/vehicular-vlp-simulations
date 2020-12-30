@@ -33,9 +33,9 @@ def translate(value, leftMin, leftMax, rightMin, rightMax):
 def change_cords(txpos):
     t_tx_pos = np.copy(txpos)
     t_tx_pos[0][0] = txpos[0][1]
-    t_tx_pos[1][0] = (-1 * txpos[0][0]) + 0.8
+    t_tx_pos[1][0] = (-1 * txpos[0][0])
     t_tx_pos[0][1] = txpos[1][1]
-    t_tx_pos[1][1] = (-1 * txpos[1][0]) + 0.8
+    t_tx_pos[1][1] = (-1 * txpos[1][0])
     return t_tx_pos
 
 
@@ -136,14 +136,14 @@ class Pose:
 
         diff_1 = theta_R_L[0][1] - theta_R_L[0][0]
         t_x_1 = self.vlc_obj.distancecar * (
-                0.5 + (math.sin(theta_R_L[0][0]) * math.cos(theta_R_L[0][1])) / (math.sin(diff_1)))
+                (self.vlc_obj.distancecar/2) + (math.sin(theta_R_L[0][0]) * math.cos(theta_R_L[0][1])) / (math.sin(diff_1)))
         t_y_1 = self.vlc_obj.distancecar * (
                 (math.cos(theta_R_L[0][0]) * math.cos(theta_R_L[0][1])) / (math.sin(diff_1)))
         # print("Transmitter-1 x pos is : ", self.t_x_1, ", y pos is : ", self.t_y_1)
 
         diff_2 = theta_R_L[1][1] - theta_R_L[1][0]
         t_x_2 = self.vlc_obj.distancecar * (
-                0.5 + (math.sin(theta_R_L[1][0]) * math.cos(theta_R_L[1][1])) / (math.sin(diff_2)))
+                (self.vlc_obj.distancecar/2) + (math.sin(theta_R_L[1][0]) * math.cos(theta_R_L[1][1])) / (math.sin(diff_2)))
         t_y_2 = self.vlc_obj.distancecar * (
                 (math.cos(theta_R_L[1][0]) * math.cos(theta_R_L[1][1])) / (math.sin(diff_2)))
         # print("Transmitter-2 x pos is : ", self.t_x_2, ", y pos is : ", self.t_y_2)
