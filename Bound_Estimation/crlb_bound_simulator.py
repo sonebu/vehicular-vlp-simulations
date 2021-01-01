@@ -88,7 +88,7 @@ def soner_crlb_single_instance(crlb_obj, tx1, tx2, delays, curr_t, dt_vhc, max_p
 
                     p_r = powers[i][j][qrx]
                     noise_effect = 1 / (p_r * noise_factors[0] + i_bg * noise_factors[1] + T * (
-                                noise_factors[2] + noise_factors[3])) # / 16))  # /16 comes from capacitance division
+                                noise_factors[2] + noise_factors[3]/ 16))  # /16 comes from capacitance division
 
                     fim[param1][param2] += noise_effect * (dh_dk1_dh_dk2 * E_2 \
                                            + (h_dh_dk1_dtau_dk2 + h_dh_dk2_dtau_dk1) * E_3 \
@@ -124,7 +124,6 @@ def main():
     start_time = data['vehicle']['t']['start']
     stop_time = data['vehicle']['t']['stop']
 
-    # TODO: generate signals
     max_power = data['tx']['power']
     signal_freq = 1e6  # 1 MHz signal frequency
     measure_dt = 1 / 2.5e6  # 2.5 MHz measure frequency

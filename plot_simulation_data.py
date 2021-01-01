@@ -1,21 +1,9 @@
-from VLP_methods.VLC_init import *
-from VLP_methods.aoa import *
-from VLP_methods.rtof import *
-from VLP_methods.tdoa import *
 import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from math import pi
-from scipy.interpolate import interp1d
-from mat4py import loadmat
-from scipy.io import loadmat, matlab
-import math
-import matplotlib.image as mpimg
-from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
-import sys
-import cProfile
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from scipy import ndimage
 
 sm = [1, 2, 3]

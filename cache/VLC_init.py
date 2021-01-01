@@ -28,30 +28,24 @@ def calc_volume(r1, r2, t1, t2, p1, p2):
 
 
 class VLC_init:
-    def __init__(self):
-        self.rx_area = 0.003  # 3mm
+    def __init__(self, rx_radius=0.003, car_dist=1, c=3e8, elavation_angle=80, azimuth_angle=80):
+        self.rx_radius = rx_radius
         self.lookuptable = {}
-        self.alpha, self.theta = 120, 120
-        self.distancecar = 1
-        self.c = 3e8  # speed of light(m/s)
-        self.trxpos, self.trypos = (-5, -5), (2, 3)  # meter
-        self.tx1 = np.array((self.trxpos[0], self.trypos[0]))
-        self.tx2 = np.array((self.trxpos[1], self.trypos[1]))
+        self.car_dist = car_dist
+        self.c = c  # speed of light(m/s)
+        self.e_angle, self.a_angle = elavation_angle, azimuth_angle
+
+        self.trxpos, self.trypos = (0, 0), (0, 0)  # meter
+        self.tx1 = np.array((0, 0))
+        self.tx2 = np.array((0, 0))
         self.rxxpos, self.rxypos = (0, 0), (0, 1)
-        self.rx1 = np.array((self.rxxpos[0], self.rxypos[0]))
-        self.rx2 = np.array((self.rxxpos[1], self.rxypos[1]))
+        self.rx1 = np.array((0, 0))
+        self.rx2 = np.array((0, 1))
         self.relative_heading = 0
-        self.e_angle, self.a_angle = 80, 80
 
-        self.distancebtw11 = np.linalg.norm(self.tx1 - self.rx1)
-        self.distancebtw12 = np.linalg.norm(self.tx1 - self.rx2)
-        self.distancebtw21 = np.linalg.norm(self.tx2 - self.rx1)
-        self.distancebtw22 = np.linalg.norm(self.tx2 - self.rx2)
+        self.distancebtw11, self.distancebtw12, self.distancebtw21, self.distancebtw22 = 0, 0, 0, 0
 
-        self.aoa11 = math.atan(((self.tx1[1] - self.rx1[1]) / (self.rx1[0] - self.tx1[0])))
-        self.aoa12 = math.atan(((self.tx1[1] - self.rx2[1]) / (self.rx2[0] - self.tx1[0])))
-        self.aoa21 = math.atan(((self.tx2[1] - self.rx1[1]) / (self.rx1[0] - self.tx2[0])))
-        self.aoa22 = math.atan(((self.tx2[1] - self.rx2[1]) / (self.rx2[0] - self.tx2[0])))
+        self.aoa11, self.aoa12, self.aoa21, self.aoa22 = 0, 0, 0, 0
         self.aoas = np.array([[self.aoa11, self.aoa12], [self.aoa21, self.aoa22]])
         self.eps_a, self.eps_b, self.eps_c, self.eps_d, self.phi_h = np.array([[0., 0.], [0., 0.]]), np.array(
             [[0., 0.], [0., 0.]]), np.array([[0., 0.], [0., 0.]]), np.array([[0., 0.], [0., 0.]]), np.array(
@@ -173,22 +167,3 @@ class VLC_init:
         self.distances = np.array([[self.distancebtw11, self.distancebtw12], [self.distancebtw21, self.distancebtw22]])
         self.delays = np.array([[self.distancebtw11 / self.c, self.distancebtw12 / self.c],
                                 [self.distancebtw21 / self.c, self.distancebtw22 / self.c]])
-
-    @lru_cache(maxsize=None)
-    def translate(self, value, leftMin, leftMax, rightMin, rightMax):
-        # Figure out how 'wide' each range is
-        leftSpan = leftMax - leftMin
-        rightSpan = rightMax - rightMin
-        # Convert the left range into a 0-1 range (float)
-        valueScaled = float(value - leftMin) / float(leftSpan)
-        # Convert the 0-1 range into a value in the right range.
-        return rightMin + (valueScaled * rightSpan)
-
-    def change_cords(self):
-        self.tx1 = np.array((self.trxpos[0], self.trypos[0]))
-        self.tx2 = np.array((self.trxpos[1], self.trypos[1]))
-        tx1 = -1 * (self.tx1[1] - 0.5)
-        ty1 = self.tx1[1]
-        tx2 = self.tx2[1]
-        ty2 = -1 * (self.tx2[1] - 0.5)
-        return tx1, ty1, tx2, ty2

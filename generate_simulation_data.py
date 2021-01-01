@@ -1,24 +1,13 @@
 # In[1]:
-from VLP_methods.VLC_init import *
 from VLP_methods.aoa import *
 from VLP_methods.rtof import *
 from VLP_methods.tdoa import *
+from Bound_Estimation.matfile_read import *
 import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from math import pi
-from scipy.interpolate import interp1d
-from mat4py import loadmat
-from scipy.io import loadmat, matlab
+from scipy.io import loadmat
 import math
-import matplotlib.image as mpimg
-from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
-import sys
-import cProfile
-from scipy import ndimage
-
 
 # coding: utf-8
 
@@ -42,74 +31,6 @@ for i in range(len(data_names)):
     profiler = cProfile.Profile()
     profiler.enable()
 
-
-
-    def load_mat(filename):
-        """
-        This function should be called instead of direct scipy.io.loadmat
-        as it cures the problem of not properly recovering python dictionaries
-        from mat files. It calls the function check keys to cure all entries
-        which are still mat-objects
-        """
-
-        def _check_vars(d):
-            """
-            Checks if entries in dictionary are mat-objects. If yes
-            todict is called to change them to nested dictionaries
-            """
-            for key in d:
-                if isinstance(d[key], matlab.mio5_params.mat_struct):
-                    d[key] = _todict(d[key])
-                elif isinstance(d[key], np.ndarray):
-                    d[key] = _toarray(d[key])
-            return d
-
-        def _todict(matobj):
-            """
-            A recursive function which constructs from matobjects nested dictionaries
-            """
-            d = {}
-            for strg in matobj._fieldnames:
-                elem = matobj.__dict__[strg]
-                if isinstance(elem, matlab.mio5_params.mat_struct):
-                    d[strg] = _todict(elem)
-                elif isinstance(elem, np.ndarray):
-                    d[strg] = _toarray(elem)
-                else:
-                    d[strg] = elem
-            return d
-
-        def _toarray(ndarray):
-            """
-            A recursive function which constructs ndarray from cellarrays
-            (which are loaded as numpy ndarrays), recursing into the elements
-            if they contain matobjects.
-            """
-            if ndarray.dtype != 'float64':
-                elem_list = []
-                for sub_elem in ndarray:
-                    if isinstance(sub_elem, matlab.mio5_params.mat_struct):
-                        elem_list.append(_todict(sub_elem))
-                    elif isinstance(sub_elem, np.ndarray):
-                        elem_list.append(_toarray(sub_elem))
-                    else:
-                        elem_list.append(sub_elem)
-                return np.array(elem_list)
-            else:
-                return ndarray
-
-        data = loadmat(filename, struct_as_record=False, squeeze_me=True)
-        return _check_vars(data)
-
-    def rec_func(data, n):
-        for k in data.keys():
-            str = ""
-            for i in range(n):
-                str += "\t"
-            print(str, k)
-            if isinstance(data[k], dict):
-                rec_func(data[k], n + 1)
-
     ## In[2]:
     data = load_mat(data_dir)
     # print(data)
@@ -121,29 +42,62 @@ for i in range(len(data_names)):
     # print(data['channel']['qrx1']['power']['tx2']['A'].shape)
 
     ## In[2]:
-    vlc_obj = VLC_init()
-    vlc_obj.distancecar = 1.6
+    max_power = data['tx']['power']
     area = data['qrx']['f_QRX']['params']['area']
-    vlc_obj.rxradius = math.sqrt(area) / math.pi
-    rel_hdg = data['vehicle']['target_relative']['heading']
-    rel_hdg = rel_hdg[::dp]
-    vlc_obj.e_angle, vlc_obj.a_angle = 60, 60
+    rx_radius = math.sqrt(area) / math.pi
+    c = 3e8
+    rx_fov = 50  # angle
+    tx_half_angle = 60  # angle
+    signal_freq = 1e6
+    measure_dt = 1 / 2.5e6  # 2.5 MHz measure frequency
+
     time_ = data['vehicle']['t']['values']
     time_ = time_[::dp]
+    vehicle_dt = data['vehicle']['t']['dt']
+    # vlc_obj = VLC_init(rx_radius=rx_radius, car_dist=1.6, c=3e8, elavation_angle=60, azimuth_angle=60)
 
-    tgt_tx1_x = -1 * data['vehicle']['target_relative']['tx1_qrx4']['y']
-    tgt_tx1_x = tgt_tx1_x[::dp]
-    tgt_tx1_y = data['vehicle']['target_relative']['tx1_qrx4']['x']
-    tgt_tx1_y = tgt_tx1_y[::dp]
-    tgt_tx2_x = -1 * data['vehicle']['target_relative']['tx2_qrx3']['y']
-    tgt_tx2_x = tgt_tx2_x[::dp]
-    tgt_tx2_y = data['vehicle']['target_relative']['tx2_qrx3']['x']
-    tgt_tx2_y = tgt_tx2_y[::dp]
+    rel_hdg = data['vehicle']['target_relative']['heading'][::dp]
+
+    tgt_tx1_x = -1 * data['vehicle']['target_relative']['tx1_qrx4']['y'][::dp]
+    tgt_tx1_y = data['vehicle']['target_relative']['tx1_qrx4']['x'][::dp]
+    tgt_tx2_x = -1 * data['vehicle']['target_relative']['tx2_qrx3']['y'][::dp]
+    tgt_tx2_y = data['vehicle']['target_relative']['tx2_qrx3']['x'][::dp]
+
+    L_tgt = data['vehicle']['target']['width']
+    L_ego = data['vehicle']['ego']['width']
 
     ego_qrx1_x = np.zeros(len(tgt_tx1_x))
-    ego_qrx1_y = np.zeros(len(tgt_tx1_x)) - vlc_obj.distancecar /2
+    ego_qrx1_y = np.zeros(len(tgt_tx1_x)) - L_ego / 2
     ego_qrx2_x = np.zeros(len(tgt_tx1_x))
-    ego_qrx2_y = np.zeros(len(tgt_tx1_x)) + vlc_obj.distancecar /2
+    ego_qrx2_y = np.zeros(len(tgt_tx1_x)) + L_ego / 2
+
+    # delay parameters
+    delay_11 = data['channel']['qrx1']['delay']['tx1'][::dp]
+    delay_12 = data['channel']['qrx1']['delay']['tx2'][::dp]
+    delay_21 = data['channel']['qrx2']['delay']['tx1'][::dp]
+    delay_22 = data['channel']['qrx2']['delay']['tx2'][::dp]
+
+    # received power of QRXes
+    pow_qrx1_tx1 = np.array([data['channel']['qrx1']['power']['tx1']['A'][::dp], data['channel']['qrx1']['power']['tx1']['B'][::dp],
+                             data['channel']['qrx1']['power']['tx1']['C'][::dp],
+                             data['channel']['qrx1']['power']['tx1']['D'][::dp]])
+    pow_qrx1_tx2 = np.array([data['channel']['qrx1']['power']['tx2']['A'][::dp], data['channel']['qrx1']['power']['tx2']['B'][::dp],
+                             data['channel']['qrx1']['power']['tx2']['C'][::dp],
+                             data['channel']['qrx1']['power']['tx2']['D'][::dp]])
+    pow_qrx2_tx1 = np.array([data['channel']['qrx2']['power']['tx1']['A'][::dp], data['channel']['qrx2']['power']['tx1']['B'][::dp],
+                             data['channel']['qrx2']['power']['tx1']['C'][::dp],
+                             data['channel']['qrx2']['power']['tx1']['D'][::dp]])
+    pow_qrx2_tx2 = np.array([data['channel']['qrx2']['power']['tx1']['A'][::dp], data['channel']['qrx2']['power']['tx1']['B'][::dp],
+                             data['channel']['qrx2']['power']['tx1']['C'][::dp],
+                             data['channel']['qrx2']['power']['tx1']['D'][::dp]])
+
+    # noise params
+    T = 298  # Kelvin
+    I_bg = 750e-6  # 750 uA
+    p_r_factor = data['qrx']['tia']['shot_P_r_factor']
+    i_bg_factor = data['qrx']['tia']['shot_I_bg_factor']
+    t_factor1 = data['qrx']['tia']['thermal_factor1']
+    t_factor2 = data['qrx']['tia']['thermal_factor1']
 
     ## In[2]:
     x, y, x_pose, y_pose, x_roberts, y_roberts, x_becha, y_becha = np.zeros((len(tgt_tx1_x), 2)), np.zeros((len(tgt_tx1_x),
@@ -154,35 +108,49 @@ for i in range(len(data_names)):
                                                                                                             2)), \
                                                                    np.zeros((len(tgt_tx1_x), 2)), np.zeros((len(tgt_tx1_x),
                                                                                                             2))
-
+    aoa = AoA(a_m=max_power, f_m1=signal_freq, f_m2=signal_freq, measure_dt=measure_dt, vehicle_dt=vehicle_dt,
+              w0=500, hbuf=1000, car_dist=L_tgt, fov=rx_fov)
+    rtof = RToF(a_m=max_power, f_m=signal_freq, measure_dt=5e-9, vehicle_dt=vehicle_dt, car_dist=L_tgt,
+                r=499, N=1, c=c)
+    tdoa = TDoA(a_m=max_power, f_m1=signal_freq, f_m2=signal_freq, measure_dt=measure_dt, vehicle_dt=vehicle_dt,
+                car_dist=L_tgt)
     for i in range(len(tgt_tx1_x)):
         # updating the given coordinates
         print("Iteration #", i, ": ")
-        vlc_obj.update_coords(
-            ((tgt_tx1_x[i], tgt_tx1_y[i]), (tgt_tx2_x[i], tgt_tx2_y[i])),
-            ((ego_qrx1_x[i], ego_qrx1_y[i]), (ego_qrx2_x[i], ego_qrx2_y[i])))
-        vlc_obj.update_lookuptable()
-        x[i] = vlc_obj.trxpos
-        y[i] = vlc_obj.trypos
-        vlc_obj.relative_heading = rel_hdg[i]
+        x[i] = (tgt_tx1_x[i], tgt_tx2_x[i])
+        y[i] = (tgt_tx1_y[i], tgt_tx2_y[i])
+
         # providing the environmentt to methods
-        aoa = Pose(vlc_obj)
-        rtof = RToF_pos(vlc_obj)
-        tdoa = Roberts(vlc_obj)
+        delays = np.array([[delay_11[i], delay_21[i]], [delay_12[i], delay_22[i]]])
+        H_q = np.array([[pow_qrx1_tx1[:, i], pow_qrx2_tx1[:, i]], [pow_qrx1_tx2[:, i], pow_qrx2_tx2[:, i]]])
+        H = np.array([[np.sum(pow_qrx1_tx1[:, i]), np.sum(pow_qrx2_tx1[:, i])],
+                     [np.sum(pow_qrx1_tx2[:, i]), np.sum(pow_qrx2_tx2[:, i])]])
+
+        p_r1, p_r2, p_r3, p_r4 = H[0][0], H[0][1], H[1][0], H[1][1]
+        noise_var1 = p_r1 * p_r_factor + I_bg * i_bg_factor + T * (t_factor1 + t_factor2)
+        noise_var2 = p_r2 * p_r_factor + I_bg * i_bg_factor + T * (t_factor1 + t_factor2)
+        noise_var3 = p_r3 * p_r_factor + I_bg * i_bg_factor + T * (t_factor1 + t_factor2)
+        noise_var4 = p_r4 * p_r_factor + I_bg * i_bg_factor + T * (t_factor1 + t_factor2)
+        noise_variance = np.array([[noise_var1,noise_var2], [noise_var3,noise_var4]])
+
+        #print("delays", delays)
+        #print("H", H)
+        #print("noise", noise_variance)
+
         # making estimations
-        tx_aoa = aoa.estimate()
+        tx_aoa = aoa.estimate(delays=delays, H_q=H_q, noise_variance=noise_variance)
         print("AoA finished")
-        tx_rtof = rtof.estimate()
+        tx_rtof = rtof.estimate(all_delays=delays, H=H, noise_variance=noise_variance)
         print("RToF finished")
-        tx_tdoa = tdoa.estimate()
+        tx_tdoa = tdoa.estimate(delays=delays, H=H, noise_variance=noise_variance)
         print("TDoA finished")
         # storing to plot later
         x_pose[i] = tx_aoa[0]
         y_pose[i] = tx_aoa[1]
         x_becha[i] = tx_rtof[0]
-        y_becha[i] = tx_rtof[1]
+        y_becha[i] = tx_rtof[1] - L_ego / 2
         x_roberts[i] = tx_tdoa[0]
-        y_roberts[i] = tx_tdoa[1]
+        y_roberts[i] = tx_tdoa[1] + L_ego / 2
     ## In[2]:
     y_data = np.copy(y)
     x_data = np.copy(x)

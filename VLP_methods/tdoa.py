@@ -1,9 +1,4 @@
-import numpy as np
-import scipy.signal as signal
-import matplotlib.pyplot as plt
-from VLP_methods.VLC_init import *
-import scipy.fftpack
-import cmath
+from cache.VLC_init import *
 
 """
 *: coordinate center of cari
@@ -20,32 +15,28 @@ import cmath
 """
 
 
-class Roberts:
-    def __init__(self, vlc_obj, a_m=20, f_m1=40000000, f_m2=25000000, dt=1e-8, noise_std=1e-5):
+class TDoA:
+
+    def __init__(self, a_m=2, f_m1=40000000, f_m2=25000000, measure_dt=1e-8, vehicle_dt=1e-3, car_dist=1.6):
         self.a_m = a_m
-        self.f_m1 = f_m1
-        self.f_m2 = f_m2
-        self.dt = 1e-8
-        self.t = np.arange(0, 1e-3-dt, dt)
+        self.dt = measure_dt
+        self.measure_period = vehicle_dt
         self.w1 = 2 * math.pi * f_m1
         self.w2 = 2 * math.pi * f_m2
-        self.noise_standard_deviation = noise_std
+        self.car_dist = car_dist
+        self.t = np.arange(0, vehicle_dt - self.dt, self.dt)
 
-        self.vlc_obj = vlc_obj
-        self.delta_delay1 = self.vlc_obj.delays[0][0] - self.vlc_obj.delays[0][1]
-        self.delta_delay2 = self.vlc_obj.delays[1][0] - self.vlc_obj.delays[1][1]
+    def estimate(self, delays, H, noise_variance):
 
-    def estimate(self):
-
-        delay1_measured, delay2_measured = self.measure_delay()
+        delay1_measured, delay2_measured = self.measure_delay(delays, H, noise_variance)
 
         # calculate distance differences using d(dist) = delay * c
         v = 3 * 1e8
         ddist1 = np.mean(delay1_measured) * v
         ddist2 = np.mean(delay2_measured) * v
 
-        Y_A = self.vlc_obj.distancecar
-        D = self.vlc_obj.distancecar
+        Y_A = self.car_dist
+        D = self.car_dist
 
         #calculate x,y position of the leading vehicle using eqs. in Robert's method
         if abs(ddist1) > 1e-4 and abs(ddist2) > 1e-4:
@@ -77,29 +68,31 @@ class Roberts:
 
 #         print("x: ", X_A)
 #         print("y: ", (0-Y_B))
-        return np.array([[X_A, X_A], [(0-Y_B), (0-Y_B) + 1]])
+        return np.array([[X_A, X_A], [(0-Y_B), (0-Y_B) + self.car_dist]])
 
-    def measure_delay(self):
+    def measure_delay(self, delays, H, noise_variance):
         # after going through ADC at receiver
-        s1_w1 = self.vlc_obj.H[0][0] * (
-                    self.a_m * np.cos(self.w1 * (self.t - self.delta_delay1)) + self.noise_standard_deviation * np.random.randn(1, len(self.t)))
-        s2_w1 = self.vlc_obj.H[0][1] * (self.a_m * np.cos(self.w1 * (self.t)) + self.noise_standard_deviation * np.random.randn(1, len(self.t)))
+        delta_delay1 = delays[0][0] - delays[0][1]
+        delta_delay2 = delays[1][0] - delays[1][1]
 
-        s1_w2 = self.vlc_obj.H[1][0] * (
-                    self.a_m * np.cos(self.w2 * (self.t - self.delta_delay2)) + self.noise_standard_deviation * np.random.randn(1, len(self.t)))
-        s2_w2 = self.vlc_obj.H[1][1] * (self.a_m * np.cos(self.w2 * (self.t)) + self.noise_standard_deviation * np.random.randn(1, len(self.t)))
+        s1_w1 = H[0][0] * self.a_m * np.cos(self.w1 * (self.t - delta_delay1)) + np.random.normal(0, math.sqrt(noise_variance[0][0]), len(self.t))
+        s2_w1 = H[0][1] * self.a_m * np.cos(self.w1 * (self.t)) + np.random.normal(0, math.sqrt(noise_variance[0][1]), len(self.t))
+
+        s1_w2 = H[1][0] * self.a_m * np.cos(self.w2 * (self.t - delta_delay2)) + np.random.normal(0, math.sqrt(noise_variance[1][0]), len(self.t))
+        s2_w2 = H[1][1] * self.a_m * np.cos(self.w2 * (self.t)) + np.random.normal(0, math.sqrt(noise_variance[1][1]), len(self.t))
 
         s1_w1_fft = np.fft.fft(s1_w1)
         s2_w1_fft = np.fft.fft(s2_w1)
-        s1_w1_fft[0, :len(s1_w1_fft[0]) // 2] = 0
-        s2_w1_fft[0, :len(s2_w1_fft[0]) // 2] = 0
+
+        s1_w1_fft[0:len(s1_w1_fft) // 2] = 0
+        s2_w1_fft[0:len(s2_w1_fft) // 2] = 0
         s1_w1_upperSideband = np.fft.ifft(s1_w1_fft)
         s2_w1_upperSideband = np.fft.ifft(s2_w1_fft)
 
         s1_w2_fft = np.fft.fft(s1_w2)
         s2_w2_fft = np.fft.fft(s2_w2)
-        s1_w2_fft[0, :len(s1_w2_fft[0]) // 2] = 0
-        s2_w2_fft[0, :len(s2_w2_fft[0]) // 2] = 0
+        s1_w2_fft[0:len(s1_w2_fft) // 2] = 0
+        s2_w2_fft[0:len(s2_w2_fft) // 2] = 0
         s1_w2_upperSideband = np.fft.ifft(s1_w2_fft)
         s2_w2_upperSideband = np.fft.ifft(s2_w2_fft)
 
