@@ -58,61 +58,86 @@ class AoA:
     def estimate(self, delays, H_q, noise_variance):
         delta_delay1 = delays[0][0] - delays[0][1]
         delta_delay2 = delays[1][0] - delays[1][1]
-        s1_w1 = np.cos(self.w1 * self.t)
+        s1_w1 = self.a_m * np.cos(self.w1 * self.t)
         #s1_w1 = s1_w1[:, np.newaxis]
-        s2_w2 = np.cos(self.w2 * self.t)
+        s2_w2 = self.a_m * np.cos(self.w2 * self.t)
         #s2_w2 = s2_w2[:, np.newaxis]
 
-        H = np.array([[np.sum(H_q[0][0]), np.sum(H_q[0][1])], [np.sum(H_q[1][0]), np.sum(H_q[1][1])]])
         # after going through ADC at receiver
-        r1_w1 = H[0][0] * np.cos(self.w1 * (self.t - delta_delay1)) + np.random.normal(0, math.sqrt(noise_variance[0][0]), len(self.t))
-        r2_w1 = H[1][0] * np.cos(self.w1 * self.t) + np.random.normal(0, math.sqrt(noise_variance[1][0]), len(self.t))
+        r1_w1_a = H_q[0][0][0] * np.cos(self.w1 * (self.t - delays[0][0])) + np.random.normal(0, math.sqrt(noise_variance[0][0][0]), len(self.t))
+        r1_w1_b = H_q[0][0][1] * np.cos(self.w1 * (self.t - delays[0][0])) + np.random.normal(0, math.sqrt(noise_variance[0][0][1]), len(self.t))
+        r1_w1_c = H_q[0][0][2] * np.cos(self.w1 * (self.t - delays[0][0])) + np.random.normal(0, math.sqrt(noise_variance[0][0][2]), len(self.t))
+        r1_w1_d = H_q[0][0][3] * np.cos(self.w1 * (self.t - delays[0][0])) + np.random.normal(0, math.sqrt(noise_variance[0][0][3]), len(self.t))
 
-        r1_w2 = H[0][1] * np.cos(self.w2 * (self.t - delta_delay2)) + np.random.normal(0, math.sqrt(noise_variance[0][1]), len(self.t))
-        r2_w2 = H[1][1] * np.cos(self.w2 * self.t) + np.random.normal(0, math.sqrt(noise_variance[1][1]), len(self.t))
+        r2_w1_a = H_q[0][1][0] * np.cos(self.w1 * (self.t - delays[0][1])) + np.random.normal(0, math.sqrt(
+            noise_variance[0][1][0]), len(self.t))
+        r2_w1_b = H_q[0][1][1] * np.cos(self.w1 * (self.t - delays[0][1])) + np.random.normal(0, math.sqrt(
+            noise_variance[0][1][1]), len(self.t))
+        r2_w1_c = H_q[0][1][2] * np.cos(self.w1 * (self.t- delays[0][1] )) + np.random.normal(0, math.sqrt(
+            noise_variance[0][1][2]), len(self.t))
+        r2_w1_d = H_q[0][1][3] * np.cos(self.w1 * (self.t - delays[0][1])) + np.random.normal(0, math.sqrt(
+            noise_variance[0][1][3]), len(self.t))
+
+        r1_w2_a = H_q[1][0][0] * np.cos(self.w2 * (self.t - delays[1][0])) + np.random.normal(0, math.sqrt(
+            noise_variance[1][0][0]), len(self.t))
+        r1_w2_b = H_q[1][0][1] * np.cos(self.w2 * (self.t - delays[1][0])) + np.random.normal(0, math.sqrt(
+            noise_variance[1][0][1]), len(self.t))
+        r1_w2_c = H_q[1][0][2] * np.cos(self.w2 * (self.t - delays[1][0])) + np.random.normal(0, math.sqrt(
+            noise_variance[1][0][2]), len(self.t))
+        r1_w2_d = H_q[1][0][3] * np.cos(self.w2 * (self.t - delays[1][0])) + np.random.normal(0, math.sqrt(
+            noise_variance[1][0][3]), len(self.t))
+
+        r2_w2_a = H_q[1][1][0] * np.cos(self.w2 * (self.t - delays[1][1])) + np.random.normal(0, math.sqrt(
+            noise_variance[1][1][0]), len(self.t))
+        r2_w2_b = H_q[1][1][1] * np.cos(self.w2 * (self.t - delays[1][1])) + np.random.normal(0, math.sqrt(
+            noise_variance[1][1][1]), len(self.t))
+        r2_w2_c = H_q[1][1][2] * np.cos(self.w2 * (self.t - delays[1][1])) + np.random.normal(0, math.sqrt(
+            noise_variance[1][1][2]), len(self.t))
+        r2_w2_d = H_q[1][1][3] * np.cos(self.w2 * (self.t - delays[1][1])) + np.random.normal(0, math.sqrt(
+            noise_variance[1][1][3]), len(self.t))
 
         eps_a_s1, eps_b_s1, eps_c_s1, eps_d_s1, phi_h_s1 = np.array([0., 0.]), np.array(
             [0., 0.]), np.array([0., 0.]), np.array([0., 0.]), np.array([0., 0.])
         eps_a_s2, eps_b_s2, eps_c_s2, eps_d_s2, phi_h_s2 = np.array([0., 0.]), np.array(
             [0., 0.]), np.array([0., 0.]), np.array([0., 0.]), np.array([0., 0.])
         theta_R_L = np.array([[0., 0.], [0., 0.]]).astype(float)
-        for w in range(self.w0, (self.w0 + self.hbuf - 1)):
-            # H_q * np.sum(np.dot(,)) TODO
-            eps_a_s1[0] += H_q[0][0][0] * r1_w1[w] * s1_w1[w]
-            eps_b_s1[0] += H_q[0][0][1] * r1_w1[w] * s1_w1[w]
-            eps_c_s1[0] += H_q[0][0][2] * r1_w1[w] * s1_w1[w]
-            eps_d_s1[0] += H_q[0][0][2] * r1_w1[w] * s1_w1[w]
-            eps_a_s1[1] += H_q[0][1][0] * r2_w1[w] * s1_w1[w]
-            eps_b_s1[1] += H_q[0][1][1] * r2_w1[w] * s1_w1[w]
-            eps_c_s1[1] += H_q[0][1][2] * r2_w1[w] * s1_w1[w]
-            eps_d_s1[1] += H_q[0][1][3] * r2_w1[w] * s1_w1[w]
 
-            eps_a_s2[0] += H_q[1][0][0] * r1_w2[w] * s2_w2[w]
-            eps_b_s2[0] += H_q[1][0][0] * r1_w2[w] * s2_w2[w]
-            eps_c_s2[0] += H_q[1][0][0] * r1_w2[w] * s2_w2[w]
-            eps_d_s2[0] += H_q[1][0][0] * r1_w2[w] * s2_w2[w]
-            eps_a_s2[1] += H_q[1][1][0] * r2_w2[w] * s2_w2[w]
-            eps_b_s2[1] += H_q[1][1][1] * r2_w2[w] * s2_w2[w]
-            eps_c_s2[1] += H_q[1][1][2] * r2_w2[w] * s2_w2[w]
-            eps_d_s2[1] += H_q[1][1][3] * r2_w2[w] * s2_w2[w]
+        print(self.t.shape)
+        print(self.dt)
+        print(r1_w1_a.shape)
+        print(s1_w1.shape)
+        print(np.dot(r1_w1_a[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf]).shape)
+        print(np.dot(r1_w1_a[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf]))
+        print(np.sum(np.dot(r1_w1_a[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf])))
+        print(np.sum(np.dot(r1_w1_a[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf])) / self.hbuf)
 
-        eps_a_s1[0] /= self.hbuf
-        eps_b_s1[0] /= self.hbuf
-        eps_c_s1[0] /= self.hbuf
-        eps_d_s1[0] /= self.hbuf
-        eps_a_s1[1] /= self.hbuf
-        eps_b_s1[1] /= self.hbuf
-        eps_c_s1[1] /= self.hbuf
-        eps_d_s1[1] /= self.hbuf
+        eps_a_s1[0] = np.sum(np.dot(r1_w1_a[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf])) / self.hbuf
+        eps_b_s1[0] = np.sum(np.dot(r1_w1_b[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf])) / self.hbuf
+        eps_c_s1[0] = np.sum(np.dot(r1_w1_c[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf])) / self.hbuf
+        eps_d_s1[0] = np.sum(np.dot(r1_w1_d[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf])) / self.hbuf
+        eps_a_s1[1] = np.sum(np.dot(r2_w1_a[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf])) / self.hbuf
+        eps_b_s1[1] = np.sum(np.dot(r2_w1_b[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf])) / self.hbuf
+        eps_c_s1[1] = np.sum(np.dot(r2_w1_c[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf])) / self.hbuf
+        eps_d_s1[1] = np.sum(np.dot(r2_w1_d[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf])) / self.hbuf
 
-        eps_a_s2[0] /= self.hbuf
-        eps_b_s2[0] /= self.hbuf
-        eps_c_s2[0] /= self.hbuf
-        eps_d_s2[0] /= self.hbuf
-        eps_a_s2[1] /= self.hbuf
-        eps_b_s2[1] /= self.hbuf
-        eps_c_s2[1] /= self.hbuf
-        eps_d_s2[1] /= self.hbuf
+        eps_a_s2[0] = np.sum(np.dot(r1_w2_a[self.w0: self.w0 + self.hbuf], s2_w2[self.w0: self.w0 + self.hbuf])) / self.hbuf
+        eps_b_s2[0] = np.sum(np.dot(r1_w2_b[self.w0: self.w0 + self.hbuf], s2_w2[self.w0: self.w0 + self.hbuf])) / self.hbuf
+        eps_c_s2[0] = np.sum(np.dot(r1_w2_c[self.w0: self.w0 + self.hbuf], s2_w2[self.w0: self.w0 + self.hbuf])) / self.hbuf
+        eps_d_s2[0] = np.sum(np.dot(r1_w2_d[self.w0: self.w0 + self.hbuf], s2_w2[self.w0: self.w0 + self.hbuf])) / self.hbuf
+        eps_a_s2[1] = np.sum(np.dot(r2_w2_a[self.w0: self.w0 + self.hbuf], s2_w2[self.w0: self.w0 + self.hbuf])) / self.hbuf
+        eps_b_s2[1] = np.sum(np.dot(r2_w2_b[self.w0: self.w0 + self.hbuf], s2_w2[self.w0: self.w0 + self.hbuf])) / self.hbuf
+        eps_c_s2[1] = np.sum(np.dot(r2_w2_c[self.w0: self.w0 + self.hbuf], s2_w2[self.w0: self.w0 + self.hbuf])) / self.hbuf
+        eps_d_s2[1] = np.sum(np.dot(r2_w2_d[self.w0: self.w0 + self.hbuf], s2_w2[self.w0: self.w0 + self.hbuf])) / self.hbuf
+
+        print(eps_a_s1)
+        print(eps_a_s2)
+        print(eps_b_s1)
+        print(eps_b_s2)
+        print(eps_c_s1)
+        print(eps_c_s2)
+        print(eps_d_s1)
+        print(eps_d_s2)
+
 
         phi_h_s1[0] = ((eps_b_s1[0] + eps_d_s1[0]) - (eps_a_s1[0] + eps_c_s1[0])) / (
                 eps_a_s1[0] + eps_b_s1[0] + eps_c_s1[0] + eps_d_s1[0])
@@ -127,17 +152,19 @@ class AoA:
         theta_R_L[0][1] = translate(phi_h_s1[1], -1, 1, (-1 * self.e_angle), self.e_angle)
         theta_R_L[1][0] = translate(phi_h_s2[0], -1, 1, (-1 * self.e_angle), self.e_angle)
         theta_R_L[1][1] = translate(phi_h_s2[1], -1, 1, (-1 * self.e_angle), self.e_angle)
-
+        print(theta_R_L)
         # %%
 
-        diff_1 = theta_R_L[0][1] - theta_R_L[0][0]
-        t_x_1 = self.car_dist * ((self.car_dist/2) + (math.sin(theta_R_L[0][0]) * math.cos(theta_R_L[0][1])) / (math.sin(diff_1)))
-        t_y_1 = self.car_dist * ( (math.cos(theta_R_L[0][0]) * math.cos(theta_R_L[0][1])) / (math.sin(diff_1)))
+        diff_1 = theta_R_L[0][0] - theta_R_L[0][1]
+        t_x_1 = self.car_dist * (1 + (math.sin(theta_R_L[0][1]) * math.cos(theta_R_L[0][0])) / (math.sin(diff_1)))
+        t_y_1 = self.car_dist * ( (math.cos(theta_R_L[0][1]) * math.cos(theta_R_L[0][0])) / (math.sin(diff_1)))
         # print("Transmitter-1 x pos is : ", self.t_x_1, ", y pos is : ", self.t_y_1)
 
-        diff_2 = theta_R_L[1][1] - theta_R_L[1][0]
-        t_x_2 = self.car_dist * ((self.car_dist/2) + (math.sin(theta_R_L[1][0]) * math.cos(theta_R_L[1][1])) / (math.sin(diff_2)))
-        t_y_2 = self.car_dist * ((math.cos(theta_R_L[1][0]) * math.cos(theta_R_L[1][1])) / (math.sin(diff_2)))
+        diff_2 = theta_R_L[1][0] - theta_R_L[1][1]
+        t_x_2 = self.car_dist * (1 + (math.sin(theta_R_L[1][1]) * math.cos(theta_R_L[1][0])) / (math.sin(diff_2)))
+        t_y_2 = self.car_dist * ((math.cos(theta_R_L[1][1]) * math.cos(theta_R_L[1][0])) / (math.sin(diff_2)))
+        print(t_x_1, t_x_2, t_y_1, t_y_2)
+        exit(0)
         # print("Transmitter-2 x pos is : ", self.t_x_2, ", y pos is : ", self.t_y_2)
         # %%
         # Error calc
