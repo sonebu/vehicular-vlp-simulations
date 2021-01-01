@@ -46,7 +46,7 @@ for i in range(len(data_names)):
     area = data['qrx']['f_QRX']['params']['area']
     rx_radius = math.sqrt(area) / math.pi
     c = 3e8
-    rx_fov = 50  # angle
+    rx_fov = 80  # angle
     tx_half_angle = 60  # angle
     signal_freq = 1e6
     measure_dt = 1 / 2.5e6  # 2.5 MHz measure frequency
@@ -58,18 +58,18 @@ for i in range(len(data_names)):
 
     rel_hdg = data['vehicle']['target_relative']['heading'][::dp]
 
-    tgt_tx1_x = -1 * data['vehicle']['target_relative']['tx1_qrx4']['y'][::dp]
-    tgt_tx1_y = data['vehicle']['target_relative']['tx1_qrx4']['x'][::dp]
-    tgt_tx2_x = -1 * data['vehicle']['target_relative']['tx2_qrx3']['y'][::dp]
-    tgt_tx2_y = data['vehicle']['target_relative']['tx2_qrx3']['x'][::dp]
-
     L_tgt = data['vehicle']['target']['width']
     L_ego = data['vehicle']['ego']['width']
 
+    tgt_tx1_x = -1 * data['vehicle']['target_relative']['tx1_qrx4']['y'][::dp]
+    tgt_tx1_y = data['vehicle']['target_relative']['tx1_qrx4']['x'][::dp] - L_ego / 2
+    tgt_tx2_x = -1 * data['vehicle']['target_relative']['tx2_qrx3']['y'][::dp]
+    tgt_tx2_y = data['vehicle']['target_relative']['tx2_qrx3']['x'][::dp] - L_ego / 2
+
     ego_qrx1_x = np.zeros(len(tgt_tx1_x))
-    ego_qrx1_y = np.zeros(len(tgt_tx1_x)) - L_ego / 2
+    ego_qrx1_y = np.zeros(len(tgt_tx1_x)) # - L_ego / 2
     ego_qrx2_x = np.zeros(len(tgt_tx1_x))
-    ego_qrx2_y = np.zeros(len(tgt_tx1_x)) + L_ego / 2
+    ego_qrx2_y = np.zeros(len(tgt_tx1_x)) + L_ego  # / 2
 
     # delay parameters
     delay_11 = data['channel']['qrx1']['delay']['tx1'][::dp]
@@ -148,9 +148,9 @@ for i in range(len(data_names)):
         x_pose[i] = tx_aoa[0]
         y_pose[i] = tx_aoa[1]
         x_becha[i] = tx_rtof[0]
-        y_becha[i] = tx_rtof[1] - L_ego / 2
+        y_becha[i] = tx_rtof[1]   - L_ego / 2
         x_roberts[i] = tx_tdoa[0]
-        y_roberts[i] = tx_tdoa[1] + L_ego / 2
+        y_roberts[i] = tx_tdoa[1]   - L_ego / 2
     ## In[2]:
     y_data = np.copy(y)
     x_data = np.copy(x)

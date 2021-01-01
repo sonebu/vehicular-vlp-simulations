@@ -17,7 +17,7 @@ from cache.VLC_init import *
 
 class TDoA:
 
-    def __init__(self, a_m=2, f_m1=40000000, f_m2=25000000, measure_dt=1e-8, vehicle_dt=1e-3, car_dist=1.6):
+    def __init__(self, a_m=2, f_m1=40000000, f_m2=25000000, measure_dt=1e-8, vehicle_dt=1e-3, car_dist=1.6, c=3e8):
         self.a_m = a_m
         self.dt = measure_dt
         self.measure_period = vehicle_dt
@@ -25,13 +25,14 @@ class TDoA:
         self.w2 = 2 * math.pi * f_m2
         self.car_dist = car_dist
         self.t = np.arange(0, vehicle_dt - self.dt, self.dt)
+        self.c = c
 
     def estimate(self, delays, H, noise_variance):
 
         delay1_measured, delay2_measured = self.measure_delay(delays, H, noise_variance)
 
         # calculate distance differences using d(dist) = delay * c
-        v = 3 * 1e8
+        v = self.c
         ddist1 = np.mean(delay1_measured) * v
         ddist2 = np.mean(delay2_measured) * v
 
