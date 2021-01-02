@@ -79,7 +79,7 @@ for i in range(len(sm)):
         ax1.set_ylim(-5, 9)
     elif fl_name == '/1/':
         ax1.set_xlim(-9, 1)
-        ax1.set_ylim(-3, 3)
+        ax1.set_ylim(-5, 3)
     ax1.grid()
     green_patch = mpatches.Patch(color='green', label='Target Vehicle')
     red_patch = mpatches.Patch(color='red', label='Ego Vehicle')

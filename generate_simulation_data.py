@@ -135,7 +135,6 @@ for i in range(len(data_names)):
         noise_var4 = p_r4 * p_r_factor + remaining_factor
         noise_variance = np.array([[noise_var1, noise_var2], [noise_var3, noise_var4]])
 
-        H_q[0][0][0]
         rem_fact_soner = I_bg * i_bg_factor + T * (t_factor1 + t_factor2 / 16)
         noise_var1_soner = np.array([H_q[0][0][0] * p_r_factor + rem_fact_soner, H_q[0][0][1] * p_r_factor + rem_fact_soner,
                                H_q[0][0][2] * p_r_factor + rem_fact_soner, H_q[0][0][3] * p_r_factor + rem_fact_soner])
