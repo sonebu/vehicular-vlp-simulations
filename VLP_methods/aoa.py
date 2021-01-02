@@ -156,12 +156,12 @@ class AoA:
         phi_h_s2[1] = ((eps_b_s2[1] + eps_d_s2[1]) - (eps_a_s2[1] + eps_c_s2[1])) / (
                 eps_a_s2[1] + eps_b_s2[1] + eps_c_s2[1] + eps_d_s2[1])
 
-        theta_l_r[0][0] = self.transfer_function(phi_h_s1[0])
-        theta_l_r[0][1] = self.transfer_function(phi_h_s1[1])
-        theta_l_r[1][0] = self.transfer_function(phi_h_s2[0])
-        theta_l_r[1][1] = self.transfer_function(phi_h_s2[1])
+        theta_l_r[0][0] = self.transfer_function(phi_h_s1[0]) * np.pi / 180
+        theta_l_r[0][1] = self.transfer_function(phi_h_s1[1]) * np.pi / 180
+        theta_l_r[1][0] = self.transfer_function(phi_h_s2[0]) * np.pi / 180
+        theta_l_r[1][1] = self.transfer_function(phi_h_s2[1]) * np.pi / 180
 
-        print(theta_l_r)
+        #print(theta_l_r)
         # %%
 
         diff_1 = theta_l_r[0][0] - theta_l_r[0][1]
@@ -206,10 +206,10 @@ class AoA:
 
     def change_cords(self, txpos):
         t_tx_pos = np.copy(txpos)
-        t_tx_pos[0][0] = txpos[0][1]
-        t_tx_pos[1][0] = (-1 * txpos[0][0])
-        t_tx_pos[0][1] = txpos[1][1]
-        t_tx_pos[1][1] = (-1 * txpos[1][0])
+        t_tx_pos[0][0] = -txpos[0][1]
+        t_tx_pos[1][0] = txpos[0][0]
+        t_tx_pos[0][1] = -txpos[1][1]
+        t_tx_pos[1][1] = txpos[1][0]
         return t_tx_pos
 
 # %%
