@@ -70,23 +70,23 @@ def rec_func(data, n):
         if isinstance(data[k], dict):
             rec_func(data[k], n + 1)
 
-data = load_mat('../SimulationData/v2lcRun_sm3_comparisonSoA.mat')
+#data = load_mat('../SimulationData/v2lcRun_sm3_comparisonSoA.mat')
 #data = load_mat('VLP_methods/aoa_transfer_function.mat')
-rec_func(data, 0)
+#rec_func(data, 0)
 #print(data['breaks'])
 #print(data['coefs'])
 #print('ego vehicle front x: ',data['vehicle']['ego']['front_center']['x'][0], ' y:',data['vehicle']['ego']['front_center']['y'][0])
-print('ego vehicle qrx1 x:', data['vehicle']['ego']['tx4_qrx1']['x'][0], ' y:', data['vehicle']['ego']['tx4_qrx1']['y'][0])
-print('ego vehicle qrx2 x:', data['vehicle']['ego']['tx3_qrx2']['x'][0], ' y:', data['vehicle']['ego']['tx3_qrx2']['y'][0])
+#print('ego vehicle qrx1 x:', data['vehicle']['ego']['tx4_qrx1']['x'][0], ' y:', data['vehicle']['ego']['tx4_qrx1']['y'][0])
+#print('ego vehicle qrx2 x:', data['vehicle']['ego']['tx3_qrx2']['x'][0], ' y:', data['vehicle']['ego']['tx3_qrx2']['y'][0])
 
 
-print('target vehicle tx1 x:', data['vehicle']['target']['tx1_qrx4']['x'][0], ' y:', data['vehicle']['target']['tx1_qrx4']['y'][0])
-print('target vehicle relative tx1 x:', data['vehicle']['target_relative']['tx1_qrx4']['x'][0], 'y:',data['vehicle']['target_relative']['tx1_qrx4']['y'][0])
+#print('target vehicle tx1 x:', data['vehicle']['target']['tx1_qrx4']['x'][0], ' y:', data['vehicle']['target']['tx1_qrx4']['y'][0])
+#print('target vehicle relative tx1 x:', data['vehicle']['target_relative']['tx1_qrx4']['x'][0], 'y:',data['vehicle']['target_relative']['tx1_qrx4']['y'][0])
 
-print('target vehicle tx2 x:',data['vehicle']['target']['tx2_qrx3']['x'][0], 'y:',data['vehicle']['target']['tx2_qrx3']['y'][0])
-print('target vehicle relative tx2 x:',data['vehicle']['target_relative']['tx2_qrx3']['x'][0] , 'y:' , data['vehicle']['target_relative']['tx2_qrx3']['y'][0] )
-print(data['vehicle']['target']['tx2_qrx3']['x'][0]-data['vehicle']['ego']['tx4_qrx1']['x'][0])
-print(data['vehicle']['target']['tx2_qrx3']['y'][0]-data['vehicle']['ego']['tx4_qrx1']['y'][0])
+#print('target vehicle tx2 x:',data['vehicle']['target']['tx2_qrx3']['x'][0], 'y:',data['vehicle']['target']['tx2_qrx3']['y'][0])
+#print('target vehicle relative tx2 x:',data['vehicle']['target_relative']['tx2_qrx3']['x'][0] , 'y:' , data['vehicle']['target_relative']['tx2_qrx3']['y'][0] )
+#print(data['vehicle']['target']['tx2_qrx3']['x'][0]-data['vehicle']['ego']['tx4_qrx1']['x'][0])
+#print(data['vehicle']['target']['tx2_qrx3']['y'][0]-data['vehicle']['ego']['tx4_qrx1']['y'][0])
 
 #print('ego vehicle front x: ',data['vehicle']['ego']['front_center']['x'][0], ' y:',data['vehicle']['ego']['front_center']['y'][1])
 #print('ego vehicle qrx1 x:', data['vehicle']['ego']['tx4_qrx1']['x'][0], ' y:', data['vehicle']['ego']['tx4_qrx1']['y'][1])
