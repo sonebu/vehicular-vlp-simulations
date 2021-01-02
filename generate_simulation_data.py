@@ -62,14 +62,14 @@ for i in range(len(data_names)):
     L_ego = data['vehicle']['ego']['width']
 
     tgt_tx1_x = -1 * data['vehicle']['target_relative']['tx1_qrx4']['y'][::dp]
-    tgt_tx1_y = data['vehicle']['target_relative']['tx1_qrx4']['x'][::dp] #+ L_ego / 2
+    tgt_tx1_y = data['vehicle']['target_relative']['tx1_qrx4']['x'][::dp]
     tgt_tx2_x = -1 * data['vehicle']['target_relative']['tx2_qrx3']['y'][::dp]
-    tgt_tx2_y = data['vehicle']['target_relative']['tx2_qrx3']['x'][::dp] #+ L_ego / 2
+    tgt_tx2_y = data['vehicle']['target_relative']['tx2_qrx3']['x'][::dp]
 
     ego_qrx1_x = np.zeros(len(tgt_tx1_x))
-    ego_qrx1_y = np.zeros(len(tgt_tx1_x))  - L_ego / 2
+    ego_qrx1_y = np.zeros(len(tgt_tx1_x))
     ego_qrx2_x = np.zeros(len(tgt_tx1_x))
-    ego_qrx2_y = np.zeros(len(tgt_tx1_x)) + L_ego  / 2
+    ego_qrx2_y = np.zeros(len(tgt_tx1_x)) + L_ego
 
     # delay parameters
     delay_11 = data['channel']['qrx1']['delay']['tx1'][::dp]
@@ -135,7 +135,7 @@ for i in range(len(data_names)):
         noise_var4 = p_r4 * p_r_factor + remaining_factor
         noise_variance = np.array([[noise_var1, noise_var2], [noise_var3, noise_var4]])
 
-        noise_variance = np.array([[0.0, 0.0], [0.0, 0.0]])
+        # noise_variance = np.array([[0.0, 0.0], [0.0, 0.0]])
         rem_fact_soner = I_bg * i_bg_factor + T * (t_factor1 + t_factor2 / 16)
         noise_var1_soner = np.array([H_q[0][0][0] * p_r_factor + rem_fact_soner, H_q[0][0][1] * p_r_factor + rem_fact_soner,
                                H_q[0][0][2] * p_r_factor + rem_fact_soner, H_q[0][0][3] * p_r_factor + rem_fact_soner])
@@ -146,7 +146,7 @@ for i in range(len(data_names)):
         noise_var4_soner = np.array([H_q[1][1][0] * p_r_factor + rem_fact_soner, H_q[1][1][1] * p_r_factor + rem_fact_soner,
                                H_q[1][1][2] * p_r_factor + rem_fact_soner, H_q[1][1][3] * p_r_factor + rem_fact_soner])
         noise_variance_soner = np.array([[noise_var1_soner, noise_var2_soner], [noise_var3_soner, noise_var4_soner]])
-        noise_variance_soner = np.array([[[0.0,0.0,0.0,0.0], [0.0,0.0,0.0,0.0]], [[0.0,0.0,0.0,0.0], [0.0,0.0,0.0,0.0]]])
+        # noise_variance_soner = np.array([[[0.0,0.0,0.0,0.0], [0.0,0.0,0.0,0.0]], [[0.0,0.0,0.0,0.0], [0.0,0.0,0.0,0.0]]])
         #print("delays", delays)
         #print("H", H)
         #print("noise", noise_variance)
@@ -162,9 +162,9 @@ for i in range(len(data_names)):
         x_pose[i] = tx_aoa[0]
         y_pose[i] = tx_aoa[1]
         x_becha[i] = tx_rtof[0]
-        y_becha[i] = tx_rtof[1]  # - L_ego / 2
+        y_becha[i] = tx_rtof[1]
         x_roberts[i] = tx_tdoa[0]
-        y_roberts[i] = tx_tdoa[1] #  - L_ego / 2
+        y_roberts[i] = tx_tdoa[1]
     ## In[2]:
     y_data = np.copy(y)
     x_data = np.copy(x)
