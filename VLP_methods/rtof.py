@@ -1,5 +1,9 @@
 import scipy.signal as signal
 from cache.VLC_init import *
+from functools import lru_cache
+import numpy as np
+import numba
+
 # import module
 
 """
@@ -40,17 +44,12 @@ class RToF:
         s_h = signal.square(2 * np.pi * f * (r / (r + 1)) * t)
 
         return s_e, s_r, s_h
-
+    @numba.jit(fastmath=True, parallel=True)
     def estimate_dist(self, s_e, s_r, s_h, f, r, N, dt, t):
         #print("f:", f, "r:", r, "N:", N,"dt:",dt)
         s_gate = (signal.square(2 * np.pi * (f / (N * (r + 1))) * t) > 0)
         s_clk = np.zeros(np.size(t))
         s_clk[np.arange(1, np.size(s_clk), 2)] = 1
-
-        s_eh = np.zeros(np.size(t))
-        s_rh = {1: np.zeros(np.size(t)), 2: np.zeros(np.size(t))}
-        s_phi = {1: np.zeros(np.size(t)), 2: np.zeros(np.size(t))}
-        s_phi_h = {1: np.zeros(np.size(t)), 2: np.zeros(np.size(t))}
         s_phi_hh = {1: np.zeros(np.size(t)), 2: np.zeros(np.size(t))}
 
         s_eh_state = 0
@@ -59,9 +58,14 @@ class RToF:
         counts = {1: [], 2: []}
         M = {1: 0, 2: 0}
 
+        s_h_diff = np.diff(s_h)
+        # s_eh_states = [1 if i == 2 and j > 0 else 0 for i, j in zip(s_h_diff, s_e[1:])]
+        #
+        # s_rh_states = {1: [1 if i == 2 and j > 0 else 0 for i, j in zip(s_h_diff, s_r[1][1:])],
+        #                 2: [1 if i == 2 and j > 0 else 0 for i, j in zip(s_h_diff, s_r[2][1:])]}
         for i in range(1, np.size(t)):
 
-            if s_h[i] - s_h[i - 1] == 2:
+            if s_h_diff[i-1] == 2:
 
                 if s_e[i] > 0:
                     s_eh_state = 1
@@ -78,18 +82,8 @@ class RToF:
                 else:
                     s_rh_state[2] = 0
 
-            s_eh[i] = s_eh_state
-            s_rh[1][i] = s_rh_state[1]
-            s_rh[2][i] = s_rh_state[2]
-
-            s_phi[1][i] = np.logical_xor(s_eh_state, s_rh_state[1])
-            s_phi[2][i] = np.logical_xor(s_eh_state, s_rh_state[2])
-
-            s_phi_h[1][i] = s_phi[1][i] * s_gate[i]
-            s_phi_h[2][i] = s_phi[2][i] * s_gate[i]
-
-            s_phi_hh[1][i] = s_phi_h[1][i] * s_clk[i]
-            s_phi_hh[2][i] = s_phi_h[2][i] * s_clk[i]
+            s_phi_hh[1][i] = np.logical_xor(s_eh_state, s_rh_state[1]) * s_gate[i] * s_clk[i]
+            s_phi_hh[2][i] = np.logical_xor(s_eh_state, s_rh_state[2]) * s_gate[i] * s_clk[i]
 
             if s_gate[i] == 1:
                 if s_phi_hh[1][i] == 1:
@@ -126,7 +120,7 @@ class RToF:
         x = -np.sqrt(d2**2 - y**2)
 
         return x, y
-
+    @numba.jit(fastmath=True, parallel=True)
     def estimate(self, all_delays, H, noise_variance):
         
         delay1 = all_delays[0][0] * 2
