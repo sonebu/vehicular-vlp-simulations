@@ -57,18 +57,22 @@ class TDoA:
                 Y_B = (- B - math.sqrt(B ** 2 - 4 * A * C)) / (2 * A)
             else:
                 Y_B = (- B + math.sqrt(B ** 2 - 4 * A * C)) / (2 * A)
+            if ((Y_A ** 2 - 2 * Y_A * Y_B - ddist2 ** 2) / (2 * ddist2)) ** 2 - (Y_B ** 2) < 0:
+                # since assumes parallel, fails to find close delays -> negative in srqt
+                return np.array([[float('NaN'), float('NaN')], [float('NaN'), float('NaN')]])
             X_A = - math.sqrt(((Y_A ** 2 - 2 * Y_A * Y_B - ddist2 ** 2) / (2 * ddist2)) ** 2 - (Y_B ** 2))
         elif abs(ddist1) <= 1e-4:
-            #print("entered to elif")
             Y_B = Y_A / 2 - D
+            if ((2 * D * Y_A - ddist2 ** 2) / (2 - ddist2)) ** 2 - (D - Y_A / 2) ** 2 < 0:
+                # since assumes parallel, fails to find close delays -> negative in srqt
+                return np.array([[float('NaN'), float('NaN')], [float('NaN'), float('NaN')]])
             X_A = - math.sqrt(((2 * D * Y_A - ddist2 ** 2) / (2 - ddist2)) ** 2 - (D - Y_A / 2) ** 2)
         else:
-            #print("entered to else")
             Y_B = Y_A / 2
+            if ((2 * Y_A * D + ddist1 ** 2) / (2 * ddist1)) ** 2 - (D + Y_A / 2) ** 2 < 0:
+                # since assumes parallel, fails to find close delays -> negative in srqt
+                return np.array([[float('NaN'), float('NaN')], [float('NaN'), float('NaN')]])
             X_A = - math.sqrt(((2 * Y_A * D + ddist1 ** 2) / (2 * ddist1)) ** 2 - (D + Y_A / 2) ** 2)
-
-#         print("x: ", X_A)
-#         print("y: ", (0-Y_B))
         return np.array([[X_A, X_A], [(0-Y_B), (0-Y_B) + self.car_dist]])
 
     def measure_delay(self, delays, H, noise_variance):
@@ -102,24 +106,6 @@ class TDoA:
 
         direct_mix2 = np.multiply(s1_w2_upperSideband, s2_w2_upperSideband.conj())
         delay2_measured = np.angle(direct_mix2) / self.w2
-
-        #plt.figure()
-        ## plt.xlim(20, 90000)
-        ## plt.ylim(0.95e-9, 0.955e-9)
-        #plt.plot(delay1_measured[0])
-        #plt.plot([0, len(delay1_measured[0]) - 1], [self.delta_delay1, self.delta_delay1], color="red")
-        #plt.show()
-
-        #plt.figure()
-        #plt.plot(delay2_measured[0])
-        #plt.plot([0, len(delay2_measured[0]) - 1], [self.delta_delay2, self.delta_delay2], color="red")
-        #plt.show()
-
-        #print(self.delta_delay1)
-        #print(np.mean(delay1_measured))
-
-        #print(self.delta_delay2)
-        #print(np.mean(delay2_measured))
 
         return delay1_measured, delay2_measured
 
