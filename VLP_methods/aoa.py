@@ -165,13 +165,13 @@ class AoA:
         # %%
 
         diff_1 = theta_l_r[0][0] - theta_l_r[0][1]
-        t_x_1 = self.car_dist * (1 + (math.sin(theta_l_r[0][1]) * math.cos(theta_l_r[0][0])) / (math.sin(diff_1)))
-        t_y_1 = self.car_dist * ((math.cos(theta_l_r[0][1]) * math.cos(theta_l_r[0][0])) / (math.sin(diff_1)))
+        t_x_1 = self.car_dist * (1 + (math.sin(theta_l_r[0][1]) * math.cos(theta_l_r[0][0])) / (math.sin(diff_1))) if math.sin(diff_1) != 0 else None
+        t_y_1 = self.car_dist * ((math.cos(theta_l_r[0][1]) * math.cos(theta_l_r[0][0])) / (math.sin(diff_1))) if math.sin(diff_1) != 0 else None
         # print("Transmitter-1 x pos is : ", self.t_x_1, ", y pos is : ", self.t_y_1)
 
         diff_2 = theta_l_r[1][0] - theta_l_r[1][1]
-        t_x_2 = self.car_dist * (1 + (math.sin(theta_l_r[1][1]) * math.cos(theta_l_r[1][0])) / (math.sin(diff_2)))
-        t_y_2 = self.car_dist * ((math.cos(theta_l_r[1][1]) * math.cos(theta_l_r[1][0])) / (math.sin(diff_2)))
+        t_x_2 = self.car_dist * (1 + (math.sin(theta_l_r[1][1]) * math.cos(theta_l_r[1][0])) / (math.sin(diff_2))) if math.sin(diff_2) != 0 else None
+        t_y_2 = self.car_dist * ((math.cos(theta_l_r[1][1]) * math.cos(theta_l_r[1][0])) / (math.sin(diff_2))) if math.sin(diff_2) != 0 else None
         # print(t_x_1, t_x_2, t_y_1, t_y_2)
         # exit(0)
         # print("Transmitter-2 x pos is : ", self.t_x_2, ", y pos is : ", self.t_y_2)
