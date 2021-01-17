@@ -1,12 +1,27 @@
+### BS: my virtualenv doesn't have tkinter, so a basic check.
+###     from: https://stackoverflow.com/questions/1871549/determine-if-python-is-running-inside-virtualenv
+import sys
+
+def get_base_prefix_compat():
+    """Get base/real prefix, or sys.prefix if there is none."""
+    return getattr(sys, "base_prefix", None) or getattr(sys, "real_prefix", None) or sys.prefix
+
+def in_virtualenv():
+    return get_base_prefix_compat() != sys.prefix
+
+
 import numpy as np
 import matplotlib
-matplotlib.use('TkAgg')
+
+### BS: my virtualenv doesn't have tkinter, so a basic check.
+if not in_virtualenv:
+    matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from scipy import ndimage
 
-sm = [1, 2, 3]
+sm = [3]
 for i in range(len(sm)):
 
     if sm[i] == 3:

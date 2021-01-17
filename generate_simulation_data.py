@@ -16,8 +16,8 @@ import math
 # 'v2lcRun_sm2_platoonFormExit'
 # 'v2lcRun_sm3_comparisonSoA'
 
-data_names = ['v2lcRun_sm2_platoonFormExit']  # ['v2lcRun_sm1_laneChange', 'v2lcRun_sm2_platoonFormExit', 'v2lcRun_sm3_comparisonSoA']
-folder_names = ['2/']  # ['1/', '2/', '3/']
+data_names = ['v2lcRun_sm3_comparisonSoA']  # ['v2lcRun_sm1_laneChange', 'v2lcRun_sm2_platoonFormExit', 'v2lcRun_sm3_comparisonSoA']
+folder_names = ['3/']  # ['1/', '2/', '3/']
 # data_name = sys.argv[1]
 #print(data_name)
 
@@ -26,8 +26,8 @@ for i in range(len(data_names)):
     data_dir = 'SimulationData/' + data_name + '.mat'
     data = loadmat(data_dir)
     folder_name = folder_names[i]
-    dp = 1
-    data_point = '1000_point/'
+    dp = 10
+    data_point = '100_point/'
     import cProfile, pstats
     profiler = cProfile.Profile()
     profiler.enable()
@@ -83,8 +83,8 @@ for i in range(len(data_names)):
                              data['channel']['qrx2']['power']['tx1']['D'][::dp]])
 
     # noise params
-    T = 298  # Kelvin
-    I_bg = 750e-6  # 750 uA
+    T = 0; #298  # Kelvin
+    I_bg = 0; #750e-6  # 750 uA
     p_r_factor = data['qrx']['tia']['shot_P_r_factor']
     i_bg_factor = data['qrx']['tia']['shot_I_bg_factor']
     t_factor1 = data['qrx']['tia']['thermal_factor1']
