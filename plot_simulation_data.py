@@ -1,6 +1,7 @@
 ### BS: my virtualenv doesn't have tkinter, so a basic check.
 ###     from: https://stackoverflow.com/questions/1871549/determine-if-python-is-running-inside-virtualenv
 import sys
+from glob import glob
 
 def get_base_prefix_compat():
     """Get base/real prefix, or sys.prefix if there is none."""
@@ -21,34 +22,47 @@ import matplotlib.patches as mpatches
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from scipy import ndimage
 
-sm = [3]
+sm = [1,2,3]
+dir = 'GUI_data/100_point_'
+
 for i in range(len(sm)):
 
     if sm[i] == 3:
         input_name = 'v2lcRun_sm3_comparisonSoA'
         fl_name = '/3/'
+        files = glob(dir + '*/3/')
     elif sm[i] == 2:
         input_name = 'v2lcRun_sm2_platoonFormExit'
         fl_name = '/2/'
-
+        files = glob(dir + '*/2/')
     elif sm[i] == 1:
         input_name = 'v2lcRun_sm1_laneChange'
         fl_name = '/1/'
+        files = glob(dir + '*/1/')
 
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(20, 20))
+    x_pose, y_pose = np.empty((100,2)), np.empty((100,2))
+    x_becha, y_becha = np.empty((100,2)), np.empty((100,2))
+    x_roberts, y_roberts = np.empty((100,2)), np.empty((100,2))
+    print(len(files))
+    for folder_name in files:
 
-    folder_name = 'GUI_data/100_point/' + fl_name
-    x, y = np.loadtxt(folder_name+'x.txt', delimiter=','), np.loadtxt(folder_name+'y.txt', delimiter=',')
-    x_pose, y_pose = np.loadtxt(folder_name+'x_pose.txt', delimiter=','), np.loadtxt(folder_name+'y_pose.txt', delimiter=',')
-    x_becha, y_becha = np.loadtxt(folder_name+'x_becha.txt', delimiter=','), np.loadtxt(folder_name+'y_becha.txt',
-                                                                                     delimiter=',')
-    x_roberts, y_roberts = np.loadtxt(folder_name+'x_roberts.txt', delimiter=','), np.loadtxt(folder_name+'y_roberts.txt',
-                                                                                           delimiter=',')
-    x_data, y_data = np.loadtxt(folder_name+'x_data.txt', delimiter=','), np.loadtxt(folder_name+'y_data.txt',
-                                                                                  delimiter=',')
-    time_ = np.loadtxt(folder_name + 'time.txt', delimiter=',')
-    rel_hdg = np.loadtxt(folder_name + 'rel_hdg.txt', delimiter=',')
+        x, y = np.loadtxt(folder_name+'x.txt', delimiter=','), np.loadtxt(folder_name+'y.txt', delimiter=',')
+        x_pose += np.loadtxt(folder_name+'x_pose.txt', delimiter=',')
+        y_pose += np.loadtxt(folder_name+'y_pose.txt', delimiter=',')
+        x_becha += np.loadtxt(folder_name+'x_becha.txt', delimiter=',')
+        y_becha += np.loadtxt(folder_name+'y_becha.txt',delimiter=',')
+        x_roberts += np.loadtxt(folder_name+'x_roberts.txt', delimiter=',')
+        y_roberts += np.loadtxt(folder_name+'y_roberts.txt',delimiter=',')
+        time_ = np.loadtxt(folder_name + 'time.txt', delimiter=',')
+        rel_hdg = np.loadtxt(folder_name + 'rel_hdg.txt', delimiter=',')
 
+    x_pose /= len(files)
+    y_pose /= len(files)
+    x_becha /= len(files)
+    y_becha /= len(files)
+    x_roberts /= len(files)
+    y_roberts /= len(files)
 
     #f.suptitle('Fig 1: Relative Target Vehicle Trajectory \n Fig 2: x Estimation Results \n Fig 3: y Estimation Results')
     # img_ego = ndimage.rotate(plt.imread('red_racing_car_top_view_preview.png'), 0)
@@ -105,7 +119,8 @@ for i in range(len(sm)):
     ax2.plot(time_, x[:, 0], 'o', color='green')
 
     ax2.plot(time_, x_pose[:, 0], '-', color='blue')
-    ax2.plot(time_, x_roberts[:, 0], '-', color='purple')
+    xr_mask = np.isfinite(x_roberts[:,0])
+    ax2.plot(time_[xr_mask], x_roberts[:, 0][xr_mask], '-', color='purple')
     ax2.plot(time_, x_becha[:, 0], '-', color='orange')
     ax2.set_xlabel('Time [s]')
     ax2.set_ylabel('[m]')
@@ -128,7 +143,8 @@ for i in range(len(sm)):
     ax3.title.set_text('Fig 3: y Estimation Results')
     ax3.plot(time_, y[:, 0], 'o', color='green')
     ax3.plot(time_, y_pose[:, 0], '-', color='blue')
-    ax3.plot(time_, y_roberts[:, 0], '-', color='purple')
+    yr_mask = np.isfinite(y_roberts[:,0])
+    ax3.plot(time_[yr_mask], y_roberts[:, 0][yr_mask], '-', color='purple')
     ax3.plot(time_, y_becha[:, 0], '-', color='orange')
     ax3.set_xlabel('Time [s]')
     ax3.set_ylabel('[m]')
