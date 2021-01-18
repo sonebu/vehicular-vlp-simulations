@@ -23,47 +23,53 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from scipy import ndimage
 
 sm = [1,2,3]
-dir = 'GUI_data/100_point_'
+folder_name = 'GUI_data/means'
+dir = 'GUI_data/100_point_4'
 
 for i in range(len(sm)):
 
     if sm[i] == 3:
         input_name = 'v2lcRun_sm3_comparisonSoA'
         fl_name = '/3/'
-        files = glob(dir + '*/3/')
+        # files = glob(dir + '*/3/')
     elif sm[i] == 2:
         input_name = 'v2lcRun_sm2_platoonFormExit'
         fl_name = '/2/'
-        files = glob(dir + '*/2/')
+        # files = glob(dir + '*/2/')
     elif sm[i] == 1:
         input_name = 'v2lcRun_sm1_laneChange'
         fl_name = '/1/'
-        files = glob(dir + '*/1/')
+        # files = glob(dir + '*/1/')
 
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(20, 20))
-    x_pose, y_pose = np.empty((100,2)), np.empty((100,2))
-    x_becha, y_becha = np.empty((100,2)), np.empty((100,2))
-    x_roberts, y_roberts = np.empty((100,2)), np.empty((100,2))
-    print(len(files))
-    for folder_name in files:
+    # x_pose, y_pose = np.empty((100,2)), np.empty((100,2))
+    # x_becha, y_becha = np.empty((100,2)), np.empty((100,2))
+    # x_roberts, y_roberts = np.empty((100,2)), np.empty((100,2))
+    # print(len(files))
+    # for folder_name in files:
+    x_pose = np.loadtxt(folder_name+fl_name+'x_pose_mean.txt', delimiter=',')
+    y_pose = np.loadtxt(folder_name+fl_name+'y_pose_mean.txt', delimiter=',')
+    x_becha = np.loadtxt(folder_name+fl_name+'x_becha_mean.txt', delimiter=',')
+    y_becha = np.loadtxt(folder_name+fl_name+'y_becha_mean.txt',delimiter=',')
+    x_roberts = np.loadtxt(folder_name+fl_name+'x_roberts_mean.txt', delimiter=',')
+    y_roberts = np.loadtxt(folder_name+fl_name+'y_roberts_mean.txt',delimiter=',')
+    time_ = np.loadtxt(dir + fl_name+ 'time.txt', delimiter=',')
+    rel_hdg = np.loadtxt(dir + fl_name+ 'rel_hdg.txt', delimiter=',')
+    x = np.loadtxt(dir+fl_name+'x.txt', delimiter=',')
+    y = np.loadtxt(dir+fl_name+'y.txt', delimiter=',')
 
-        x, y = np.loadtxt(folder_name+'x.txt', delimiter=','), np.loadtxt(folder_name+'y.txt', delimiter=',')
-        x_pose += np.loadtxt(folder_name+'x_pose.txt', delimiter=',')
-        y_pose += np.loadtxt(folder_name+'y_pose.txt', delimiter=',')
-        x_becha += np.loadtxt(folder_name+'x_becha.txt', delimiter=',')
-        y_becha += np.loadtxt(folder_name+'y_becha.txt',delimiter=',')
-        x_roberts += np.loadtxt(folder_name+'x_roberts.txt', delimiter=',')
-        y_roberts += np.loadtxt(folder_name+'y_roberts.txt',delimiter=',')
-        time_ = np.loadtxt(folder_name + 'time.txt', delimiter=',')
-        rel_hdg = np.loadtxt(folder_name + 'rel_hdg.txt', delimiter=',')
-
-    x_pose /= len(files)
-    y_pose /= len(files)
-    x_becha /= len(files)
-    y_becha /= len(files)
-    x_roberts /= len(files)
-    y_roberts /= len(files)
-
+    # x_pose /= len(files)
+    # np.savetxt('GUI_data/means'+ fl_name +'x_pose_mean.txt', x_pose, delimiter=',')
+    # y_pose /= len(files)
+    # np.savetxt('GUI_data/means'+ fl_name +'y_pose_mean.txt', y_pose, delimiter=',')
+    # x_becha /= len(files)
+    # np.savetxt('GUI_data/means'+ fl_name +'x_becha_mean.txt', x_becha, delimiter=',')
+    # y_becha /= len(files)
+    # np.savetxt('GUI_data/means'+ fl_name +'y_becha_mean.txt', y_becha, delimiter=',')
+    # x_roberts /= len(files)
+    # np.savetxt('GUI_data/means'+ fl_name +'x_roberts_mean.txt', x_roberts, delimiter=',')
+    # y_roberts /= len(files)
+    # np.savetxt('GUI_data/means'+ fl_name +'y_roberts_mean.txt', y_roberts, delimiter=',')
     #f.suptitle('Fig 1: Relative Target Vehicle Trajectory \n Fig 2: x Estimation Results \n Fig 3: y Estimation Results')
     # img_ego = ndimage.rotate(plt.imread('red_racing_car_top_view_preview.png'), 0)
     img_tgt_s = ndimage.rotate(plt.imread('green_racing_car_top_view_preview.png'), rel_hdg[0])
