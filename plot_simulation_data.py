@@ -24,7 +24,7 @@ from scipy import ndimage
 
 sm = [1,2,3]
 folder_name = 'GUI_data/means'
-dir = 'GUI_data/100_point_4'
+dir = 'GUI_data/means'
 
 for i in range(len(sm)):
 
@@ -47,12 +47,12 @@ for i in range(len(sm)):
     # x_roberts, y_roberts = np.empty((100,2)), np.empty((100,2))
     # print(len(files))
     # for folder_name in files:
-    x_pose = np.loadtxt(folder_name+fl_name+'x_pose_mean.txt', delimiter=',')
-    y_pose = np.loadtxt(folder_name+fl_name+'y_pose_mean.txt', delimiter=',')
-    x_becha = np.loadtxt(folder_name+fl_name+'x_becha_mean.txt', delimiter=',')
-    y_becha = np.loadtxt(folder_name+fl_name+'y_becha_mean.txt',delimiter=',')
-    x_roberts = np.loadtxt(folder_name+fl_name+'x_roberts_mean.txt', delimiter=',')
-    y_roberts = np.loadtxt(folder_name+fl_name+'y_roberts_mean.txt',delimiter=',')
+    x_pose = np.loadtxt(folder_name+fl_name+'x_pose.txt', delimiter=',')
+    y_pose = np.loadtxt(folder_name+fl_name+'y_pose.txt', delimiter=',')
+    x_becha = np.loadtxt(folder_name+fl_name+'x_becha.txt', delimiter=',')
+    y_becha = np.loadtxt(folder_name+fl_name+'y_becha.txt',delimiter=',')
+    x_roberts = np.loadtxt(folder_name+fl_name+'x_roberts.txt', delimiter=',')
+    y_roberts = np.loadtxt(folder_name+fl_name+'y_roberts.txt',delimiter=',')
     time_ = np.loadtxt(dir + fl_name+ 'time.txt', delimiter=',')
     rel_hdg = np.loadtxt(dir + fl_name+ 'rel_hdg.txt', delimiter=',')
     x = np.loadtxt(dir+fl_name+'x.txt', delimiter=',')

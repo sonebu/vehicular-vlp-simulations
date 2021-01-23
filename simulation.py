@@ -59,7 +59,7 @@ def run(sm):
         input_name = 'v2lcRun_sm1_laneChange'
         fl_name = '/1/'
 
-    folder_name = 'GUI_data/1000_point/' + fl_name
+    folder_name = 'GUI_data/means' + fl_name
     x, y = np.loadtxt(folder_name + 'x.txt', delimiter=','), np.loadtxt(folder_name + 'y.txt', delimiter=',')
     x_pose, y_pose = np.loadtxt(folder_name + 'x_pose.txt', delimiter=','), np.loadtxt(folder_name + 'y_pose.txt',
                                                                                        delimiter=',')
@@ -72,12 +72,12 @@ def run(sm):
                                                                                        delimiter=',')
     time_ = np.loadtxt(folder_name + 'time.txt', delimiter=',')
     rel_hdg = np.loadtxt(folder_name + 'rel_hdg.txt', delimiter=',')
-    x, y = x[::20], y[::20]
-    x_pose, y_pose = x_pose[::20], y_pose[::20]
-    x_roberts, y_roberts = x_roberts[::20], y_roberts[::20]
-    x_becha, y_becha = x_becha[::20], y_becha[::20]
-    x_data, y_data = x_data[::20], y_data[::20]
-    time_, rel_hdg = time_[::20], rel_hdg[::20]
+    x, y = x[::2], y[::2]
+    x_pose, y_pose = x_pose[::2], y_pose[::2]
+    x_roberts, y_roberts = x_roberts[::2], y_roberts[::2]
+    x_becha, y_becha = x_becha[::2], y_becha[::2]
+    x_data, y_data = x_data[::2], y_data[::2]
+    time_, rel_hdg = time_[::2], rel_hdg[::2]
 
     app = SeaofBTCapp()
     ani = animation.FuncAnimation(f, animate, repeat_delay=1)
