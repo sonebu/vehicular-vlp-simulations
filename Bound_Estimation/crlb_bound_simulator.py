@@ -1,5 +1,6 @@
 from CRLB_init import *
 from matfile_read import load_mat
+from glob import glob
 import math
 import matplotlib.pyplot as plt
 
@@ -110,8 +111,23 @@ def signal_generator(current_time, dt_vhc, max_power, signal_freq, delay, measur
 
 
 def main():
-    data = load_mat('../SimulationData/v2lcRun_sm3_comparisonSoA.mat')
 
+    dir = '../GUI_data/100_point_'
+    files = glob(dir + '*/3/')
+    x_pose, y_pose = [], []
+    x_becha, y_becha = [], []
+    x_roberts, y_roberts = [], []
+    print(len(files))
+    for folder_name in files:
+        x_pose.append(np.loadtxt(folder_name+'x_pose.txt', delimiter=','))
+        y_pose.append(np.loadtxt(folder_name+'y_pose.txt', delimiter=','))
+        x_roberts.append(np.loadtxt(folder_name+'x_roberts.txt', delimiter=','))
+        y_roberts.append(np.loadtxt(folder_name+'y_roberts.txt', delimiter=','))
+        x_becha.append(np.loadtxt(folder_name+'x_becha.txt', delimiter=','))
+        y_becha.append(np.loadtxt(folder_name+'y_becha.txt', delimiter=','))
+    # print(np.shape(np.asarray(y_pose)))
+    data = load_mat('../SimulationData/v2lcRun_sm3_comparisonSoA.mat')
+    dp = 10
     # vehicle parameters
     L_1 = data['vehicle']['target']['width']
     L_2 = data['vehicle']['ego']['width']
@@ -119,8 +135,8 @@ def main():
     rx_area = data['qrx']['f_QRX']['params']['area']
 
     # time parameters
-    time = data['vehicle']['t']['values']
-    dt = data['vehicle']['t']['dt']
+    time = data['vehicle']['t']['values'][::dp]
+    dt = data['vehicle']['t']['dt'] * dp
     start_time = data['vehicle']['t']['start']
     stop_time = data['vehicle']['t']['stop']
 
@@ -129,27 +145,27 @@ def main():
     measure_dt = 1 / 2.5e6  # 2.5 MHz measure frequency
 
     # relative tgt vehicle positions
-    tx1_x = data['vehicle']['target_relative']['tx1_qrx4']['y']
-    tx1_y = data['vehicle']['target_relative']['tx1_qrx4']['x']
-    tx2_x = data['vehicle']['target_relative']['tx2_qrx3']['y']
-    tx2_y = data['vehicle']['target_relative']['tx2_qrx3']['x']
-    rel_heading = data['vehicle']['target_relative']['heading']
+    tx1_x = data['vehicle']['target_relative']['tx1_qrx4']['y'][::dp]
+    tx1_y = data['vehicle']['target_relative']['tx1_qrx4']['x'][::dp]
+    tx2_x = data['vehicle']['target_relative']['tx2_qrx3']['y'][::dp]
+    tx2_y = data['vehicle']['target_relative']['tx2_qrx3']['x'][::dp]
+    rel_heading = data['vehicle']['target_relative']['heading'][::dp]
 
     # delay parameters
-    delay_11 = data['channel']['qrx1']['delay']['tx1']
-    delay_12 = data['channel']['qrx1']['delay']['tx2']
-    delay_21 = data['channel']['qrx2']['delay']['tx1']
-    delay_22 = data['channel']['qrx2']['delay']['tx2']
+    delay_11 = data['channel']['qrx1']['delay']['tx1'][::dp]
+    delay_12 = data['channel']['qrx1']['delay']['tx2'][::dp]
+    delay_21 = data['channel']['qrx2']['delay']['tx1'][::dp]
+    delay_22 = data['channel']['qrx2']['delay']['tx2'][::dp]
 
     # received power of QRXes
-    pow_qrx1_tx1 = np.array([data['channel']['qrx1']['power']['tx1']['A'], data['channel']['qrx1']['power']['tx1']['B'],
-                             data['channel']['qrx1']['power']['tx1']['C'], data['channel']['qrx1']['power']['tx1']['D']])
-    pow_qrx1_tx2 = np.array([data['channel']['qrx1']['power']['tx2']['A'], data['channel']['qrx1']['power']['tx2']['B'],
-                             data['channel']['qrx1']['power']['tx2']['C'], data['channel']['qrx1']['power']['tx2']['D']])
-    pow_qrx2_tx1 = np.array([data['channel']['qrx2']['power']['tx1']['A'], data['channel']['qrx2']['power']['tx1']['B'],
-                             data['channel']['qrx2']['power']['tx1']['C'], data['channel']['qrx2']['power']['tx1']['D']])
-    pow_qrx2_tx2 = np.array([data['channel']['qrx2']['power']['tx1']['A'], data['channel']['qrx2']['power']['tx1']['B'],
-                             data['channel']['qrx2']['power']['tx1']['C'], data['channel']['qrx2']['power']['tx1']['D']])
+    pow_qrx1_tx1 = np.array([data['channel']['qrx1']['power']['tx1']['A'][::dp], data['channel']['qrx1']['power']['tx1']['B'][::dp],
+                             data['channel']['qrx1']['power']['tx1']['C'][::dp], data['channel']['qrx1']['power']['tx1']['D'][::dp]])
+    pow_qrx1_tx2 = np.array([data['channel']['qrx1']['power']['tx2']['A'][::dp], data['channel']['qrx1']['power']['tx2']['B'][::dp],
+                             data['channel']['qrx1']['power']['tx2']['C'][::dp], data['channel']['qrx1']['power']['tx2']['D'][::dp]])
+    pow_qrx2_tx1 = np.array([data['channel']['qrx2']['power']['tx1']['A'][::dp], data['channel']['qrx2']['power']['tx1']['B'][::dp],
+                             data['channel']['qrx2']['power']['tx1']['C'][::dp], data['channel']['qrx2']['power']['tx1']['D'][::dp]])
+    pow_qrx2_tx2 = np.array([data['channel']['qrx2']['power']['tx1']['A'][::dp], data['channel']['qrx2']['power']['tx1']['B'][::dp],
+                             data['channel']['qrx2']['power']['tx1']['C'][::dp], data['channel']['qrx2']['power']['tx1']['D'][::dp]])
 
     # noise params
     T = 298  # Kelvin
@@ -200,12 +216,12 @@ def main():
         print(i)
 
     print("finished")
-    folder_name = '../GUI_data/1000_point/3/'
-    x_becha, y_becha = np.loadtxt(folder_name+'x_becha.txt', delimiter=','), np.loadtxt(folder_name+'y_becha.txt',
-                                                                                        delimiter=',')
-    x_roberts, y_roberts = np.loadtxt(folder_name+'x_roberts.txt', delimiter=','), np.loadtxt(folder_name+'y_roberts.txt',
-                                                                                              delimiter=',')
-    x_soner, y_soner = np.loadtxt(folder_name+'x_pose.txt', delimiter=','), np.loadtxt(folder_name+'y_pose.txt', delimiter=',')
+    folder_name = '../GUI_data/means/3/'
+    # x_becha, y_becha = np.loadtxt(folder_name+'x_becha_mean.txt', delimiter=','), np.loadtxt(folder_name+'y_becha_mean.txt',
+    #                                                                                     delimiter=',')
+    # x_roberts, y_roberts = np.loadtxt(folder_name+'x_roberts_mean.txt', delimiter=','), np.loadtxt(folder_name+'y_roberts_mean.txt',
+    #                                                                                           delimiter=',')
+    # x_soner, y_soner = np.loadtxt(folder_name+'x_pose_mean.txt', delimiter=','), np.loadtxt(folder_name+'y_pose_mean.txt', delimiter=',')
 
     plt.close("all")
     plot1 = plt.figure(1)
@@ -219,6 +235,7 @@ def main():
     plt.legend([becha_x1, soner_x1, roberts_x1, ten_cm_line], ['RToF', 'AoA', 'TDoA', '10 cm line'])
     plt.ylim(1e-5,10)
     plt.yscale('log')
+    plt.savefig('crlb_x1.png')
 
     plot2 = plt.figure(2)
     becha_y1, = plt.plot(time[0:i+1], becha_crlb_results[1])
@@ -231,6 +248,7 @@ def main():
     plt.legend([becha_y1, soner_y1, roberts_y1, ten_cm_line], ['RToF', 'AoA', 'TDoA', '10 cm line'])
     plt.ylim(1e-5,10)
     plt.yscale('log')
+    plt.savefig('crlb_y1.png')
 
     plot3 = plt.figure(3)
     becha_x2, = plt.plot(time[0:i + 1], becha_crlb_results[2])
@@ -242,6 +260,7 @@ def main():
     plt.legend([becha_x2, soner_x2, ten_cm_line], ['RToF', 'AoA', '10 cm line'])
     plt.ylim(1e-5,10)
     plt.yscale('log')
+    plt.savefig('crlb_x2.png')
 
     plot4 = plt.figure(4)
     becha_y2, = plt.plot(time[0:i + 1], becha_crlb_results[3])
@@ -253,37 +272,53 @@ def main():
     plt.legend([becha_y2, soner_y2, ten_cm_line], ['RToF', 'AoA', '10 cm line'])
     plt.ylim(1e-5,10)
     plt.yscale('log')
+    plt.savefig('crlb_y2.png')
 
-    x1_becha, x2_becha = x_becha[:,0], x_becha[:,1]
-    y1_becha, y2_becha = y_becha[:,0], y_becha[:,1]
+    x1_becha, x2_becha = np.asarray(x_becha)[:,:,0], np.asarray(x_becha)[:,:,1]
+    y1_becha, y2_becha = np.asarray(y_becha)[:,:,0], np.asarray(y_becha)[:,:,1]
+    print(np.shape(x1_becha))
+    print(np.shape(x2_becha))
+    print(np.shape(y1_becha))
+    print(np.shape(y2_becha))
 
     plot5 = plt.figure(5)
     th_becha_x1, = plt.plot(time[0:i+1], becha_crlb_results[0], '--')
     th_becha_x2, = plt.plot(time[0:i + 1], becha_crlb_results[2], '--')
     th_becha_y1, = plt.plot(time[0:i+1], becha_crlb_results[1], '--')
     th_becha_y2, = plt.plot(time[0:i + 1], becha_crlb_results[3], '--')
-    sim_becha_x1, = plt.plot(time[0:i + 1], abs(tx1_x + x1_becha)[0:i + 1])
-    sim_becha_x2, = plt.plot(time[0:i + 1], abs(tx2_x + x2_becha)[0:i + 1])
-    sim_becha_y1, = plt.plot(time[0:i + 1], abs(tx1_y - y1_becha)[0:i + 1])
-    sim_becha_y2, = plt.plot(time[0:i + 1], abs(tx2_y - y2_becha)[0:i + 1])
+    # sim_becha_x1, = plt.plot(time[0:i + 1], abs(tx1_x + x1_becha)[0:i + 1])
+    sim_becha_x1, = plt.plot(time[0:i + 1], np.std(x1_becha, axis=0))
+    # sim_becha_x2, = plt.plot(time[0:i + 1], abs(tx2_x + x2_becha)[0:i + 1])
+    sim_becha_x2, = plt.plot(time[0:i + 1], np.std(x2_becha, axis=0))
+    # sim_becha_y1, = plt.plot(time[0:i + 1], abs(tx1_y - y1_becha)[0:i + 1])
+    sim_becha_y1, = plt.plot(time[0:i + 1], np.std(y1_becha, axis=0))
+    # sim_becha_y2, = plt.plot(time[0:i + 1], abs(tx2_y - y2_becha)[0:i + 1])
+    sim_becha_y2, = plt.plot(time[0:i + 1], np.std(y2_becha, axis=0))
     plt.ylabel('Error (m)')
     plt.xlabel('Time (s)')
     plt.title('CRLB vs. Simulation Results for RToF')
-    plt.legend([th_becha_x1, th_becha_x2, th_becha_y1, th_becha_y2, sim_becha_x1 , sim_becha_x2, sim_becha_y1,
-                sim_becha_y2], ['x1 (theoretical)', 'x2 (theoretical)', 'y1 (theoretical)', 'y2 (theoretical)',
-                                'x1 (simulation)', 'x2 (simulation)', 'y1 (simulation)', 'y2 (simulation)'],
-               ncol=4,loc=3)
-    plt.ylim(1e-5,2)
+    # plt.legend([th_becha_x1, th_becha_x2, th_becha_y1, th_becha_y2, sim_becha_x1 , sim_becha_x2, sim_becha_y1,
+    #             sim_becha_y2], ['x1 (theoretical)', 'x2 (theoretical)', 'y1 (theoretical)', 'y2 (theoretical)',
+    #                             'x1 (simulation)', 'x2 (simulation)', 'y1 (simulation)', 'y2 (simulation)'],
+    #            ncol=4,loc=3)
+    # plt.ylim(1e-5,2)
+    # plt.yscale('log')
+    plt.savefig('crlb_becha_lin.png')
     plt.yscale('log')
+    plt.savefig('crlb_becha_log.png')
 
-    x1_roberts, x2_roberts = x_roberts[:,0], x_roberts[:,1]
-    y1_roberts, y2_roberts = y_roberts[:,0], y_roberts[:,1]
+    x1_roberts, x2_roberts = np.asarray(x_roberts)[:,:,0], np.asarray(x_roberts)[:,:,1]
+    y1_roberts, y2_roberts = np.asarray(y_roberts)[:,:,0], np.asarray(y_roberts)[:,:,1]
 
     plot6 = plt.figure(6)
     th_roberts_x1, = plt.plot(time[0:i+1], robert_crlb_results[0], '--')
     th_roberts_y1, = plt.plot(time[0:i+1], robert_crlb_results[1], '--')
-    sim_roberts_x1, = plt.plot(time[0:i + 1], abs(tx1_x + x1_roberts)[0:i + 1])
-    sim_roberts_y1, = plt.plot(time[0:i + 1], abs(tx1_y - y1_roberts)[0:i + 1])
+    xr_mask = np.isfinite(np.std(x1_roberts, axis=0))
+    yr_mask = np.isfinite(np.std(y1_roberts, axis=0))
+    # sim_roberts_x1, = plt.plot(time[0:i + 1][xr_mask], abs(tx1_x + x1_roberts)[0:i + 1][xr_mask])
+    sim_roberts_x1, = plt.plot(time[0:i + 1][xr_mask], np.std(x1_roberts, axis=0)[xr_mask])
+    # sim_roberts_y1, = plt.plot(time[0:i + 1][yr_mask], abs(tx1_y - y1_roberts)[0:i + 1][yr_mask])
+    sim_roberts_y1, = plt.plot(time[0:i + 1][yr_mask], np.std(y1_roberts, axis=0)[yr_mask])
     plt.ylabel('Error (m)')
     plt.xlabel('Time (s)')
     plt.title('CRLB vs. Simulation Results for TDoA')
@@ -291,19 +326,24 @@ def main():
                ['x1 (theoretical)', 'y1 (theoretical)', 'x1 (simulation)', 'y1 (simulation)'],ncol=2,loc=3)
     plt.ylim(1e-5,2)
     plt.yscale('log')
+    plt.savefig('crlb_roberts.png')
 
-    x1_soner, x2_soner = x_soner[:,0], x_soner[:,1]
-    y1_soner, y2_soner = y_soner[:,0], y_soner[:,1]
+    x1_soner, x2_soner = np.asarray(x_pose)[:,:,0], np.asarray(x_pose)[:,:,1]
+    y1_soner, y2_soner = np.asarray(y_pose)[:,:,0], np.asarray(y_pose)[:,:,1]
 
     plot7 = plt.figure(7)
     th_soner_x1, = plt.plot(time[0:i+1], soner_crlb_results[0], '--')
     th_soner_x2, = plt.plot(time[0:i + 1], soner_crlb_results[2], '--')
     th_soner_y1, = plt.plot(time[0:i+1], soner_crlb_results[1], '--')
     th_soner_y2, = plt.plot(time[0:i + 1], soner_crlb_results[3], '--')
-    sim_soner_x1, = plt.plot(time[0:i + 1], abs(tx1_x + x1_soner)[0:i + 1])
-    sim_soner_x2, = plt.plot(time[0:i + 1], abs(tx2_x + x2_soner)[0:i + 1])
-    sim_soner_y1, = plt.plot(time[0:i + 1], abs(tx1_y - y1_soner)[0:i + 1])
-    sim_soner_y2, = plt.plot(time[0:i + 1], abs(tx2_y - y2_soner)[0:i + 1])
+    # sim_soner_x1, = plt.plot(time[0:i + 1], abs(tx1_x + x1_soner)[0:i + 1])
+    sim_soner_x1, = plt.plot(time[0:i + 1], np.std(x1_soner, axis=0))
+    # sim_soner_x2, = plt.plot(time[0:i + 1], abs(tx2_x + x2_soner)[0:i + 1])
+    sim_soner_x2, = plt.plot(time[0:i + 1], np.std(x2_soner, axis=0))
+    # sim_soner_y1, = plt.plot(time[0:i + 1], abs(tx1_y - y1_soner)[0:i + 1])
+    sim_soner_y1, = plt.plot(time[0:i + 1], np.std(y1_soner, axis=0))
+    # sim_soner_y2, = plt.plot(time[0:i + 1], abs(tx2_y - y2_soner)[0:i + 1])
+    sim_soner_y2, = plt.plot(time[0:i + 1], np.std(y2_soner, axis=0))
     plt.ylabel('Error (m)')
     plt.xlabel('Time (s)')
     plt.title('CRLB vs. Simulation Results for AoA')
@@ -313,6 +353,7 @@ def main():
                ncol=4,loc=3)
     plt.ylim(1e-5,2)
     plt.yscale('log')
+    plt.savefig('crlb_soner.png')
     plt.show()
 
 
