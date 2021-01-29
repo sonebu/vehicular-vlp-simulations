@@ -17,6 +17,7 @@ def draw_figure(canvas, figure):
     figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
     return figure_canvas_agg
 
+#TODO: Add flexibility to the size for the each computer
 
 def plot(input_name='', folder_name='', skip = 1):
     """
@@ -63,7 +64,7 @@ def plot(input_name='', folder_name='', skip = 1):
               [sg.Button('Exit', size=(10, 2), pad=((280, 0), 3), font='Helvetica 14')]]
 
     # create the form and show it without the plot
-    window = sg.Window('Real Time Simulation Of Chosen Scenario', layout, finalize=True, location=(0,0), size=(1800, 950))
+    window = sg.Window('Simulation', layout, finalize=True, location=(0,0), size=(1800, 950))
     window.Maximize()
 
     canvas_elem = window['-CANVAS-']
@@ -82,7 +83,7 @@ def plot(input_name='', folder_name='', skip = 1):
     DPI = fig.get_dpi()
     fig.set_size_inches(600 * 2 / float(DPI), 800 / float(DPI))
     fig_agg = draw_figure(canvas, fig)
-
+    fig.tight_layout()
     for i in range(NUM_DATAPOINTS):
         event, values = window.read(timeout=50)
         if event in ('Exit', None):
