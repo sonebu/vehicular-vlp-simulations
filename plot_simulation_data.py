@@ -21,24 +21,24 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from scipy import ndimage
-
-sm = [1,2,3]
-folder_name = 'GUI_data/means'
-dir = 'GUI_data/means'
+from config import plot_sim_data
+sm = plot_sim_data.names.sm
+folder_name = plot_sim_data.names.folder_name
+dir = plot_sim_data.names.dir
 
 for i in range(len(sm)):
 
     if sm[i] == 3:
-        input_name = 'v2lcRun_sm3_comparisonSoA'
-        fl_name = '/3/'
+        input_name = plot_sim_data.names.data_names[2]
+        fl_name = plot_sim_data.names.folder_names[2]
         # files = glob(dir + '*/3/')
     elif sm[i] == 2:
-        input_name = 'v2lcRun_sm2_platoonFormExit'
-        fl_name = '/2/'
+        input_name = plot_sim_data.names.data_names[1]
+        fl_name = plot_sim_data.names.folder_names[1]
         # files = glob(dir + '*/2/')
     elif sm[i] == 1:
-        input_name = 'v2lcRun_sm1_laneChange'
-        fl_name = '/1/'
+        input_name = plot_sim_data.names.data_names[0]
+        fl_name = plot_sim_data.names.folder_names[0]
         # files = glob(dir + '*/1/')
 
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(20, 20))

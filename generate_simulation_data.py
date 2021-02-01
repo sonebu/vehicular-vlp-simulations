@@ -9,6 +9,7 @@ matplotlib.use('TkAgg')
 from scipy.io import loadmat
 import math
 import os
+from config import gen_sim_data
 
 # coding: utf-8
 
@@ -17,18 +18,18 @@ import os
 # 'v2lcRun_sm2_platoonFormExit'
 # 'v2lcRun_sm3_comparisonSoA'
 
-data_names = ['v2lcRun_sm1_laneChange', 'v2lcRun_sm2_platoonFormExit', 'v2lcRun_sm3_comparisonSoA']
-folder_names = ['1/', '2/', '3/']
+data_names = gen_sim_data.names.data_names
+folder_names = gen_sim_data.names.folder_names
 # data_name = sys.argv[1]
 #print(data_name)
-for iter in range(100):
+for iter in range(gen_sim_data.params.start_point_of_iter, gen_sim_data.params.end_point_of_iter):
     print(iter)
     for i in range(len(data_names)):
         data_name = data_names[i]
         data_dir = 'SimulationData/' + data_name + '.mat'
         data = loadmat(data_dir)
         folder_name = folder_names[i]
-        dp = 10
+        dp = gen_sim_data.params.number_of_skip_data
         data_point = '100_point_' + str(iter) + '/'
         import cProfile, pstats
         profiler = cProfile.Profile()
@@ -45,11 +46,11 @@ for iter in range(100):
         max_power = data['tx']['power']
         area = data['qrx']['f_QRX']['params']['area']
         rx_radius = math.sqrt(area) / math.pi
-        c = 3e8
-        rx_fov = 50  # angle
-        tx_half_angle = 60  # angle
-        signal_freq = 1e6
-        measure_dt = 1 / 2.5e6  # 2.5 MHz measure frequency
+        c = gen_sim_data.params.c
+        rx_fov = gen_sim_data.params.rx_fov
+        tx_half_angle = gen_sim_data.params.tx_half_angle
+        signal_freq = gen_sim_data.params.signal_freq
+        measure_dt = gen_sim_data.params.measure_dt
 
         time_ = data['vehicle']['t']['values']
         time_ = time_[::dp]
@@ -91,8 +92,8 @@ for iter in range(100):
                                  data['channel']['qrx2']['power']['tx1']['D'][::dp]])
 
         # noise params
-        T = 0; #298  # Kelvin
-        I_bg = 0; #750e-6  # 750 uA
+        T = gen_sim_data.params.T
+        I_bg = gen_sim_data.params.I_bg
         p_r_factor = data['qrx']['tia']['shot_P_r_factor']
         i_bg_factor = data['qrx']['tia']['shot_I_bg_factor']
         t_factor1 = data['qrx']['tia']['thermal_factor1']
@@ -108,10 +109,10 @@ for iter in range(100):
                                                                                                                 2))
 
         aoa = AoA(a_m=max_power, f_m1=signal_freq, f_m2=2*signal_freq, measure_dt=measure_dt, vehicle_dt=vehicle_dt * dp,
-                  w0=0, hbuf= int(vehicle_dt / measure_dt), car_dist=L_tgt, fov=rx_fov)
+                  w0=gen_sim_data.params.w0, hbuf= int(vehicle_dt / measure_dt), car_dist=L_tgt, fov=rx_fov)
         # print(vehicle_dt / measure_dt)
-        rtof = RToF(a_m=max_power, f_m=signal_freq, measure_dt=5e-9, vehicle_dt=vehicle_dt * dp, car_dist=L_tgt,
-                    r=499, N=1, c=c)
+        rtof = RToF(a_m=max_power, f_m=signal_freq, measure_dt=gen_sim_data.params.rtof_measure_dt, vehicle_dt=vehicle_dt * dp, car_dist=L_tgt,
+                    r=gen_sim_data.params.r, N=gen_sim_data.params.N , c=c)
         tdoa = TDoA(a_m=max_power, f_m1=signal_freq, f_m2=signal_freq, measure_dt=measure_dt , vehicle_dt=vehicle_dt * dp,
                     car_dist=L_tgt)
         for i in range(len(tgt_tx1_x)):
