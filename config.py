@@ -18,8 +18,8 @@ gen_sim_data.params.tx_half_angle = 60  # angle
 gen_sim_data.params.signal_freq = 1e6
 gen_sim_data.params.measure_dt = 1 / 2.5e6  # 2.5 MHz measure frequency
 # noise params
-gen_sim_data.params.T = 0  # 298  # Kelvin
-gen_sim_data.params.I_bg = 0  # 750e-6  # 750 uA
+gen_sim_data.params.T = 298  # Kelvin
+gen_sim_data.params.I_bg = 750e-6  # 750 uA
 # aoa params
 gen_sim_data.params.w0 = 0
 # rtof params
