@@ -31,17 +31,17 @@ def main():
     tx2_x = data['vehicle']['target_relative']['tx2_qrx3']['y'][::dp]
     tx2_y = data['vehicle']['target_relative']['tx2_qrx3']['x'][::dp]
 
-    pose_x1_crlb = np.loadtxt('pose_crlb_x1.txt', delimiter=',')
-    becha_x1_crlb = np.loadtxt('becha_crlb_x1.txt', delimiter=',')
-    pose_x2_crlb = np.loadtxt('pose_crlb_x2.txt', delimiter=',')
-    becha_x2_crlb = np.loadtxt('becha_crlb_x2.txt', delimiter=',')
-    roberts_x_crlb = np.loadtxt('roberts_crlb_x.txt', delimiter=',')
+    pose_x1_crlb = np.loadtxt('Data/aoa/crlb_x1.txt', delimiter=',')
+    becha_x1_crlb = np.loadtxt('Data/rtof/crlb_x1.txt', delimiter=',')
+    pose_x2_crlb = np.loadtxt('Data/aoa/crlb_x2.txt', delimiter=',')
+    becha_x2_crlb = np.loadtxt('Data/rtof/crlb_x2.txt', delimiter=',')
+    roberts_x_crlb = np.loadtxt('Data/tdoa/crlb_x.txt', delimiter=',')
 
-    pose_y1_crlb = np.loadtxt('pose_crlb_y1.txt', delimiter=',')
-    becha_y1_crlb = np.loadtxt('becha_crlb_y1.txt', delimiter=',')
-    pose_y2_crlb = np.loadtxt('pose_crlb_y2.txt', delimiter=',')
-    becha_y2_crlb = np.loadtxt('becha_crlb_y2.txt', delimiter=',')
-    roberts_y_crlb = np.loadtxt('roberts_crlb_y.txt', delimiter=',')
+    pose_y1_crlb = np.loadtxt('Data/aoa/crlb_y1.txt', delimiter=',')
+    becha_y1_crlb = np.loadtxt('Data/rtof/crlb_y1.txt', delimiter=',')
+    pose_y2_crlb = np.loadtxt('Data/aoa/crlb_y2.txt', delimiter=',')
+    becha_y2_crlb = np.loadtxt('Data/rtof/crlb_y2.txt', delimiter=',')
+    roberts_y_crlb = np.loadtxt('Data/tdoa/crlb_y.txt', delimiter=',')
 
     plt.close("all")
     plot1 = plt.figure(1)

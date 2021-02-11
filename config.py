@@ -9,7 +9,7 @@ gen_sim_data.names.folder_names = ['1/', '2/', '3/']
 gen_sim_data.params = CN()
 # data manipulation params
 gen_sim_data.params.start_point_of_iter = 0
-gen_sim_data.params.end_point_of_iter = 100
+gen_sim_data.params.end_point_of_iter = 2
 gen_sim_data.params.number_of_skip_data = 10
 # environment params
 gen_sim_data.params.c = 3e8

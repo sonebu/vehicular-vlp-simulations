@@ -193,6 +193,7 @@ def main():
         fim_inverse_soner = soner_crlb_single_instance(crlb_init_object, tx1, tx2, delays,
                                      curr_t, dt, max_power, signal_freq, measure_dt, T, I_bg, noise_factors, powers)
 
+
         robert_crlb_results[0] = np.append(robert_crlb_results[0], np.sqrt(fim_inverse_rob[0][0]))
         robert_crlb_results[1] = np.append(robert_crlb_results[1], np.sqrt(fim_inverse_rob[1][1]))
 
@@ -207,17 +208,17 @@ def main():
         soner_crlb_results[3] = np.append(soner_crlb_results[3], np.sqrt(fim_inverse_soner[3][3]))
         print(i)
 
-    np.savetxt('pose_crlb_x1.txt', soner_crlb_results[0], delimiter=',')
-    np.savetxt('becha_crlb_x1.txt', becha_crlb_results[0], delimiter=',')
-    np.savetxt('pose_crlb_x2.txt', soner_crlb_results[2], delimiter=',')
-    np.savetxt('becha_crlb_x2.txt', becha_crlb_results[2], delimiter=',')
-    np.savetxt('roberts_crlb_x.txt', robert_crlb_results[0], delimiter=',')
+    np.savetxt('Data/aoa/crlb_x1.txt', soner_crlb_results[0], delimiter=',')
+    np.savetxt('Data/rtof/crlb_x1.txt', becha_crlb_results[0], delimiter=',')
+    np.savetxt('Data/aoa/crlb_x2.txt', soner_crlb_results[2], delimiter=',')
+    np.savetxt('Data/rtof/crlb_x2.txt', becha_crlb_results[2], delimiter=',')
+    np.savetxt('Data/tdoa/crlb_x.txt', robert_crlb_results[0], delimiter=',')
 
-    np.savetxt('pose_crlb_y1.txt', soner_crlb_results[1], delimiter=',')
-    np.savetxt('becha_crlb_y1.txt', becha_crlb_results[1], delimiter=',')
-    np.savetxt('pose_crlb_y2.txt', soner_crlb_results[3], delimiter=',')
-    np.savetxt('becha_crlb_y2.txt', becha_crlb_results[3], delimiter=',')
-    np.savetxt('roberts_crlb_y.txt', robert_crlb_results[1], delimiter=',')
+    np.savetxt('Data/aoa/crlb_y1.txt', soner_crlb_results[1], delimiter=',')
+    np.savetxt('Data/rtof/crlb_y1.txt', becha_crlb_results[1], delimiter=',')
+    np.savetxt('Data/tdoa/crlb_y2.txt', soner_crlb_results[3], delimiter=',')
+    np.savetxt('Data/rtof/crlb_y2.txt', becha_crlb_results[3], delimiter=',')
+    np.savetxt('Data/tdoa/crlb_y.txt', robert_crlb_results[1], delimiter=',')
 
     print("finished")
     folder_name = '../GUI_data/means/3/'
