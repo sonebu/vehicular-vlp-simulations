@@ -22,7 +22,7 @@ def main():
         for i in range(len(data_names)):
             data_name = data_names[i]
             data_dir = 'SimulationData/' + data_name + '.mat'
-            data = loadmat(data_dir)
+            data = load_mat(data_dir)
 
             folder_name = folder_names[i]
             dp = gen_sim_data.params.number_of_skip_data
