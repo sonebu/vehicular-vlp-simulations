@@ -24,8 +24,8 @@ def main():
     """calculating actual theta"""
     aoa11 = math.atan(tx1_y/tx1_x)
     aoa12 = math.atan(tx2_y/tx2_x)
-    aoa21 = math.atan((tx1_y + L) /tx1_x)
-    aoa22 = math.atan((tx2_y + L) /tx2_x)
+    aoa21 = math.atan((tx1_y + L) / tx1_x)
+    aoa22 = math.atan((tx2_y + L) / tx2_x)
     thetas = np.array([[aoa11, aoa12], [aoa21, aoa22]])
 
     """calculating actual distance values"""
