@@ -2,7 +2,6 @@ import pickle
 
 import scipy.signal as signal
 from Bound_Estimation.matfile_read import *
-from scipy.io import loadmat
 import numpy as np
 from numba import njit
 import math
@@ -390,6 +389,11 @@ def main():
             data_name = data_names[idx]
             data_dir = directory_path + '/SimulationData/' + data_name + '.mat'
             data = load_mat(data_dir)
+
+            d11 = np.sqrt(tx1[0] ^ 2 + tx1[1] ^ 2)
+            d11 = np.sqrt(tx1[0] ^ 2 + tx1[1] ^ 2)
+
+
 
             folder_name = folder_names[idx]
             dp = gen_sim_data.params.number_of_skip_data
