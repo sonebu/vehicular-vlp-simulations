@@ -389,12 +389,6 @@ def main():
             data_name = data_names[idx]
             data_dir = directory_path + '/SimulationData/' + data_name + '.mat'
             data = load_mat(data_dir)
-
-            d11 = np.sqrt(tx1[0] ^ 2 + tx1[1] ^ 2)
-            d11 = np.sqrt(tx1[0] ^ 2 + tx1[1] ^ 2)
-
-
-
             folder_name = folder_names[idx]
             dp = gen_sim_data.params.number_of_skip_data
             data_point = str(int(1000 / dp)) + '_point_' + '/'
@@ -521,20 +515,20 @@ def main():
                     [[noise_var1_soner, noise_var2_soner], [noise_var3_soner, noise_var4_soner]])
 
                 # making estimations
-                theta_l_r[itr, i] = aoa.estimate(delays=delays, H_q=H_q, noise_variance=noise_variance_soner)
-                print("AoA finished")
-                #rtof_dist[itr, i] = rtof.estimate(all_delays=delays, H=H, noise_variance=noise_variance)
-                #print("RToF finished")
-                tdoa_dist[itr, i] = tdoa.estimate(delays=delays, H=H, noise_variance=noise_variance)
-                print("TDoA finished")
+                #theta_l_r[itr, i] = aoa.estimate(delays=delays, H_q=H_q, noise_variance=noise_variance_soner)
+                #print("AoA finished")
+                rtof_dist[itr, i] = rtof.estimate(all_delays=delays, H=H, noise_variance=noise_variance)
+                print("RToF finished")
+                #tdoa_dist[itr, i] = tdoa.estimate(delays=delays, H=H, noise_variance=noise_variance)
+                #print("TDoA finished")
                 #print(time_)
     pickle_dir = directory_path + '/Bound_Estimation/Parameter_Deviation/'
-    with open(pickle_dir + 'theta.pkl', 'wb') as f:
-        pickle.dump(theta_l_r, f)
-    #with open(pickle_dir + 'rtof_dist', 'wb') as f:
-    #    pickle.dump(rtof_dist, f)
-    with open(pickle_dir + 'tdoa_dist.pkl', 'wb') as f:
-        pickle.dump(tdoa_dist, f)
+    #with open(pickle_dir + 'theta.pkl', 'wb') as f:
+    #    pickle.dump(theta_l_r, f)
+    with open(pickle_dir + 'rtof_dist', 'wb') as f:
+        pickle.dump(rtof_dist, f)
+    #with open(pickle_dir + 'tdoa_dist.pkl', 'wb') as f:
+    #   pickle.dump(tdoa_dist, f)
 
 
 if __name__ == '__main__':
