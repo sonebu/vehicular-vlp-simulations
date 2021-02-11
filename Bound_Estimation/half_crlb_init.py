@@ -24,6 +24,18 @@ class half_crlb_init:
         self.m = -np.log(2) / np.log(math.cos(math.radians(self.half_angle)))
 
     # derivations for Soner's method
+    def d_theta_d_param(self, param, ij, tx1, tx2):
+        if param == 1:
+            return self.d_theta_d_x1(ij, tx1, tx2)
+        elif param == 2:
+            return self.d_theta_d_y1(ij, tx1, tx2)
+        elif param == 3:
+            return self.d_theta_d_x2(ij, tx1, tx2)
+        elif param == 4:
+            return self.d_theta_d_y2(ij, tx1, tx2)
+        else:
+            raise ValueError("Error in d_theta_d_param parameter")
+
     def d_theta_d_x1(self, ij, tx1, tx2):
         if ij == 11:
             return - tx1[1] / (tx1[0]**2 + tx1[1]**2)
@@ -76,6 +88,20 @@ class half_crlb_init:
             raise ValueError("Entered tx rx values do not exist")
 
     # derivations for Roberts' method
+    def d_ddist_d_param(self, param, i, tx1, tx2):
+        if param == 1:
+            if i == 1:
+                return self.d_dA_d_x1(tx1, tx2)
+            else:
+                return self.d_dB_d_x1(tx1, tx2)
+        elif param == 2:
+            if i == 1:
+                return self.d_dA_d_y1(tx1, tx2)
+            else:
+                return self.d_dB_d_y1(tx1, tx2)
+        else:
+            raise ValueError("Entered tx rx values do not exist")
+
     def d_dA_d_x1(self, tx1, tx2):
         return tx1[0] * ( 1. / np.sqrt(tx1[0]**2 + tx1[1]**2) - 1. / np.sqrt(tx1[0]**2 + (tx1[1] + self.L1)**2))
 
@@ -93,6 +119,18 @@ class half_crlb_init:
 
 
     # derivations for Bechadeurge's method
+    def d_dij_d_param(self, param, ij, tx1, tx2):
+        if param == 1:
+            return self.d_dij_d_x1(ij, tx1, tx2)
+        elif param == 2:
+            return self.d_dij_d_y1(ij, tx1, tx2)
+        elif param == 3:
+            return self.d_dij_d_x2(ij, tx1, tx2)
+        elif param == 4:
+            return self.d_dij_d_y2(ij, tx1, tx2)
+        else:
+            raise ValueError("Error in d_theta_d_param parameter")
+
     def d_dij_d_x1(self, ij, tx1, tx2):
         if ij == 11:
             return tx1[0] / np.sqrt(tx1[0]**2 + tx1[1]**2)
