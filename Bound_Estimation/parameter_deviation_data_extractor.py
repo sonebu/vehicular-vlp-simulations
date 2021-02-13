@@ -10,7 +10,8 @@ def deviation_from_actual_value(array, actual_vals):
         deviations = np.zeros((array.shape[1],array.shape[2]))
         for pt in range(array.shape[1]):
             for param in range(array.shape[2]):
-                dev = np.sqrt(np.mean(np.abs(array[:,pt,param] - actual_vals[pt,param]) ** 2, axis=0))
+                #dev = np.sqrt(np.mean(np.abs(array[:,pt,param] - actual_vals[pt,param]) ** 2, axis=0))
+                dev = np.std(array[:,pt,param])
                 deviations[pt,param] = dev
         return deviations
 
@@ -19,8 +20,9 @@ def deviation_from_actual_value(array, actual_vals):
         for pt in range(array.shape[1]):
             for param_ind1 in range(array.shape[2]):
                 for param_ind2 in range(array.shape[3]):
-                    dev = np.sqrt(np.mean(np.abs(
-                        array[:, pt, param_ind1, param_ind2] - actual_vals[pt, param_ind1, param_ind2]) ** 2, axis=0))
+                    #dev = np.sqrt(np.mean(np.abs(
+                    #    array[:, pt, param_ind1, param_ind2] - actual_vals[pt, param_ind1, param_ind2]) ** 2, axis=0))
+                    dev = np.std(array[:, pt, param_ind1, param_ind2])
                     deviations[pt, param_ind1, param_ind2] = dev
         return deviations
     else:
@@ -34,9 +36,9 @@ def main():
     data = load_mat(data_dir)
     L = data['vehicle']['target']['width']
     """getting actual coordinates from .mat file"""
-    tx1_x = (-1)*data['vehicle']['target_relative']['tx1_qrx4']['y'][::gen_sim_data.params.number_of_skip_data]
+    tx1_x = data['vehicle']['target_relative']['tx1_qrx4']['y'][::gen_sim_data.params.number_of_skip_data]
     tx1_y = data['vehicle']['target_relative']['tx1_qrx4']['x'][::gen_sim_data.params.number_of_skip_data]
-    tx2_x = (-1)*data['vehicle']['target_relative']['tx2_qrx3']['y'][::gen_sim_data.params.number_of_skip_data]
+    tx2_x = data['vehicle']['target_relative']['tx2_qrx3']['y'][::gen_sim_data.params.number_of_skip_data]
     tx2_y = data['vehicle']['target_relative']['tx2_qrx3']['x'][::gen_sim_data.params.number_of_skip_data]
 
     """calculating actual theta"""
@@ -71,6 +73,10 @@ def main():
 
     with open(pickle_dir + 'theta.pkl', 'rb') as f:
         theta_l_r = pickle.load(f)
+    print(theta_l_r.shape)
+    print(theta_l_r[:,:,1,0] * 180 / math.pi)
+    print(thetas[:,1,0] * 180 / math.pi)
+    exit(0)
     """""
     with open(pickle_dir + 'rtof_dist.pkl', 'rb') as f:
         rtof_dist = pickle.load(f)

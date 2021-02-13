@@ -13,9 +13,8 @@ def roberts_half_crlb_single_instance(crlb_inst, tx1, tx2, noise_factor):
 
     for param1, param2 in zip(range(2), range(2)):
         for i in range(2):
-            fim[param1][param2] += 1 / noise_factor[i] * crlb_inst.d_ddist_d_param(param1 + 1, i, tx1, tx2) \
+            fim[param1][param2] -= 1 / noise_factor[i] * crlb_inst.d_ddist_d_param(param1 + 1, i, tx1, tx2) \
                                   * crlb_inst.d_ddist_d_param(param2 + 1, i, tx1, tx2)
-
     return np.linalg.inv(fim)
 
 
@@ -28,7 +27,7 @@ def bechadergue_half_crlb_single_instance(crlb_inst, tx1, tx2, noise_factor):
             for j in range(2):
                 ij = (i + 1) * 10 + (j + 1)
 
-                fim[param1][param2] += 1 / noise_factor[i][j] * crlb_inst.d_dij_d_param(param1 + 1, ij, tx1, tx2) \
+                fim[param1][param2] -= 1 / noise_factor[i][j] * crlb_inst.d_dij_d_param(param1 + 1, ij, tx1, tx2) \
                                        * crlb_inst.d_dij_d_param(param2 + 1, ij, tx1, tx2)
     return np.linalg.inv(fim)
 
@@ -42,8 +41,13 @@ def soner_half_crlb_single_instance(crlb_inst, tx1, tx2, noise_factor):
             for j in range(2):
                 ij = (i + 1) * 10 + (j + 1)
 
-                fim[param1][param2] += 1 / noise_factor[i][j] * crlb_inst.d_theta_d_param(param1 + 1, ij, tx1, tx2) \
+                fim[param1][param2] -= 1 / noise_factor[i][j] * crlb_inst.d_theta_d_param(param1 + 1, ij, tx1, tx2) \
                                        * crlb_inst.d_theta_d_param(param2 + 1, ij, tx1, tx2)
+                print(crlb_inst.d_theta_d_param(param1 + 1, ij, tx1, tx2))
+                print(crlb_inst.d_theta_d_param(param2 + 1, ij, tx1, tx2))
+                print("noise", noise_factor[i][j])
+    print("max: ", np.max(fim))
+    print("min: ", np.min(fim))
     return np.linalg.inv(fim)
 
 
