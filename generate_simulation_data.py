@@ -23,36 +23,36 @@ def main():
             data_name = data_names[i]
             data_dir = 'SimulationData/' + data_name + '.mat'
             data = load_mat(data_dir)
-
+            # editing the saved folder name
             folder_name = folder_names[i]
             dp = gen_sim_data.params.number_of_skip_data
             data_point = str(int(1000 / dp)) + '_point_' + str(itr) + '/'
 
             f_name = 'GUI_data/'+data_point+folder_name
             print(f_name)
-
+            # making the directory, iif it doesn't exist
             if not os.path.exists(f_name):
                 os.makedirs(f_name)
-
+            # obtaining values from the read simulation data (power, area)
             max_power = data['tx']['power']
             area = data['qrx']['f_QRX']['params']['area']
             rx_radius = math.sqrt(area) / math.pi
-
+            # obtaining values from the config file, based on transmitted signals
             c = gen_sim_data.params.c
             rx_fov = gen_sim_data.params.rx_fov
             tx_half_angle = gen_sim_data.params.tx_half_angle
             signal_freq = gen_sim_data.params.signal_freq
             measure_dt = gen_sim_data.params.measure_dt
-
+            # temporal parameters
             time_ = data['vehicle']['t']['values']
             time_ = time_[::dp]
             vehicle_dt = data['vehicle']['t']['dt']
-
+            # heading information of vehicles
             rel_hdg = data['vehicle']['target_relative']['heading'][::dp]
-
+            # vehicle widths
             L_tgt = data['vehicle']['target']['width']
             L_ego = data['vehicle']['ego']['width']
-
+            # relative coordinates of the target vehicle. edited to be aligned with simulations
             tgt_tx1_x = -1 * data['vehicle']['target_relative']['tx1_qrx4']['y'][::dp]
             tgt_tx1_y = data['vehicle']['target_relative']['tx1_qrx4']['x'][::dp]
             tgt_tx2_x = -1 * data['vehicle']['target_relative']['tx2_qrx3']['y'][::dp]
@@ -85,7 +85,7 @@ def main():
             i_bg_factor = data['qrx']['tia']['shot_I_bg_factor']
             t_factor1 = data['qrx']['tia']['thermal_factor1']
             t_factor2 = data['qrx']['tia']['thermal_factor1']
-
+            # initiating the arrays to hold each method's results.
             x, y, x_pose, y_pose, x_roberts, y_roberts, x_becha, y_becha = np.zeros((len(tgt_tx1_x), 2)), np.zeros((len(tgt_tx1_x),
                                                                                                                     2)), \
                                                                            np.zeros((len(tgt_tx1_x), 2)), np.zeros((len(tgt_tx1_x),
@@ -95,10 +95,13 @@ def main():
                                                                            np.zeros((len(tgt_tx1_x), 2)), np.zeros((len(tgt_tx1_x),
                                                                                                                     2))
 
+            # obtaining angle of arrival's results.
             aoa = AoA(a_m=max_power, f_m1=signal_freq, f_m2=2*signal_freq, measure_dt=measure_dt, vehicle_dt=vehicle_dt * dp,
                       w0=gen_sim_data.params.w0, hbuf= int(vehicle_dt / measure_dt), car_dist=L_tgt, fov=rx_fov)
+            # obtaining round-trip time of flight's results.
             rtof = RToF(a_m=max_power, f_m=signal_freq, measure_dt=gen_sim_data.params.rtof_measure_dt, vehicle_dt=vehicle_dt * dp, car_dist=L_tgt,
                         r=gen_sim_data.params.r, N=gen_sim_data.params.N , c=c)
+            # obtaining time difference of arrival's results.
             tdoa = TDoA(a_m=max_power, f_m1=signal_freq, f_m2=signal_freq, measure_dt=measure_dt , vehicle_dt=vehicle_dt * dp,
                         car_dist=L_tgt)
             for i in range(len(tgt_tx1_x)):
@@ -112,7 +115,7 @@ def main():
                 H_q = np.array([[pow_qrx1_tx1[:, i], pow_qrx2_tx1[:, i]], [pow_qrx1_tx2[:, i], pow_qrx2_tx2[:, i]]])
                 H = np.array([[np.sum(pow_qrx1_tx1[:, i]), np.sum(pow_qrx2_tx1[:, i])],
                              [np.sum(pow_qrx1_tx2[:, i]), np.sum(pow_qrx2_tx2[:, i])]])
-
+                # obtaining noise variances based on power scales
                 p_r1, p_r2, p_r3, p_r4 = H[0][0], H[0][1], H[1][0], H[1][1]
                 remaining_factor = I_bg * i_bg_factor + T * (t_factor1 + t_factor2)
                 noise_var1 = p_r1 * p_r_factor + remaining_factor
@@ -154,7 +157,7 @@ def main():
             for i in range(len(y)):
                 y_data[i] = (y[i][0] + y[i][1])/2
                 x_data[i] = (x[i][0] + x[i][1])/2
-
+            # saving simulation results in corresponding files.
             np.savetxt(f_name+'x.txt', x, delimiter=',')
             np.savetxt(f_name+'x_pose.txt', x_pose, delimiter=',')
             np.savetxt(f_name+'x_becha.txt', x_becha, delimiter=',')

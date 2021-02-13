@@ -27,7 +27,7 @@ folder_name = plot_sim_data.names.folder_name
 dir = plot_sim_data.names.dir
 
 for i in range(len(sm)):
-
+    # determining file name, depending on the simulation number
     if sm[i] == 3:
         input_name = plot_sim_data.names.data_names[2]
         fl_name = plot_sim_data.names.folder_names[2]
@@ -47,6 +47,7 @@ for i in range(len(sm)):
     # x_roberts, y_roberts = np.empty((100,2)), np.empty((100,2))
     # print(len(files))
     # for folder_name in files:
+    # loading simulation data
     x_pose = np.loadtxt(folder_name+fl_name+'x_pose.txt', delimiter=',')
     y_pose = np.loadtxt(folder_name+fl_name+'y_pose.txt', delimiter=',')
     x_becha = np.loadtxt(folder_name+fl_name+'x_becha.txt', delimiter=',')
