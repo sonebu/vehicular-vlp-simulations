@@ -154,7 +154,7 @@ def main():
             for i in range(len(y)):
                 y_data[i] = (y[i][0] + y[i][1])/2
                 x_data[i] = (x[i][0] + x[i][1])/2
-
+            # saving required data into txt file.
             np.savetxt(f_name+'x.txt', x, delimiter=',')
             np.savetxt(f_name+'x_pose.txt', x_pose, delimiter=',')
             np.savetxt(f_name+'x_becha.txt', x_becha, delimiter=',')
