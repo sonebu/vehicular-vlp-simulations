@@ -3,6 +3,7 @@ from matfile_read import load_mat
 from glob import glob
 import math
 import matplotlib.pyplot as plt
+from config_est import bound_est_data
 
 # Roberts' method, CRLB calculation for a single position estimation
 def roberts_crlb_single_instance(crlb_obj, tx1, tx2, delays, curr_t, dt_vhc, max_pow, sig_freq, meas_dt, T, i_bg, noise_factors, powers):
@@ -116,7 +117,7 @@ def deviation_from_actual_value(array, actual_val):
 def main():
 
     data = load_mat('../SimulationData/v2lcRun_sm3_comparisonSoA.mat')
-    dp = 10
+    dp = bound_est_data.params.number_of_skip_data
     # vehicle parameters
     L_1 = data['vehicle']['target']['width']
     L_2 = data['vehicle']['ego']['width']
@@ -130,8 +131,8 @@ def main():
     stop_time = data['vehicle']['t']['stop']
 
     max_power = data['tx']['power']
-    signal_freq = 1e6  # 1 MHz signal frequency
-    measure_dt = 1 / 2.5e6  # 2.5 MHz measure frequency
+    signal_freq = bound_est_data.params.signal_freq
+    measure_dt = bound_est_data.params.measure_dt
 
     # relative tgt vehicle positions
     tx1_x = data['vehicle']['target_relative']['tx1_qrx4']['y'][::dp]
@@ -160,8 +161,8 @@ def main():
                              data['channel']['qrx2']['power']['tx1']['C'][::dp], data['channel']['qrx2']['power']['tx1']['D'][::dp]])
 
     # noise params
-    T = 298  # Kelvin
-    I_bg = 750e-6  # 750 uA
+    T = bound_est_data.params.T
+    I_bg = bound_est_data.params.I_bg
     p_r_factor = data['qrx']['tia']['shot_P_r_factor']
     i_bg_factor = data['qrx']['tia']['shot_I_bg_factor']
     t_factor1 = data['qrx']['tia']['thermal_factor1']
@@ -169,8 +170,8 @@ def main():
     noise_factors = [p_r_factor, i_bg_factor, t_factor1, t_factor2]
 
     # other params
-    rx_fov = 50  # angle
-    tx_half_angle = 60  # angle
+    rx_fov = bound_est_data.params.rx_fov
+    tx_half_angle = bound_est_data.params.tx_half_angle
 
     # initalize crlb equations with given parameters
     crlb_init_object = CRLB_init(L_1, L_2, rx_area, rx_fov, tx_half_angle)

@@ -2,18 +2,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 from glob import glob
 from matfile_read import load_mat
+from config_est import bound_est_data
 
 
 def deviation_from_actual_value(array, actual_val):
     return np.sqrt(np.mean(abs(array - actual_val) ** 2, axis=0))
 
 def main():
-    dir = '../GUI_data/100_point_'
+    dir = bound_est_data.plot.directory
     files = glob(dir + '*/3/')
     x_pose, y_pose = [], []
     x_becha, y_becha = [], []
     x_roberts, y_roberts = [], []
-    dp = 10
+    dp = bound_est_data.params.number_of_skip_data
     print(len(files))
 
     for folder_name in files:
