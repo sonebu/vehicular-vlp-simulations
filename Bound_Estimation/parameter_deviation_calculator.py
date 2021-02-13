@@ -80,15 +80,15 @@ class RToF:
         self.car_dist = car_dist
 
     def gen_signals(self, f, r, N, t, delays, noise_variance):
-        length_time = np.size(t);
+        length_time = np.size(t)
         noise1 = np.random.normal(0, math.sqrt(noise_variance[0]), length_time).astype('float')
         noise2 = np.random.normal(0, math.sqrt(noise_variance[1]), length_time).astype('float')
         s_e = np.asarray(signal.square(2 * np.pi * f * t), dtype='float')  # + (noise1 + noise2) / 2
-        s_r = np.zeros((2, length_time));
-        s_r[0] = np.asarray(signal.square(2 * np.pi * f * (t + delays[0])), dtype='float') + noise1;
-        s_r[1] = np.asarray(signal.square(2 * np.pi * f * (t + delays[1])), dtype='float') + noise2;
+        s_r = np.zeros((2, length_time))
+        s_r[0] = np.asarray(signal.square(2 * np.pi * f * (t + delays[0])), dtype='float') + noise1
+        s_r[1] = np.asarray(signal.square(2 * np.pi * f * (t + delays[1])), dtype='float') + noise2
         s_h = np.asarray(signal.square(2 * np.pi * f * (r / (r + 1)) * t), dtype='float')
-        s_gate = np.asarray((signal.square(2 * np.pi * (f / (N * (r + 1))) * t) > 0), dtype='float');
+        s_gate = np.asarray((signal.square(2 * np.pi * (f / (N * (r + 1))) * t) > 0), dtype='float')
         return s_e, s_r, s_h, s_gate
 
     @staticmethod
@@ -169,15 +169,15 @@ class RToF:
         ### BS: numba and the LLVM optimizer can't really handle varying size arrays well
         ###     so we need to tell the size of the time array beforehand
         ###     also, moved dm computation outside
-        length_time = np.size(self.t);
+        length_time = np.size(self.t)
         fclk = 1 / (2 * self.dt)
 
         counts1, counts2 = self.rtof_estimate_dist(s_e, s_r, s_h, s_gate, self.f, self.r, self.N, self.dt, self.t,
                                                    length_time)
         size_tmp = np.size(counts1)  # could equivalently be counts2
         dm = np.zeros((2, size_tmp));
-        dm[0] = ((self.c / 2) * (np.asarray(counts2) / ((self.r + 1) * self.N * fclk)));
-        dm[1] = ((self.c / 2) * (np.asarray(counts1) / ((self.r + 1) * self.N * fclk)));
+        dm[0] = ((self.c / 2) * (np.asarray(counts2) / ((self.r + 1) * self.N * fclk)))
+        dm[1] = ((self.c / 2) * (np.asarray(counts1) / ((self.r + 1) * self.N * fclk)))
 
         d11, d12 = self.dist_to_pos(dm, delays)
 
@@ -195,8 +195,8 @@ class RToF:
                                                    length_time)
         size_tmp = np.size(counts1)  # could equivalently be counts2
         dm = np.zeros((2, size_tmp));
-        dm[0] = ((self.c / 2) * (np.asarray(counts2) / ((self.r + 1) * self.N * fclk)));
-        dm[1] = ((self.c / 2) * (np.asarray(counts1) / ((self.r + 1) * self.N * fclk)));
+        dm[0] = ((self.c / 2) * (np.asarray(counts2) / ((self.r + 1) * self.N * fclk)))
+        dm[1] = ((self.c / 2) * (np.asarray(counts1) / ((self.r + 1) * self.N * fclk)))
 
         d21, d22 = self.dist_to_pos(dm, delays)
 
@@ -277,15 +277,6 @@ class AoA:
             [0., 0.]), np.array([0., 0.]), np.array([0., 0.]), np.array([0., 0.])
         theta_l_r = np.array([[0., 0.], [0., 0.]]).astype(float)
 
-        # print(self.t.shape)
-        # print(self.dt)
-        # print(r1_w1_a.shape)
-        # print(s1_w1.shape)
-        # print(np.dot(r1_w1_a[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf]).shape)
-        # print(np.dot(r1_w1_a[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf]))
-        # print(np.sum(np.dot(r1_w1_a[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf])))
-        # print(np.sum(np.dot(r1_w1_a[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf])) / self.hbuf)
-
         eps_a_s1[0] = np.sum(
             np.dot(r1_w1_a[self.w0: self.w0 + self.hbuf], s1_w1[self.w0: self.w0 + self.hbuf])) / self.hbuf
         eps_b_s1[0] = np.sum(
@@ -320,14 +311,6 @@ class AoA:
         eps_d_s2[1] = np.sum(
             np.dot(r2_w2_d[self.w0: self.w0 + self.hbuf], s2_w2[self.w0: self.w0 + self.hbuf])) / self.hbuf
 
-        # print(eps_a_s1)
-        # print(eps_a_s2)
-        # print(eps_b_s1)
-        # print(eps_b_s2)
-        # print(eps_c_s1)
-        # print(eps_c_s2)
-        # print(eps_d_s1)
-        # print(eps_d_s2)
 
         phi_h_s1[0] = ((eps_b_s1[0] + eps_d_s1[0]) - (eps_a_s1[0] + eps_c_s1[0])) / (
                 eps_a_s1[0] + eps_b_s1[0] + eps_c_s1[0] + eps_d_s1[0])
