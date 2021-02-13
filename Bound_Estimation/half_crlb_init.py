@@ -46,7 +46,7 @@ class half_crlb_init:
         elif ij == 22:
             return 0
         else:
-            raise ValueError("Entered tx rx values do not exist")
+            raise ValueError("Entered tx rx values do not exist", str(ij))
 
 
     def d_theta_d_x2(self, ij, tx1, tx2):

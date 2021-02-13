@@ -217,7 +217,7 @@ def main():
 
     np.savetxt('Data/aoa/crlb_y1.txt', soner_crlb_results[1], delimiter=',')
     np.savetxt('Data/rtof/crlb_y1.txt', becha_crlb_results[1], delimiter=',')
-    np.savetxt('Data/tdoa/crlb_y2.txt', soner_crlb_results[3], delimiter=',')
+    np.savetxt('Data/aoa/crlb_y2.txt', soner_crlb_results[3], delimiter=',')
     np.savetxt('Data/rtof/crlb_y2.txt', becha_crlb_results[3], delimiter=',')
     np.savetxt('Data/tdoa/crlb_y.txt', robert_crlb_results[1], delimiter=',')
 

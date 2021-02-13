@@ -1,5 +1,7 @@
 from half_crlb_init import *
 from matfile_read import load_mat
+import os
+import pickle
 from glob import glob
 import math
 import matplotlib.pyplot as plt
@@ -11,7 +13,7 @@ def roberts_half_crlb_single_instance(crlb_inst, tx1, tx2, noise_factor):
 
     for param1, param2 in zip(range(2), range(2)):
         for i in range(2):
-            fim[param1][param2] -= 1 / noise_factor[i] * crlb_inst.d_ddist_d_param(param1 + 1, i, tx1, tx2) \
+            fim[param1][param2] += 1 / noise_factor[i] * crlb_inst.d_ddist_d_param(param1 + 1, i, tx1, tx2) \
                                   * crlb_inst.d_ddist_d_param(param2 + 1, i, tx1, tx2)
 
     return np.linalg.inv(fim)
@@ -24,9 +26,9 @@ def bechadergue_half_crlb_single_instance(crlb_inst, tx1, tx2, noise_factor):
     for param1, param2 in zip(range(4), range(4)):
         for i in range(2):
             for j in range(2):
-                ij = (i + 1) * 10 + j
+                ij = (i + 1) * 10 + (j + 1)
 
-                fim[param1][param2] -= 1 / noise_factor[i][j] * crlb_inst.d_dij_d_param(param1 + 1, ij, tx1, tx2) \
+                fim[param1][param2] += 1 / noise_factor[i][j] * crlb_inst.d_dij_d_param(param1 + 1, ij, tx1, tx2) \
                                        * crlb_inst.d_dij_d_param(param2 + 1, ij, tx1, tx2)
     return np.linalg.inv(fim)
 
@@ -38,9 +40,9 @@ def soner_half_crlb_single_instance(crlb_inst, tx1, tx2, noise_factor):
     for param1, param2 in zip(range(4), range(4)):
         for i in range(2):
             for j in range(2):
-                ij = (i + 1) * 10 + j
+                ij = (i + 1) * 10 + (j + 1)
 
-                fim[param1][param2] -= 1 / noise_factor[i][j] * crlb_inst.d_theta_d_param(param1 + 1, ij, tx1, tx2) \
+                fim[param1][param2] += 1 / noise_factor[i][j] * crlb_inst.d_theta_d_param(param1 + 1, ij, tx1, tx2) \
                                        * crlb_inst.d_theta_d_param(param2 + 1, ij, tx1, tx2)
     return np.linalg.inv(fim)
 
@@ -73,12 +75,19 @@ def main():
     tx2_y = data['vehicle']['target_relative']['tx2_qrx3']['x'][::dp]
     rel_heading = data['vehicle']['target_relative']['heading'][::dp]
 
-    #print("deviation results: ", deviation_from_actual_value(np.asarray(x_becha)[:,:,0], -tx1_x))
-    #print(deviation_from_actual_value(np.asarray(x_becha)[:,:,0], -tx1_x).shape)
-
-
-
     # noise params
+    directory_path = os.path.dirname(
+        os.path.dirname(os.path.join(os.getcwd(), os.listdir(os.getcwd())[0])))  ## directory of directory of file
+    pickle_dir = directory_path + '/Bound_Estimation/Parameter_Deviation/'
+
+    with open(pickle_dir + 'deviation_tdoa_dist.pkl', 'rb') as f:
+        noise_dev_roberts = pickle.load(f)
+
+    with open(pickle_dir + 'deviation_theta.pkl', 'rb') as f:
+        noise_dev_soner = pickle.load(f)
+
+    #with open(pickle_dir + 'deviation_rtof_dist.pkl', 'rb') as f:
+    #    noise_dev_bechadergue = pickle.load(f)
 
 
     # other params
@@ -96,20 +105,28 @@ def main():
     for i in range(len(tx1_x)):
         tx1 = np.array([tx1_x[i], tx1_y[i]])
         tx2 = np.array([tx2_x[i], tx2_y[i]])
-        curr_t = time[i]
-        delays = np.array([[delay_11[i], delay_12[i]], [delay_21[i], delay_22[i]]])
-        powers = np.array([[pow_qrx1_tx1[:, i], pow_qrx1_tx2[:, i]], [pow_qrx2_tx1[:, i], pow_qrx2_tx2[:, i]]])
-        fim_inverse_rob = roberts_half_crlb_single_instance(half_crlb_init_object, tx1, tx2,noise)
-        fim_inverse_becha = bechadergue_half_crlb_single_instance(half_crlb_init_object, tx1, tx2, noise)
-        fim_inverse_soner = soner_half_crlb_single_instance(half_crlb_init_object, tx1, tx2, noise)
 
+        noise_factor_r = noise_dev_roberts[i]
+        #noise_factor_b = noise_dev_bechadergue[i]
+        noise_factor_s = noise_dev_soner[i]
+
+        fim_inverse_rob = roberts_half_crlb_single_instance(half_crlb_init_object, tx1, tx2, noise_factor_r)
+        #fim_inverse_becha = bechadergue_half_crlb_single_instance(half_crlb_init_object, tx1, tx2, noise_factor_b)
+        fim_inverse_soner = soner_half_crlb_single_instance(half_crlb_init_object, tx1, tx2, noise_factor_s)
+
+        """print(fim_inverse_rob)
+        print(fim_inverse_soner)
+        print(noise_factor_r)
+        print(noise_factor_s)
+        if i == 10:
+            exit(0)"""
         robert_crlb_results[0] = np.append(robert_crlb_results[0], np.sqrt(fim_inverse_rob[0][0]))
         robert_crlb_results[1] = np.append(robert_crlb_results[1], np.sqrt(fim_inverse_rob[1][1]))
 
-        becha_crlb_results[0] = np.append(becha_crlb_results[0], np.sqrt(fim_inverse_becha[0][0]))
-        becha_crlb_results[1] = np.append(becha_crlb_results[1], np.sqrt(fim_inverse_becha[1][1]))
-        becha_crlb_results[2] = np.append(becha_crlb_results[2], np.sqrt(fim_inverse_becha[2][2]))
-        becha_crlb_results[3] = np.append(becha_crlb_results[3], np.sqrt(fim_inverse_becha[3][3]))
+        #becha_crlb_results[0] = np.append(becha_crlb_results[0], np.sqrt(fim_inverse_becha[0][0]))
+        #becha_crlb_results[1] = np.append(becha_crlb_results[1], np.sqrt(fim_inverse_becha[1][1]))
+        #becha_crlb_results[2] = np.append(becha_crlb_results[2], np.sqrt(fim_inverse_becha[2][2]))
+        #becha_crlb_results[3] = np.append(becha_crlb_results[3], np.sqrt(fim_inverse_becha[3][3]))
 
         soner_crlb_results[0] = np.append(soner_crlb_results[0], np.sqrt(fim_inverse_soner[0][0]))
         soner_crlb_results[1] = np.append(soner_crlb_results[1], np.sqrt(fim_inverse_soner[1][1]))
@@ -117,27 +134,28 @@ def main():
         soner_crlb_results[3] = np.append(soner_crlb_results[3], np.sqrt(fim_inverse_soner[3][3]))
         print(i)
 
-    np.savetxt('pose_crlb_x1.txt', soner_crlb_results[0], delimiter=',')
-    np.savetxt('becha_crlb_x1.txt', becha_crlb_results[0], delimiter=',')
-    np.savetxt('pose_crlb_x2.txt', soner_crlb_results[2], delimiter=',')
-    np.savetxt('becha_crlb_x2.txt', becha_crlb_results[2], delimiter=',')
-    np.savetxt('roberts_crlb_x.txt', robert_crlb_results[0], delimiter=',')
+    if not os.path.exists(directory_path + "/Bound_Estimation/Half_CRLB_Data"):
+        os.makedirs(directory_path + "/Bound_Estimation/Half_CRLB_Data")
+    if not os.path.exists(directory_path + "/Bound_Estimation/Half_CRLB_Data/aoa"):
+        os.makedirs(directory_path + "/Bound_Estimation/Half_CRLB_Data/aoa")
+    if not os.path.exists(directory_path + "/Bound_Estimation/Half_CRLB_Data/rtof"):
+        os.makedirs(directory_path + "/Bound_Estimation/Half_CRLB_Data/rtof")
+    if not os.path.exists(directory_path + "/Bound_Estimation/Half_CRLB_Data/tdoa"):
+        os.makedirs(directory_path + "/Bound_Estimation/Half_CRLB_Data/tdoa")
 
-    np.savetxt('pose_crlb_y1.txt', soner_crlb_results[1], delimiter=',')
-    np.savetxt('becha_crlb_y1.txt', becha_crlb_results[1], delimiter=',')
-    np.savetxt('pose_crlb_y2.txt', soner_crlb_results[3], delimiter=',')
-    np.savetxt('becha_crlb_y2.txt', becha_crlb_results[3], delimiter=',')
-    np.savetxt('roberts_crlb_y.txt', robert_crlb_results[1], delimiter=',')
+    np.savetxt('Half_CRLB_Data/aoa/crlb_x1.txt', soner_crlb_results[0], delimiter=',')
+    #np.savetxt('Half_CRLB_Data/rtof/crlb_x1.txt', becha_crlb_results[0], delimiter=',')
+    np.savetxt('Half_CRLB_Data/aoa/crlb_x2.txt', soner_crlb_results[2], delimiter=',')
+    #np.savetxt('Half_CRLB_Data/rtof/crlb_x2.txt', becha_crlb_results[2], delimiter=',')
+    np.savetxt('Half_CRLB_Data/tdoa/crlb_x.txt', robert_crlb_results[0], delimiter=',')
+
+    np.savetxt('Half_CRLB_Data/aoa/crlb_y1.txt', soner_crlb_results[1], delimiter=',')
+    #np.savetxt('Half_CRLB_Data/rtof/crlb_y1.txt', becha_crlb_results[1], delimiter=',')
+    np.savetxt('Half_CRLB_Data/aoa/crlb_y2.txt', soner_crlb_results[3], delimiter=',')
+    #np.savetxt('Half_CRLB_Data/rtof/crlb_y2.txt', becha_crlb_results[3], delimiter=',')
+    np.savetxt('Half_CRLB_Data/tdoa/crlb_y.txt', robert_crlb_results[1], delimiter=',')
 
     print("finished")
-    folder_name = '../GUI_data/means/3/'
-    # x_becha, y_becha = np.loadtxt(folder_name+'x_becha_mean.txt', delimiter=','), np.loadtxt(folder_name+'y_becha_mean.txt',
-    #                                                                                     delimiter=',')
-    # x_roberts, y_roberts = np.loadtxt(folder_name+'x_roberts_mean.txt', delimiter=','), np.loadtxt(folder_name+'y_roberts_mean.txt',
-    #                                                                                           delimiter=',')
-    # x_soner, y_soner = np.loadtxt(folder_name+'x_pose_mean.txt', delimiter=','), np.loadtxt(folder_name+'y_pose_mean.txt', delimiter=',')
-
-
 
 
 if __name__ == "__main__":
