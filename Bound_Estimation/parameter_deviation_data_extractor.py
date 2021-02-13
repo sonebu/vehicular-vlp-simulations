@@ -41,14 +41,14 @@ def main():
     tx2_x = data['vehicle']['target_relative']['tx2_qrx3']['y'][::gen_sim_data.params.number_of_skip_data]
     tx2_y = data['vehicle']['target_relative']['tx2_qrx3']['x'][::gen_sim_data.params.number_of_skip_data]
 
-    """calculating actual theta"""
+    #calculating actual theta
     aoa11 = np.arctan(tx1_y/tx1_x)
     aoa12 = np.arctan(tx2_y/tx2_x)
     aoa21 = np.arctan((tx1_y - L) / tx1_x)
     aoa22 = np.arctan((tx2_y - L) / tx2_x)
     thetas = np.array([[aoa11, aoa12], [aoa21, aoa22]]).transpose()
 
-    """calculating actual distance values"""
+    #calculating actual distance values
     d11 = np.sqrt(np.power(tx1_x, 2) + np.power(tx1_y, 2))
     d12 = np.sqrt(np.power(tx2_x, 2) + np.power(tx2_y, 2))
     d21 = np.sqrt(np.power(tx1_x, 2) + np.power((tx1_y-L), 2))
@@ -61,7 +61,7 @@ def main():
 
 
 
-    """retrieving pickle data calculated from parameter_deviation_calculator.py"""
+    #retrieving pickle data calculated from parameter_deviation_calculator.py
     folder_name = gen_sim_data.names.folder_names[2]
     data_point = str(int(1000 / gen_sim_data.params.number_of_skip_data)) + '_point_' + '/'
     f_name = directory_path + '/Parameter_Deviation/' + data_point + folder_name
@@ -78,22 +78,22 @@ def main():
     print(thetas[:,1,0] * 180 / math.pi)
     exit(0)
     """""
-    with open(pickle_dir + 'rtof_dist.pkl', 'rb') as f:
-        rtof_dist = pickle.load(f)
-        print(rtof_dist.shape)
+    with open(pickle_dir + 'rtof_dist.pkl.pkl', 'rb') as f:
+        rtof_dist.pkl = pickle.load(f)
+        print(rtof_dist.pkl.shape)
     """
     with open(pickle_dir + 'tdoa_dist.pkl', 'rb') as f:
         tdoa_dist = pickle.load(f)
 
-    """calculating deviation for theta, rtof_dist, tdoa_dist"""
+    #calculating deviation for theta, rtof_dist.pkl, tdoa_dist
     deviation_theta = deviation_from_actual_value(theta_l_r, thetas)
 
     """
-    deviation_rtof_dist = deviation_from_actual_value(rtof_dist, rtof_distances)
+    deviation_rtof_dist = deviation_from_actual_value(rtof_dist.pkl, rtof_distances)
     """
     deviation_tdoa_dist = deviation_from_actual_value(tdoa_dist, tdoa_distances)
 
-    """saving calculated deviation parameters."""
+    #saving calculated deviation parameters.
     with open(pickle_dir + 'deviation_theta.pkl', 'wb') as f:
         pickle.dump(deviation_theta, f)
     #with open(pickle_dir + 'deviation_rtof_dist', 'wb') as f:
