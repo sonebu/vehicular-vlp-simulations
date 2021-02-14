@@ -1,8 +1,6 @@
 from CRLB_init import *
 from matfile_read import load_mat
-from glob import glob
-import math
-import matplotlib.pyplot as plt
+import numpy as np
 from config_est import bound_est_data
 
 # Roberts' method, CRLB calculation for a single position estimation
@@ -99,6 +97,9 @@ def soner_crlb_single_instance(crlb_obj, tx1, tx2, delays, curr_t, dt_vhc, max_p
 
 
 def signal_generator(current_time, dt_vhc, max_power, signal_freq, delay, measure_dt):
+    """
+    Create sinusoidal signal and its derivative form for CRLB calculations
+    """
     time = np.arange(current_time - dt_vhc + measure_dt, current_time + measure_dt, measure_dt)
 
     s = max_power * np.sin((2 * np.pi * signal_freq * (time - delay)) % (2 * np.pi))
@@ -111,13 +112,11 @@ def signal_generator(current_time, dt_vhc, max_power, signal_freq, delay, measur
     return e_1, e_2, e_3
 
 
-def deviation_from_actual_value(array, actual_val):
-    return np.sqrt(np.mean(abs(array - actual_val) ** 2, axis=0))
-
 def main():
-
+    # load the simulation data
     data = load_mat('../SimulationData/v2lcRun_sm3_comparisonSoA.mat')
     dp = bound_est_data.params.number_of_skip_data
+
     # vehicle parameters
     L_1 = data['vehicle']['target']['width']
     L_2 = data['vehicle']['ego']['width']
@@ -127,8 +126,6 @@ def main():
     # time parameters
     time = data['vehicle']['t']['values'][::dp]
     dt = data['vehicle']['t']['dt'] * dp
-    start_time = data['vehicle']['t']['start']
-    stop_time = data['vehicle']['t']['stop']
 
     max_power = data['tx']['power']
     signal_freq = bound_est_data.params.signal_freq
@@ -139,10 +136,6 @@ def main():
     tx1_y = data['vehicle']['target_relative']['tx1_qrx4']['x'][::dp]
     tx2_x = data['vehicle']['target_relative']['tx2_qrx3']['y'][::dp]
     tx2_y = data['vehicle']['target_relative']['tx2_qrx3']['x'][::dp]
-    rel_heading = data['vehicle']['target_relative']['heading'][::dp]
-
-    #print("deviation results: ", deviation_from_actual_value(np.asarray(x_becha)[:,:,0], -tx1_x))
-    #print(deviation_from_actual_value(np.asarray(x_becha)[:,:,0], -tx1_x).shape)
 
     # delay parameters
     delay_11 = data['channel']['qrx1']['delay']['tx1'][::dp]
@@ -182,11 +175,14 @@ def main():
     soner_crlb_results = [np.array([]), np.array([]), np.array([]), np.array([])]
 
     for i in range(len(tx1_x)):
+        # calculate sim params for ith point
         tx1 = np.array([tx1_x[i], tx1_y[i]])
         tx2 = np.array([tx2_x[i], tx2_y[i]])
         curr_t = time[i]
         delays = np.array([[delay_11[i], delay_12[i]], [delay_21[i], delay_22[i]]])
         powers = np.array([[pow_qrx1_tx1[:, i], pow_qrx1_tx2[:, i]], [pow_qrx2_tx1[:, i], pow_qrx2_tx2[:, i]]])
+
+        #calculate inverse of FIM for each method
         fim_inverse_rob = roberts_crlb_single_instance(crlb_init_object, tx1, tx2, delays,
                                      curr_t, dt, max_power, signal_freq, measure_dt, T, I_bg, noise_factors, powers)
         fim_inverse_becha = bechadergue_crlb_single_instance(crlb_init_object, tx1, tx2, delays,
@@ -194,7 +190,7 @@ def main():
         fim_inverse_soner = soner_crlb_single_instance(crlb_init_object, tx1, tx2, delays,
                                      curr_t, dt, max_power, signal_freq, measure_dt, T, I_bg, noise_factors, powers)
 
-
+        # from varince -> deviation
         robert_crlb_results[0] = np.append(robert_crlb_results[0], np.sqrt(fim_inverse_rob[0][0]))
         robert_crlb_results[1] = np.append(robert_crlb_results[1], np.sqrt(fim_inverse_rob[1][1]))
 
@@ -207,8 +203,8 @@ def main():
         soner_crlb_results[1] = np.append(soner_crlb_results[1], np.sqrt(fim_inverse_soner[1][1]))
         soner_crlb_results[2] = np.append(soner_crlb_results[2], np.sqrt(fim_inverse_soner[2][2]))
         soner_crlb_results[3] = np.append(soner_crlb_results[3], np.sqrt(fim_inverse_soner[3][3]))
-        print(i)
 
+    #save deviations
     np.savetxt('Data/aoa/crlb_x1.txt', soner_crlb_results[0], delimiter=',')
     np.savetxt('Data/rtof/crlb_x1.txt', becha_crlb_results[0], delimiter=',')
     np.savetxt('Data/aoa/crlb_x2.txt', soner_crlb_results[2], delimiter=',')
@@ -222,6 +218,7 @@ def main():
     np.savetxt('Data/tdoa/crlb_y.txt', robert_crlb_results[1], delimiter=',')
 
     print("finished")
+
 
 if __name__ == "__main__":
     main()
