@@ -31,22 +31,14 @@ for i in range(len(sm)):
     if sm[i] == 3:
         input_name = plot_sim_data.names.data_names[2]
         fl_name = plot_sim_data.names.folder_names[2]
-        # files = glob(dir + '*/3/')
     elif sm[i] == 2:
         input_name = plot_sim_data.names.data_names[1]
         fl_name = plot_sim_data.names.folder_names[1]
-        # files = glob(dir + '*/2/')
     elif sm[i] == 1:
         input_name = plot_sim_data.names.data_names[0]
         fl_name = plot_sim_data.names.folder_names[0]
-        # files = glob(dir + '*/1/')
 
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(20, 20))
-    # x_pose, y_pose = np.empty((100,2)), np.empty((100,2))
-    # x_becha, y_becha = np.empty((100,2)), np.empty((100,2))
-    # x_roberts, y_roberts = np.empty((100,2)), np.empty((100,2))
-    # print(len(files))
-    # for folder_name in files:
     # loading simulation data
     x_pose = np.loadtxt(folder_name+fl_name+'x_pose.txt', delimiter=',')
     y_pose = np.loadtxt(folder_name+fl_name+'y_pose.txt', delimiter=',')
@@ -59,20 +51,6 @@ for i in range(len(sm)):
     x = np.loadtxt(dir+fl_name+'x.txt', delimiter=',')
     y = np.loadtxt(dir+fl_name+'y.txt', delimiter=',')
 
-    # x_pose /= len(files)
-    # np.savetxt('GUI_data/means'+ fl_name +'x_pose_mean.txt', x_pose, delimiter=',')
-    # y_pose /= len(files)
-    # np.savetxt('GUI_data/means'+ fl_name +'y_pose_mean.txt', y_pose, delimiter=',')
-    # x_becha /= len(files)
-    # np.savetxt('GUI_data/means'+ fl_name +'x_becha_mean.txt', x_becha, delimiter=',')
-    # y_becha /= len(files)
-    # np.savetxt('GUI_data/means'+ fl_name +'y_becha_mean.txt', y_becha, delimiter=',')
-    # x_roberts /= len(files)
-    # np.savetxt('GUI_data/means'+ fl_name +'x_roberts_mean.txt', x_roberts, delimiter=',')
-    # y_roberts /= len(files)
-    # np.savetxt('GUI_data/means'+ fl_name +'y_roberts_mean.txt', y_roberts, delimiter=',')
-    #f.suptitle('Fig 1: Relative Target Vehicle Trajectory \n Fig 2: x Estimation Results \n Fig 3: y Estimation Results')
-    # img_ego = ndimage.rotate(plt.imread('red_racing_car_top_view_preview.png'), 0)
     img_tgt_s = ndimage.rotate(plt.imread('green_racing_car_top_view_preview.png'), rel_hdg[0])
     img_tgt_f = ndimage.rotate(plt.imread('green_racing_car_top_view_preview.png'), rel_hdg[-1])
     if fl_name == '/3/':
@@ -93,7 +71,6 @@ for i in range(len(sm)):
         ax1.add_artist(AnnotationBbox(OffsetImage(img_tgt_f, zoom=0.08), (x[-1][0], y[-1][0]), frameon=False))
 
 
-    # ax1.add_artist(AnnotationBbox(OffsetImage(img_tgt_f, zoom=0.05), (x_data[-1][0], y_data[-1][0]), frameon=False))
     if fl_name == '/2/':
         ax1.plot(x[:, 0], y[:, 0], 'o', color='green', markersize=10)
         ax1.title.set_text('Fig.1: Relative Target Vehicle Trajectory')

@@ -222,15 +222,6 @@ def main():
     np.savetxt('Data/tdoa/crlb_y.txt', robert_crlb_results[1], delimiter=',')
 
     print("finished")
-    folder_name = '../GUI_data/means/3/'
-    # x_becha, y_becha = np.loadtxt(folder_name+'x_becha_mean.txt', delimiter=','), np.loadtxt(folder_name+'y_becha_mean.txt',
-    #                                                                                     delimiter=',')
-    # x_roberts, y_roberts = np.loadtxt(folder_name+'x_roberts_mean.txt', delimiter=','), np.loadtxt(folder_name+'y_roberts_mean.txt',
-    #                                                                                           delimiter=',')
-    # x_soner, y_soner = np.loadtxt(folder_name+'x_pose_mean.txt', delimiter=','), np.loadtxt(folder_name+'y_pose_mean.txt', delimiter=',')
-
-
-
 
 if __name__ == "__main__":
     main()

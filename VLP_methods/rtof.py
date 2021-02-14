@@ -42,8 +42,6 @@ class RToF:
 
         ### BS: numba doesn't like dictionaries since it's not LLVM-loop-optimization-friendly
         ###     and this can easily be an array, so I'll convert it to an array
-        #s_r = {1: np.asarray(signal.square(2 * np.pi * f * (t + delays[0])), dtype='float') + noise1,
-        #       2: np.asarray(signal.square(2 * np.pi * f * (t + delays[1])), dtype='float') + noise2  }
         s_r = np.zeros((2, length_time));
         # noise added, received signals
         s_r[0] = np.asarray(signal.square(2 * np.pi * f * (t + delays[0])), dtype='float') + noise1;
@@ -64,40 +62,25 @@ class RToF:
     def rtof_estimate_dist(s_e, s_r, s_h, s_gate, f, r, N, dt, t, length_time):
 
         # setting initial states
-        #print("f:", f, "r:", r, "N:", N,"dt:",dt)
         s_clk            = np.zeros(length_time);
         s_clk_idx        = np.arange(1, length_time, 2);
         s_clk[s_clk_idx] = 1;
         
         ### BS: numba doesn't like dictionaries since it's not LLVM-loop-optimization-friendly
         ###     and this can easily be an array, so I'll convert it to an array
-        #s_phi_hh         = { 1: np.zeros(np.size(t), dtype='float'), 2: np.zeros(np.size(t), dtype='float') };
         s_phi_hh = np.zeros((2, length_time));
-
         s_eh_state = 0
-
         ### BS: numba doesn't like dictionaries since it's not LLVM-loop-optimization-friendly
         ###     and this can easily be an array, so I'll convert it to an array
-        #s_rh_state = {1: 0, 2: 0}
         s_rh_state = np.zeros((2))
-
         ### BS: numba doesn't like dictionaries since it's not LLVM-loop-optimization-friendly
-        #counts = {1: [], 2: []}
         counts1 = [];
         counts2 = [];
-
         ### BS: numba doesn't like dictionaries since it's not LLVM-loop-optimization-friendly
         ###     and this can easily be an array, so I'll convert it to an array
-        #M = {1: 0, 2: 0}
         M = np.zeros((2))
         # to check the difference between consecutive values
         s_h_diff = np.diff(s_h)
-
-        ### BS: bu commented kod niye burda tam anlamadım
-        # s_eh_states = [1 if i == 2 and j > 0 else 0 for i, j in zip(s_h_diff, s_e[1:])]
-        #
-        # s_rh_states = {1: [1 if i == 2 and j > 0 else 0 for i, j in zip(s_h_diff, s_r[1][1:])],
-        #                 2: [1 if i == 2 and j > 0 else 0 for i, j in zip(s_h_diff, s_r[2][1:])]}
 
         for i in range(1, length_time):
             # detecting the falling edge
@@ -142,34 +125,23 @@ class RToF:
         ### BS: numba doesn't like dictionaries since it's not LLVM-loop-optimization-friendly
         ###     and it also doesn't like measuring size of growing arrays since it requires consistent
         ###     repetitive memory usage on (I guess) the heap, moving this part outsize, it's not a 
-        ###     performance-related part anyhow, doesn't have to be jit'ted.  
-        #fclk = 1/(2*dt)
-        #dm = {'d1': ((self.c/2) * (np.asarray(counts[2]) / ((r+1) * N * fclk))),
-        #      'd2': ((self.c/2) * (np.asarray(counts[1]) / ((r+1) * N * fclk)))}
-
+        ###     performance-related part anyhow, doesn't have to be jit'ted.
         return counts1, counts2
-    # Converting distance informatioin to coordinates.
+    # Converting distance information to coordinates.
     def dist_to_pos(self, dm, delays):
-        #print("dm: ",dm)
         l = self.car_dist
-
         ### BS: numba doesn't like dictionaries since it's not LLVM-loop-optimization-friendly
-        #d1 = dm['d1']
         d1 = dm[0]
         # obtaining the nearest count
         d1_err = np.abs(self.c*delays[1]/2 - d1) # since the delays are from round trips
         d1 = d1[d1_err == np.min(d1_err)][0]
-
         ### BS: numba doesn't like dictionaries since it's not LLVM-loop-optimization-friendly
-        #d2 = dm['d2']
         d2 = dm[1];
         # obtaining the nearest count
         d2_err = np.abs(self.c*delays[0]/2 - d2)
         d2 = d2[d2_err == np.min(d2_err)][0]
-        #print(d2)
         # extracting the coordinates using triangulation and distance measurements from both tx LEDs.
         y = (d2**2 - d1**2 + l**2) / (2*l)
-        #print(y)
         x = -np.sqrt(d2**2 - y**2)
 
         return x, y
