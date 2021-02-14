@@ -35,12 +35,9 @@ def main():
                 os.makedirs(f_name)
             # obtaining values from the read simulation data (power, area)
             max_power = data['tx']['power']
-            area = data['qrx']['f_QRX']['params']['area']
-            rx_radius = math.sqrt(area) / math.pi
             # obtaining values from the config file, based on transmitted signals
             c = gen_sim_data.params.c
             rx_fov = gen_sim_data.params.rx_fov
-            tx_half_angle = gen_sim_data.params.tx_half_angle
             signal_freq = gen_sim_data.params.signal_freq
             measure_dt = gen_sim_data.params.measure_dt
             # temporal parameters
@@ -51,7 +48,6 @@ def main():
             rel_hdg = data['vehicle']['target_relative']['heading'][::dp]
             # vehicle widths
             L_tgt = data['vehicle']['target']['width']
-            L_ego = data['vehicle']['ego']['width']
             # relative coordinates of the target vehicle. edited to be aligned with simulations
             tgt_tx1_x = -1 * data['vehicle']['target_relative']['tx1_qrx4']['y'][::dp]
             tgt_tx1_y = data['vehicle']['target_relative']['tx1_qrx4']['x'][::dp]
@@ -109,7 +105,6 @@ def main():
                 print("Iteration #", i, ": ")
                 x[i] = (tgt_tx1_x[i], tgt_tx2_x[i])
                 y[i] = (tgt_tx1_y[i], tgt_tx2_y[i])
-
                 # providing the environment to methods
                 delays = np.array([[delay_11[i], delay_21[i]], [delay_12[i], delay_22[i]]])
                 H_q = np.array([[pow_qrx1_tx1[:, i], pow_qrx2_tx1[:, i]], [pow_qrx1_tx2[:, i], pow_qrx2_tx2[:, i]]])
@@ -124,7 +119,6 @@ def main():
                 noise_var4 = p_r4 * p_r_factor + remaining_factor
                 noise_variance = np.array([[noise_var1, noise_var2], [noise_var3, noise_var4]])
 
-                # noise_variance = np.array([[0.0, 0.0], [0.0, 0.0]])
                 rem_fact_soner = I_bg * i_bg_factor + T * (t_factor1 + t_factor2 / 16)
                 noise_var1_soner = np.array([H_q[0][0][0] * p_r_factor + rem_fact_soner, H_q[0][0][1] * p_r_factor + rem_fact_soner,
                                        H_q[0][0][2] * p_r_factor + rem_fact_soner, H_q[0][0][3] * p_r_factor + rem_fact_soner])

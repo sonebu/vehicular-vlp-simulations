@@ -24,7 +24,7 @@ def main():
         y_roberts.append(np.loadtxt(folder_name+'y_roberts.txt', delimiter=','))
         x_becha.append(np.loadtxt(folder_name+'x_becha.txt', delimiter=','))
         y_becha.append(np.loadtxt(folder_name+'y_becha.txt', delimiter=','))
-    # print(np.shape(np.asarray(y_pose)))
+
     data = load_mat('../SimulationData/v2lcRun_sm3_comparisonSoA.mat')
     time = data['vehicle']['t']['values'][::dp]
     tx1_x = data['vehicle']['target_relative']['tx1_qrx4']['y'][::dp]
@@ -107,26 +107,20 @@ def main():
     th_becha_x2, = plt.plot(time, becha_x2_crlb, '--')
     th_becha_y1, = plt.plot(time, becha_y1_crlb, '--')
     th_becha_y2, = plt.plot(time, becha_y2_crlb, '--')
-    # sim_becha_x1, = plt.plot(time[0:i + 1], abs(tx1_x + x1_becha)[0:i + 1])
     sim_becha_x1, = plt.plot(time, deviation_from_actual_value(x1_becha, -tx1_x))
-    # sim_becha_x2, = plt.plot(time[0:i + 1], abs(tx2_x + x2_becha)[0:i + 1])
     sim_becha_x2, = plt.plot(time, deviation_from_actual_value(x2_becha, -tx2_x))
-    # sim_becha_y1, = plt.plot(time[0:i + 1], abs(tx1_y - y1_becha)[0:i + 1])
     sim_becha_y1, = plt.plot(time, deviation_from_actual_value(y1_becha, tx1_y))
-    # sim_becha_y2, = plt.plot(time[0:i + 1], abs(tx2_y - y2_becha)[0:i + 1])
     sim_becha_y2, = plt.plot(time, deviation_from_actual_value(y2_becha, tx2_y))
     plt.ylabel('Error (m)')
     plt.xlabel('Time (s)')
     plt.title('CRLB vs. Simulation Results for RToF')
-    # plt.legend([th_becha_x1, th_becha_x2, th_becha_y1, th_becha_y2, sim_becha_x1 , sim_becha_x2, sim_becha_y1,
-    #             sim_becha_y2], ['x1 (theoretical)', 'x2 (theoretical)', 'y1 (theoretical)', 'y2 (theoretical)',
-    #                             'x1 (simulation)', 'x2 (simulation)', 'y1 (simulation)', 'y2 (simulation)'],
-    #            ncol=4,loc=3)
-    # plt.ylim(1e-5,2)
-    # plt.yscale('log')
-    plt.savefig('crlb_becha_lin.png')
+    plt.legend([th_becha_x1, th_becha_x2, th_becha_y1, th_becha_y2, sim_becha_x1 , sim_becha_x2, sim_becha_y1,
+                sim_becha_y2], ['x1 (theoretical)', 'x2 (theoretical)', 'y1 (theoretical)', 'y2 (theoretical)',
+                                'x1 (simulation)', 'x2 (simulation)', 'y1 (simulation)', 'y2 (simulation)'],
+               ncol=4,loc=3)
+    plt.ylim(1e-5,2)
     plt.yscale('log')
-    plt.savefig('crlb_becha_log.png')
+    plt.savefig('crlb_becha.png')
 
     x1_roberts, x2_roberts = np.asarray(x_roberts)[:,:,0], np.asarray(x_roberts)[:,:,1]
     y1_roberts, y2_roberts = np.asarray(y_roberts)[:,:,0], np.asarray(y_roberts)[:,:,1]
@@ -134,12 +128,8 @@ def main():
     plot6 = plt.figure(6)
     th_roberts_x1, = plt.plot(time, roberts_x_crlb, '--')
     th_roberts_y1, = plt.plot(time, roberts_y_crlb, '--')
-    #xr_mask = np.isfinite(deviation_from_actual_value(x1_roberts, tx1_x))
-    #yr_mask = np.isfinite(deviation_from_actual_value(y1_roberts, tx1_y))
     sim_roberts_x1, = plt.plot(time, deviation_from_actual_value(x1_roberts, -tx1_x))
-    #sim_roberts_x1, = plt.plot(time[0:i + 1][xr_mask], deviation_from_actual_value(x1_roberts, -tx1_x)[xr_mask])
     sim_roberts_y1, = plt.plot(time, deviation_from_actual_value(y1_roberts, tx1_y))
-    #sim_roberts_y1, = plt.plot(time[0:i + 1][yr_mask], deviation_from_actual_value(y1_roberts, tx1_y)[yr_mask])
     plt.ylabel('Error (m)')
     plt.xlabel('Time (s)')
     plt.title('CRLB vs. Simulation Results for TDoA')
@@ -157,13 +147,9 @@ def main():
     th_soner_x2, = plt.plot(time, pose_x2_crlb, '--')
     th_soner_y1, = plt.plot(time, pose_y1_crlb, '--')
     th_soner_y2, = plt.plot(time, pose_y2_crlb, '--')
-    # sim_soner_x1, = plt.plot(time[0:i + 1], abs(tx1_x + x1_soner)[0:i + 1])
     sim_soner_x1, = plt.plot(time, deviation_from_actual_value(x1_soner, -tx1_x))
-    # sim_soner_x2, = plt.plot(time[0:i + 1], abs(tx2_x + x2_soner)[0:i + 1])
     sim_soner_x2, = plt.plot(time, deviation_from_actual_value(x2_soner, -tx2_x))
-    # sim_soner_y1, = plt.plot(time[0:i + 1], abs(tx1_y - y1_soner)[0:i + 1])
     sim_soner_y1, = plt.plot(time, deviation_from_actual_value(y1_soner, tx1_y))
-    # sim_soner_y2, = plt.plot(time[0:i + 1], abs(tx2_y - y2_soner)[0:i + 1])
     sim_soner_y2, = plt.plot(time, deviation_from_actual_value(y2_soner, tx2_y))
     plt.ylabel('Error (m)')
     plt.xlabel('Time (s)')
