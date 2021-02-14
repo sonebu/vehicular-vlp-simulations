@@ -617,7 +617,7 @@ class CRLB_init:
         if ij == 11:
             return 0
         elif ij == 12:
-            return -const*(tx2[1] / (tx1[0]**2 + tx1[1]**2))
+            return -const*(tx2[1] / (tx2[0]**2 + tx2[1]**2))
         elif ij == 21:
             return 0
         elif ij == 22:
@@ -657,7 +657,7 @@ class CRLB_init:
         if ij == 11:
             return 0
         elif ij == 12:
-            return const*(tx2[0] / (tx1[0]**2 + tx1[1]**2))
+            return const*(tx2[0] / (tx2[0]**2 + tx2[1]**2))
         elif ij == 21:
             return 0
         elif ij == 22:
