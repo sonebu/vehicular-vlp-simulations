@@ -1,7 +1,6 @@
 import pickle
-
 import scipy.signal as signal
-from Bound_Estimation.matfile_read import *
+from Bound_Estimation.matfile_read import load_mat
 import numpy as np
 from numba import njit
 import math
@@ -10,7 +9,10 @@ from config import gen_sim_data
 
 
 class TDoA:
-
+    """
+    Exact replica of the VLP_methods/tdoa.py with last parts deleted, instead of calculating the position, it stops
+    when measured delays are calculated. See VLP_methods/tdoa.py for more explanation
+    """
     def __init__(self, a_m=2, f_m1=40000000, f_m2=25000000, measure_dt=1e-8, vehicle_dt=1e-3, car_dist=1.6, c=3e8):
         self.a_m = a_m
         self.dt = measure_dt
@@ -29,7 +31,6 @@ class TDoA:
         return np.array([ddist1, ddist2], np.newaxis)
 
     def measure_delay(self, delays, H, noise_variance):
-        # after going through ADC at receiver
         delta_delay1 = delays[0][0] - delays[0][1]
         delta_delay2 = delays[1][0] - delays[1][1]
 
@@ -68,7 +69,10 @@ class TDoA:
 
 
 class RToF:
-
+    """
+        Exact replica of the VLP_methods/rtof.py with last parts deleted, instead of calculating the position, it stops
+        when distances between tx and rx are calculated. See VLP_methods/rtof.py for more explanation
+    """
     def __init__(self, a_m=2, f_m=1e6, measure_dt=5e-9, vehicle_dt=5e-3, car_dist=1.6, r=499, N=1, c=3e8):
         self.dt = measure_dt
         self.f = f_m
@@ -83,7 +87,7 @@ class RToF:
         length_time = np.size(t)
         noise1 = np.random.normal(0, math.sqrt(noise_variance[0]), length_time).astype('float')
         noise2 = np.random.normal(0, math.sqrt(noise_variance[1]), length_time).astype('float')
-        s_e = np.asarray(signal.square(2 * np.pi * f * t), dtype='float')  # + (noise1 + noise2) / 2
+        s_e = np.asarray(signal.square(2 * np.pi * f * t), dtype='float')
         s_r = np.zeros((2, length_time))
         s_r[0] = np.asarray(signal.square(2 * np.pi * f * (t + delays[0])), dtype='float') + noise1
         s_r[1] = np.asarray(signal.square(2 * np.pi * f * (t + delays[1])), dtype='float') + noise2
@@ -94,10 +98,10 @@ class RToF:
     @staticmethod
     @njit(parallel=True)
     def rtof_estimate_dist(s_e, s_r, s_h, s_gate, f, r, N, dt, t, length_time):
-        s_clk = np.zeros(length_time);
-        s_clk_idx = np.arange(1, length_time, 2);
-        s_clk[s_clk_idx] = 1;
-        s_phi_hh = np.zeros((2, length_time));
+        s_clk = np.zeros(length_time)
+        s_clk_idx = np.arange(1, length_time, 2)
+        s_clk[s_clk_idx] = 1
+        s_phi_hh = np.zeros((2, length_time))
         s_eh_state = 0
         s_rh_state = np.zeros((2))
         counts1 = []
@@ -166,15 +170,12 @@ class RToF:
         s_r[0] *= H[0][0]
         s_r[1] *= H[0][1]
 
-        ### BS: numba and the LLVM optimizer can't really handle varying size arrays well
-        ###     so we need to tell the size of the time array beforehand
-        ###     also, moved dm computation outside
         length_time = np.size(self.t)
         fclk = 1 / (2 * self.dt)
 
         counts1, counts2 = self.rtof_estimate_dist(s_e, s_r, s_h, s_gate, self.f, self.r, self.N, self.dt, self.t,
                                                    length_time)
-        size_tmp = np.size(counts1)  # could equivalently be counts2
+        size_tmp = np.size(counts1)
         dm = np.zeros((2, size_tmp));
         dm[0] = ((self.c / 2) * (np.asarray(counts2) / ((self.r + 1) * self.N * fclk)))
         dm[1] = ((self.c / 2) * (np.asarray(counts1) / ((self.r + 1) * self.N * fclk)))
@@ -206,12 +207,14 @@ class RToF:
 
 directory_path = os.path.dirname(os.path.dirname(os.path.join(os.getcwd(), os.listdir(os.getcwd())[0]))) ## directory of directory of file
 data = load_mat(directory_path + '/VLP_methods/aoa_transfer_function.mat')
-rec_func(data, 0)
 breaks = np.array(data['transfer_function']['breaks'])
 coefficients = np.array(data['transfer_function']['coefs'])
 
-
 class AoA:
+    """
+        Exact replica of the VLP_methods/aoa.py with last parts deleted, instead of calculating the position, it stops
+        when angles of arrival are calculated. See VLP_methods/aoa.py for more explanation
+    """
     def __init__(self, a_m=2, f_m1=1000000, f_m2=2000000, measure_dt=5e-6, vehicle_dt=1e-2, w0=500, hbuf=1000,
                  car_dist=1.6, fov=80):
         self.dt = measure_dt
@@ -224,15 +227,9 @@ class AoA:
         self.car_dist = car_dist
         self.e_angle = fov
 
-    # %%
-
     def estimate(self, delays, H_q, noise_variance):
-        delta_delay1 = delays[0][0] - delays[0][1]
-        delta_delay2 = delays[1][0] - delays[1][1]
         s1_w1 = self.a_m * np.cos(self.w1 * self.t)
-        # s1_w1 = s1_w1[:, np.newaxis]
         s2_w2 = self.a_m * np.cos(self.w2 * self.t)
-        # s2_w2 = s2_w2[:, np.newaxis]
 
         # after going through ADC at receiver
         r1_w1_a = H_q[0][0][0] * np.cos(self.w1 * (self.t - delays[0][0])) + np.random.normal(0, math.sqrt(
@@ -311,7 +308,6 @@ class AoA:
         eps_d_s2[1] = np.sum(
             np.dot(r2_w2_d[self.w0: self.w0 + self.hbuf], s2_w2[self.w0: self.w0 + self.hbuf])) / self.hbuf
 
-
         phi_h_s1[0] = ((eps_b_s1[0] + eps_d_s1[0]) - (eps_a_s1[0] + eps_c_s1[0])) / (
                 eps_a_s1[0] + eps_b_s1[0] + eps_c_s1[0] + eps_d_s1[0])
         phi_h_s1[1] = ((eps_b_s1[1] + eps_d_s1[1]) - (eps_a_s1[1] + eps_c_s1[1])) / (
@@ -326,8 +322,6 @@ class AoA:
         theta_l_r[1][0] = self.transfer_function(phi_h_s2[0]) * np.pi / 180
         theta_l_r[1][1] = self.transfer_function(phi_h_s2[1]) * np.pi / 180
         return theta_l_r
-
-    # %%
 
     def find_nearest(self, array, value):
         array = np.asarray(array)
@@ -356,38 +350,34 @@ class AoA:
 
 
 def main():
+    #initialize the folders info will be read from
     data_names = gen_sim_data.names.data_names
     folder_names = gen_sim_data.names.folder_names
+    #compute for how many iterations the calculations will be repeated
     size = gen_sim_data.params.end_point_of_iter - gen_sim_data.params.start_point_of_iter
 
-    theta_l_r = np.zeros((size, 100, 2, 2))
-    rtof_dist = np.zeros((size, 100, 2, 2))
-    tdoa_dist = np.zeros((size, 100, 2))
+    #initialize outputs with zero
+    theta_l_r = np.zeros((size, 100, 2, 2))  # (num_iter, num_points_in_sim, [[aoa11, aoa12],[aoa21, aoa22]])
+    rtof_dist = np.zeros((size, 100, 2, 2))  # (num_iter, num_points_in_sim, [[d11, d12],[d21, d22]])
+    tdoa_dist = np.zeros((size, 100, 2))  # (num_iter, num_points_in_sim, [dA, dB])
 
     # run for multiple iterations
-
     for itr in range(gen_sim_data.params.start_point_of_iter, gen_sim_data.params.end_point_of_iter):
         print(itr)
-        for idx in range(2, 3):
+        for idx in range(2, 3): # currently doing only for simulation 3 (parallel scenario)
+            #load simulation data
             data_name = data_names[idx]
             data_dir = directory_path + '/SimulationData/' + data_name + '.mat'
             data = load_mat(data_dir)
+
             folder_name = folder_names[idx]
             dp = gen_sim_data.params.number_of_skip_data
             data_point = str(int(1000 / dp)) + '_point_' + '/'
 
-            f_name = directory_path + '/Parameter_Deviation/' + data_point + folder_name
-
-            if not os.path.exists(f_name):
-                os.makedirs(f_name)
-
             max_power = data['tx']['power']
-            area = data['qrx']['f_QRX']['params']['area']
-            rx_radius = math.sqrt(area) / math.pi
 
             c = gen_sim_data.params.c
             rx_fov = gen_sim_data.params.rx_fov
-            tx_half_angle = gen_sim_data.params.tx_half_angle
             signal_freq = gen_sim_data.params.signal_freq
             measure_dt = gen_sim_data.params.measure_dt
 
@@ -395,11 +385,9 @@ def main():
             time_ = time_[::dp]
             vehicle_dt = data['vehicle']['t']['dt']
 
-            rel_hdg = data['vehicle']['target_relative']['heading'][::dp]
-
             L_tgt = data['vehicle']['target']['width']
-            L_ego = data['vehicle']['ego']['width']
 
+            # relative target positions, changed to adapt to coordinate of parameter calc methods
             tgt_tx1_x = -1 * data['vehicle']['target_relative']['tx1_qrx4']['y'][::dp]
             tgt_tx1_y = data['vehicle']['target_relative']['tx1_qrx4']['x'][::dp]
             tgt_tx2_x = -1 * data['vehicle']['target_relative']['tx2_qrx3']['y'][::dp]
@@ -497,21 +485,22 @@ def main():
                 noise_variance_soner = np.array(
                     [[noise_var1_soner, noise_var2_soner], [noise_var3_soner, noise_var4_soner]])
 
-                # making estimations
-                #theta_l_r[itr, i] = aoa.estimate(delays=delays, H_q=H_q, noise_variance=noise_variance_soner)
-                #print("AoA finished")
+                # making estimations for theta and distances
+                theta_l_r[itr, i] = aoa.estimate(delays=delays, H_q=H_q, noise_variance=noise_variance_soner)
+                print("AoA finished")
                 rtof_dist[itr, i] = rtof.estimate(all_delays=delays, H=H, noise_variance=noise_variance)
                 print("RToF finished")
-                #tdoa_dist[itr, i] = tdoa.estimate(delays=delays, H=H, noise_variance=noise_variance)
-                #print("TDoA finished")
-                #print(time_)
+                tdoa_dist[itr, i] = tdoa.estimate(delays=delays, H=H, noise_variance=noise_variance)
+                print("TDoA finished")
+
+    #store elts in pickle files as multi dims arrays
     pickle_dir = directory_path + '/Bound_Estimation/Parameter_Deviation/'
-    #with open(pickle_dir + 'theta.pkl', 'wb') as f:
-    #    pickle.dump(theta_l_r, f)
-    with open(pickle_dir + 'rtof_dist', 'wb') as f:
+    with open(pickle_dir + 'theta.pkl', 'wb') as f:
+        pickle.dump(theta_l_r, f)
+    with open(pickle_dir + 'rtof_dist.pkl', 'wb') as f:
         pickle.dump(rtof_dist, f)
-    #with open(pickle_dir + 'tdoa_dist.pkl', 'wb') as f:
-    #   pickle.dump(tdoa_dist, f)
+    with open(pickle_dir + 'tdoa_dist.pkl', 'wb') as f:
+       pickle.dump(tdoa_dist, f)
 
 
 if __name__ == '__main__':
