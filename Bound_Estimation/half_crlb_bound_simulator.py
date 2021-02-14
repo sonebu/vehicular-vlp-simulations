@@ -3,9 +3,6 @@ from matfile_read import load_mat
 import os
 import pickle
 import numpy as np
-from glob import glob
-import math
-import matplotlib.pyplot as plt
 
 # Roberts' method, CRLB calculation for a single position estimation
 def roberts_half_crlb_single_instance(crlb_inst, tx1, tx2, noise_factor):
