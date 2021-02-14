@@ -16,7 +16,7 @@ def main():
     x_roberts, y_roberts = [], []
     dp = bound_est_data.params.number_of_skip_data
     print(len(files))
-
+    # obtaining results of various simulations, to check the standard deviation from them.
     for folder_name in files:
         x_pose.append(np.loadtxt(folder_name+'x_pose.txt', delimiter=','))
         y_pose.append(np.loadtxt(folder_name+'y_pose.txt', delimiter=','))
@@ -24,14 +24,14 @@ def main():
         y_roberts.append(np.loadtxt(folder_name+'y_roberts.txt', delimiter=','))
         x_becha.append(np.loadtxt(folder_name+'x_becha.txt', delimiter=','))
         y_becha.append(np.loadtxt(folder_name+'y_becha.txt', delimiter=','))
-
+    # loading the necessary data
     data = load_mat('../SimulationData/v2lcRun_sm3_comparisonSoA.mat')
     time = data['vehicle']['t']['values'][::dp]
     tx1_x = data['vehicle']['target_relative']['tx1_qrx4']['y'][::dp]
     tx1_y = data['vehicle']['target_relative']['tx1_qrx4']['x'][::dp]
     tx2_x = data['vehicle']['target_relative']['tx2_qrx3']['y'][::dp]
     tx2_y = data['vehicle']['target_relative']['tx2_qrx3']['x'][::dp]
-
+    # loading Cramer-Rao Lower Bound estimation results
     pose_x1_crlb = np.loadtxt('Data/aoa/crlb_x1.txt', delimiter=',')
     becha_x1_crlb = np.loadtxt('Data/rtof/crlb_x1.txt', delimiter=',')
     pose_x2_crlb = np.loadtxt('Data/aoa/crlb_x2.txt', delimiter=',')
@@ -43,7 +43,7 @@ def main():
     pose_y2_crlb = np.loadtxt('Data/aoa/crlb_y2.txt', delimiter=',')
     becha_y2_crlb = np.loadtxt('Data/rtof/crlb_y2.txt', delimiter=',')
     roberts_y_crlb = np.loadtxt('Data/tdoa/crlb_y.txt', delimiter=',')
-
+    # plotting the results to compare and saving the figures
     plt.close("all")
     plot1 = plt.figure(1)
     becha_x1, = plt.plot(time, becha_x1_crlb)
