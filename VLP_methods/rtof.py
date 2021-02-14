@@ -1,10 +1,7 @@
 import scipy.signal as signal
-from cache.VLC_init import *
-from functools import lru_cache
 import numpy as np
 from numba import njit
-
-# import module
+import math
 
 """
 *: coordinate center of cari
