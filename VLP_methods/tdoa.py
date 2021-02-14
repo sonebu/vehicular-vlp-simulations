@@ -1,4 +1,3 @@
-from cache.VLC_init import *
 
 """
 *: coordinate center of cari
