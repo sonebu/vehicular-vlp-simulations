@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 import PySimpleGUI as sg
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-from numpy.random import rand
+import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-import numpy as np
-from scipy import ndimage
-import matplotlib.patches as mpatches
+
 from config import sim_data
 
 
@@ -92,12 +88,9 @@ def plot(input_name='', folder_name='', skip=sim_data.params.number_of_skip_data
         event, values = window.read(timeout=50)
         if event in ('Exit', None):
             exit(69)
-        # img_ego_s = ndimage.rotate(plt.imread('red_racing_car_top_view_preview.png'), rel_hdg[0])
         img_ego_s = plt.imread(sim_data.params.img_ego_s_dir)
         img_tgt_s = plt.imread(sim_data.params.img_tgt_s_dir)
         img_tgt_f = plt.imread(sim_data.params.img_tgt_f_dir)
-        # img_tgt_s = ndimage.rotate(plt.imread('green_racing_car_top_view_preview.png'), rel_hdg[0])
-        # img_tgt_f = ndimage.rotate(plt.imread('green_racing_car_top_view_preview.png'), rel_hdg[-1])
         if fl_name == '/3/':
             ax1.add_artist(
                 AnnotationBbox(OffsetImage(img_ego_s, zoom=0.25), (0, 0),

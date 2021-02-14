@@ -1,7 +1,7 @@
 ### BS: my virtualenv doesn't have tkinter, so a basic check.
 ###     from: https://stackoverflow.com/questions/1871549/determine-if-python-is-running-inside-virtualenv
 import sys
-from glob import glob
+
 
 def get_base_prefix_compat():
     """Get base/real prefix, or sys.prefix if there is none."""
@@ -13,6 +13,7 @@ def in_virtualenv():
 
 import numpy as np
 import matplotlib
+from config import sim_data
 
 ### BS: my virtualenv doesn't have tkinter, so a basic check.
 if not in_virtualenv:
@@ -51,20 +52,20 @@ for i in range(len(sm)):
     x = np.loadtxt(dir+fl_name+'x.txt', delimiter=',')
     y = np.loadtxt(dir+fl_name+'y.txt', delimiter=',')
 
-    img_tgt_s = ndimage.rotate(plt.imread('green_racing_car_top_view_preview.png'), rel_hdg[0])
-    img_tgt_f = ndimage.rotate(plt.imread('green_racing_car_top_view_preview.png'), rel_hdg[-1])
+    img_tgt_s = ndimage.rotate(plt.imread(sim_data.params.img_tgt_s_dir), rel_hdg[0])
+    img_tgt_f = ndimage.rotate(plt.imread(sim_data.params.img_tgt_f_dir), rel_hdg[-1])
     if fl_name == '/3/':
         ax1.add_artist(
-            AnnotationBbox(OffsetImage(plt.imread('red_racing_car_top_view_preview.png'), zoom=0.25), (0.2, -0.12),
+            AnnotationBbox(OffsetImage(plt.imread(sim_data.params.img_ego_s_dir), zoom=0.25), (0.2, -0.12),
                            frameon=False))
 
-        ax1.add_artist(AnnotationBbox(OffsetImage(plt.imread('green_racing_car_top_view_preview.png'), zoom=0.08),
+        ax1.add_artist(AnnotationBbox(OffsetImage(plt.imread(sim_data.params.img_tgt_s_dir), zoom=0.08),
                                       (x[0][0] - 0.27, y[0][0] + 0.2), frameon=False))
-        ax1.add_artist(AnnotationBbox(OffsetImage(plt.imread('green_racing_car_top_view_preview.png'), zoom=0.08),
+        ax1.add_artist(AnnotationBbox(OffsetImage(plt.imread(sim_data.params.img_tgt_f_dir), zoom=0.08),
                                       (x[-1][0] - 0.27, y[-1][0] + 0.2), frameon=False))
     else:
         ax1.add_artist(
-            AnnotationBbox(OffsetImage(plt.imread('red_racing_car_top_view_preview.png'), zoom=0.25), (0, 0),
+            AnnotationBbox(OffsetImage(plt.imread(sim_data.params.img_ego_s_dir ), zoom=0.25), (0, 0),
                            frameon=False))
 
         ax1.add_artist(AnnotationBbox(OffsetImage(img_tgt_s, zoom=0.08), (x[0][0], y[0][0]), frameon=False))
