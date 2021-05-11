@@ -1,0 +1,1 @@
+This directory holds the auxiliary files used in the readme.md's of other directories, primarily figures. There is no centralized documentation, see top level readme.md and use the links from there. Each functional subfolder has its own readme.md, which serves as documentation together with the comments in the source.
