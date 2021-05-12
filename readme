@@ -1,1 +1,7 @@
-update this.
+Notes:
+
+- rx vlc signals will be generated and processed online, and then deleted. Otherwise the simulator requires too much memory.
+- all scenarios consider 1 ego, 1 target vehicle, no obstructions in between
+- all scenarios consider collision avoidance and platooning, so road between target and ego is assumed to be 2D
+- 
+

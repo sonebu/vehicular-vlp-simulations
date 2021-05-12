@@ -1,0 +1,16 @@
+save dictionaries for the optical components here.
+tools.py is for processing the dictionaries (read/write)
+
+
+a qrx dictionary contains
+---------------------------------------------
+- 
+- 
+- 
+
+
+a tx dictionary contains
+---------------------------------------------
+- 
+-
+-

@@ -1,0 +1,2 @@
+trajectories that are either filtered from a dataset like INTERACTION, or are manually generated. Sampling rate is 1000 Hz by default.
+tools.py is for processing the trajectories (read/write)
