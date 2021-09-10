@@ -4,3 +4,4 @@
 **/__pycache__/
 *.log
 *.seq
+recorded_INTERACTION_collisionthreat.npz

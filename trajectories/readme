@@ -1,2 +1,16 @@
-trajectories that are either filtered from a dataset like INTERACTION, or are manually generated. Sampling rate is 1000 Hz by default.
-tools.py is for processing the trajectories (read/write)
+- sampling rate is 1000 Hz by default.
+
+- we only keep relative trajectories and assume target vehicle is leading the ego vehicle, i.e., tail lights are transmitters.
+  since we're not doing any dynamic simulation, x/y/hdg is enough from a reference point on the vehicles.
+  therefore, only the following variables are saved for each trajectory: x_RL, x_RR, y_RL, y_RR, hdg. 
+
+- "recorded_INTERACTION_collisionthreat.npz" is a filtered and resampled version of an excerpt from the recorded scenario "DR_DEU_Merging_MT" from the INTERACTION dataset:
+  https://github.com/interaction-dataset/interaction-dataset
+  https://github.com/interaction-dataset/interaction-dataset_selected_scenarios_list/tree/main/collision_threats
+
+  in this excerpt, 2 vehicles experience a collision threat on a highway merging lane. 
+  we provide the full filtering and resampling procedure in a notebook under utilities/, but we cannot provide the .npz file here due to distribution limitations. 
+  contact the INTERACTION team for access to the dataset, and use the provided notebook for generating "recorded_INTERACTION_collisionthreat.npz" for use in the simulations.
+
+- "generated_*.npz" trajectories are from the v1 MATLAB repo: 
+  https://github.com/sonebu/v2lc_sim
