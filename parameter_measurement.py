@@ -49,3 +49,117 @@ def aoa_measurement(sigA_buffer, sigB_buffer, sigC_buffer, sigD_buffer, wav_buff
 
 #######################################################################################
 ### rtof measurement -> bechadergue
+
+# taken from: https://stackoverflow.com/a/23291658
+def hyst(x, th_lo, th_hi, initial = False):
+    hi = x >= th_hi
+    lo_or_hi = (x <= th_lo) | hi
+    ind = np.nonzero(lo_or_hi)[0]
+    if not ind.size: # prevent index error if ind is empty
+        return np.zeros_like(x, dtype=bool) | initial
+    cnt = np.cumsum(lo_or_hi) # from 0 to len(x)
+    return np.where(cnt, hi[ind[cnt-1]], initial)
+
+# custom
+def dflipflop_vec(inp_x, clock):
+    inp_lead = inp_x[1:]
+    inp_lag  = inp_x[0:-1]
+    clk_lead = clock[1:]
+    clk_lag  = clock[0:-1]
+
+    clk_re = np.concatenate((np.asarray([False]), np.logical_and((1-clk_lag),clk_lead)))
+    out_pp = inp_x[clk_re]
+
+    re_idx      = np.where(clk_re==1)
+    re_idx_lead = re_idx[0][1:]
+    re_idx_lag  = re_idx[0][0:-1]
+
+    out_t = np.zeros(inp_x.shape)
+    for i in range(0, len(re_idx_lag)):
+        out_t[re_idx_lag[i]:re_idx_lead[i]] = out_pp[i]
+
+    return out_t
+
+# custom
+def counter_simulation_vec(signal, gate):
+    gate_lead = gate[1:]
+    gate_lag  = gate[0:-1]
+    gate_re   = np.concatenate((np.asarray([False]), np.logical_and(1-gate_lag, gate_lead)))
+    gate_fe   = np.concatenate((np.asarray([False]), np.logical_and(gate_lag, 1-gate_lead)))
+    
+    re_idx = np.where(gate_re==1)[0];
+    fe_idx = np.where(gate_fe==1)[0];
+
+    count = []
+    for i in range(0, len(re_idx)):
+        count.append( np.sum( signal[ re_idx[i]:fe_idx[i] ] ) )
+
+    return count
+
+# custom (does a bit of debouncing)
+def counter_simulation_iterative(signal, state_prev, state_ctr, count):
+    if(   (signal[-1]==0) and (np.sum(signal[0:4])==0) ):
+        state_curr = 0;
+    elif( (signal[-1]==1) and (np.sum(signal[0:4])!=4) and (state_prev==0) ):
+        state_curr = 1;
+    elif( (signal[-1]==1) and (np.sum(signal[0:4])==4) ):
+        state_curr = 2;
+    elif( (signal[-1]==0) and (np.sum(signal[0:4])!=0) and (state_prev==2) ):
+        state_curr = 3;
+    else:
+        state_curr = state_prev;
+
+    # state ops:
+    if(state_curr==2):
+        state_ctr = state_ctr + 1; 
+    elif(state_curr==1):
+        state_ctr = state_ctr + 0.5;
+    elif(state_curr==3):
+        state_ctr = state_ctr + 0.5;
+    elif(state_curr==0):
+        pass
+        #state_ctr = 0;
+    
+    state_prev = state_curr;
+    
+    return state_prev, state_ctr
+
+def rtof_d_measure(s_simulation, s_adc_clock_re, rx, rtof_N, rtof_r, f_e, f_adc_clock, c, rr):
+    s_h_sin    = np.sin(2*np.pi* f_e*(rtof_r/(rtof_r+1))     *s_simulation - np.pi/32);
+    s_h_zc_thd = (np.amax(s_h_sin) - np.amin(s_h_sin))/rr;
+    s_h        = hyst(s_h_sin, -s_h_zc_thd, s_h_zc_thd)
+    del s_h_sin
+
+    s_e_sin    = np.sin(2*np.pi* f_e               *s_simulation - np.pi/32);
+    s_e_zc_thd = (np.amax(s_e_sin) - np.amin(s_e_sin))/rr;
+    s_e        = hyst(s_e_sin, -s_e_zc_thd, s_e_zc_thd)
+    del s_e_sin
+
+    # burdan önce heralde bandpass filtre olcak, yoksa halay çeker bu alttaki hysteresis
+    s_r_zc_thd = (np.amax(rx) - np.amin(rx))/rr;
+    s_r        = hyst(rx, -s_r_zc_thd, s_r_zc_thd)
+    del rx
+    
+    s_eh = dflipflop_vec(s_e, s_h)[s_adc_clock_re]
+    s_rh = dflipflop_vec(s_r, s_h)[s_adc_clock_re]
+    del s_e, s_h
+    
+    s_gate_sin = np.sin(2*np.pi* f_e*(1/(rtof_N*(rtof_r+1))) *s_simulation - np.pi/32);
+    s_gate_zc_thd = (np.amax(s_gate_sin) - np.amin(s_gate_sin))/rr;
+    s_gate = hyst(s_gate_sin, -s_gate_zc_thd, s_gate_zc_thd)
+    s_gate = s_gate[s_adc_clock_re]
+    del s_gate_sin
+
+    s_phi    = np.logical_xor(s_eh, s_rh);
+    del s_rh, s_eh
+
+    s_phi_pp  = s_phi*s_gate # clock applied implicitly
+    del s_phi
+
+    count = counter_simulation_vec(s_phi_pp, s_gate)
+
+    f_i = f_e/(rtof_r+1);
+    phase_shift_est = 2*np.pi*(np.asarray(count)*f_i/(rtof_N*f_adc_clock))
+    d_est = c*(phase_shift_est/(2*np.pi*2*f_e))
+
+    return d_est
