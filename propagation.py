@@ -1,4 +1,6 @@
 import numpy as np
+from numba import njit
+import time
 
 ##############################################################################
 ### Method 1 - Approximate the 3D Lambertian pattern with a rectangular prism  
@@ -343,6 +345,8 @@ def generate_aoa2_rx_signals(shared_pwr_txL_to_rxL, shared_pwr_txL_to_rxR, share
 
     return (rxLA_txL, rxLB_txL, rxLC_txL, rxLD_txL), (rxLA_txR, rxLB_txR, rxLC_txR, rxLD_txR), (rxRA_txL, rxRB_txL, rxRC_txL, rxRD_txL), (rxRA_txR, rxRB_txR, rxRC_txR, rxRD_txR), (dLL_sigTime, dLR_sigTime, dRL_sigTime, dRR_sigTime)
 
+
+@njit(parallel=True, fastmath=True)
 def generate_rtof_rx_signals(pwr_txL_to_rx, pwr_txR_to_rx, delay_txL_to_rx, delay_txR_to_rx,
                             f_eL, f_eR, pd_snst, pd_gain, thermal_and_bg_curr, rx_P_rx_factor,
                             step_time, simulation_time, smp_lo, smp_hi,
@@ -364,12 +368,7 @@ def generate_rtof_rx_signals(pwr_txL_to_rx, pwr_txR_to_rx, delay_txL_to_rx, dela
     ###
     ### different than aoa2 -> there's a x2 in the delay because this is emulating roundtrip time of flight
     rx_txL_peakAmps_sigTime = np.interp(simulation_time, step_time, rx_txL_peakAmps) 
-    rx_txL_wavAmps          = rx_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - 2*delayL_sigTime) - np.pi/32)) / 2; 
-    del rx_txL_peakAmps_sigTime
-
     rx_txR_peakAmps_sigTime = np.interp(simulation_time, step_time, rx_txR_peakAmps) 
-    rx_txR_wavAmps          = rx_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - 2*delayR_sigTime) - np.pi/32)) / 2; 
-    del rx_txR_peakAmps_sigTime
 
     rx_total_pwr = pwr_txR_to_rx[smp_lo:smp_hi] + pwr_txL_to_rx[smp_lo:smp_hi] 
     rx_noise_var = rx_P_rx_factor*rx_total_pwr + thermal_and_bg_curr; 
@@ -378,13 +377,15 @@ def generate_rtof_rx_signals(pwr_txL_to_rx, pwr_txR_to_rx, delay_txL_to_rx, dela
     ### note that the signals are separate for the two TX units -> this is 
     ### because we assume that the two TX signals are kept at different frequency bands, 
     ### thus, they can be easily extracted from the actual received signal via bandpass filtering. 
-    numsamples = len(rx_txL_wavAmps)
+    numsamples = len(rx_txL_peakAmps_sigTime)
 
     rx_noise_std = np.interp(simulation_time, step_time, np.sqrt(rx_noise_var));
-    rx_txL = (rx_txL_wavAmps + add_noise * rx_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rx_txL_wavAmps
-    rx_txR = (rx_txR_wavAmps + add_noise * rx_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rx_txR_wavAmps, rx_noise_std
+    ns = np.random.randn(numsamples)
+    rx_txL = ((rx_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - 2*delayL_sigTime) - np.pi/32)) / 2) + add_noise * rx_noise_std * ns)*pd_gain;
+    #del rx_txL_peakAmps_sigTime, delayL_sigTime
+    ns = np.random.randn(numsamples)
+    rx_txR = ((rx_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - 2*delayR_sigTime) - np.pi/32)) / 2) + add_noise * rx_noise_std * ns)*pd_gain;
+    #del rx_txR_peakAmps_sigTime, delayR_sigTime, rx_noise_std
 
     return rx_txL, rx_txR
 
