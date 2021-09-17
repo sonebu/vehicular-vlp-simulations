@@ -389,6 +389,65 @@ def generate_rtof_rx_signals(pwr_txL_to_rx, pwr_txR_to_rx, delay_txL_to_rx, dela
 
     return rx_txL, rx_txR
 
+@njit(parallel=True, fastmath=True)
+def generate_pdoa_rx_signals(pwr_txL_to_rxL, pwr_txL_to_rxR, pwr_txR_to_rxL, pwr_txR_to_rxR, 
+                            delay_txL_to_rxL, delay_txL_to_rxR, delay_txR_to_rxL, delay_txR_to_rxR,
+                            f_eL, f_eR, pd_snst, pd_gain, thermal_and_bg_curr, rx_P_rx_factor,
+                            step_time, simulation_time, smp_lo, smp_hi,
+                            add_noise):
+    ### for simplicity, let's just assume a simple sine wave for each TX. 
+    ### Roberts wants 10-50 MHz with higher=better, but that's not feasible. 
+    ### Bechadergue ideally wants something on the order of MHz, and SonerColeri doesn't care, 
+    ### so let's stick to 1 MHz / 0.9 MHz, which is feasible
+
+    ### noiseless waveforms first
+    rxL_txL_peakAmps = pwr_txL_to_rxL[smp_lo:smp_hi]*pd_snst
+    rxR_txL_peakAmps = pwr_txL_to_rxR[smp_lo:smp_hi]*pd_snst
+    rxL_txR_peakAmps = pwr_txR_to_rxL[smp_lo:smp_hi]*pd_snst
+    rxR_txR_peakAmps = pwr_txR_to_rxR[smp_lo:smp_hi]*pd_snst
+
+    delay_txL_to_rxL_sigTime = np.interp(simulation_time, step_time, delay_txL_to_rxL[smp_lo:smp_hi])
+    delay_txL_to_rxR_sigTime = np.interp(simulation_time, step_time, delay_txL_to_rxR[smp_lo:smp_hi])
+    delay_txR_to_rxL_sigTime = np.interp(simulation_time, step_time, delay_txR_to_rxL[smp_lo:smp_hi])
+    delay_txR_to_rxR_sigTime = np.interp(simulation_time, step_time, delay_txR_to_rxR[smp_lo:smp_hi])
+
+    ### /2 because sin is -1 to +1, which is 2 A_pp, we want nominal 1 A_pp since we're mapping to 
+    ### full intensity of the TX beam, and the pre-amp at the TIA is AC-coupled 
+    ###
+    ### different than aoa2 -> there's a x2 in the delay because this is emulating roundtrip time of flight
+    rxL_txL_peakAmps_sigTime = np.interp(simulation_time, step_time, rxL_txL_peakAmps) 
+    rxR_txL_peakAmps_sigTime = np.interp(simulation_time, step_time, rxR_txL_peakAmps) 
+    rxL_txR_peakAmps_sigTime = np.interp(simulation_time, step_time, rxL_txR_peakAmps) 
+    rxR_txR_peakAmps_sigTime = np.interp(simulation_time, step_time, rxR_txR_peakAmps) 
+
+    rxL_total_pwr = pwr_txL_to_rxL[smp_lo:smp_hi] + pwr_txR_to_rxL[smp_lo:smp_hi] 
+    rxL_noise_var = rx_P_rx_factor*rxL_total_pwr + thermal_and_bg_curr; 
+
+    rxR_total_pwr = pwr_txL_to_rxR[smp_lo:smp_hi] + pwr_txR_to_rxR[smp_lo:smp_hi] 
+    rxR_noise_var = rx_P_rx_factor*rxR_total_pwr + thermal_and_bg_curr; 
+
+    ### add noise, get received signals at each quadrant in sig_time
+    ### note that the signals are separate for the two TX units -> this is 
+    ### because we assume that the two TX signals are kept at different frequency bands, 
+    ### thus, they can be easily extracted from the actual received signal via bandpass filtering. 
+    numsamples = len(rxL_txL_peakAmps_sigTime)
+
+    rxL_noise_std = np.interp(simulation_time, step_time, np.sqrt(rxL_noise_var));
+    rxR_noise_std = np.interp(simulation_time, step_time, np.sqrt(rxR_noise_var));
+
+    ns = np.random.randn(numsamples)
+    rxL_txL = ((rxL_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - delay_txL_to_rxL_sigTime) - np.pi/32)) / 2) + add_noise * rxL_noise_std * ns)*pd_gain;
+
+    ns = np.random.randn(numsamples)
+    rxR_txL = ((rxR_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - delay_txL_to_rxR_sigTime) - np.pi/32)) / 2) + add_noise * rxR_noise_std * ns)*pd_gain;
+
+    ns = np.random.randn(numsamples)
+    rxL_txR = ((rxL_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - delay_txR_to_rxL_sigTime) - np.pi/32)) / 2) + add_noise * rxL_noise_std * ns)*pd_gain;
+
+    ns = np.random.randn(numsamples)
+    rxR_txR = ((rxR_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - delay_txR_to_rxR_sigTime) - np.pi/32)) / 2) + add_noise * rxR_noise_std * ns)*pd_gain;
+
+    return rxL_txL, rxL_txR, rxR_txL, rxR_txR
 
 ##############################################################################
 ### not-so-important utility functions

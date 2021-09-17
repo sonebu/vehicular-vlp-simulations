@@ -49,6 +49,17 @@ def aoa_measurement(sigA_buffer, sigB_buffer, sigC_buffer, sigD_buffer, wav_buff
 #######################################################################################
 ### pdoa measurement -> roberts
 
+def pdoa_deld_measure(rxL, rxR):
+    rxL = np.fft.fft(rxL);
+    rxL[0:int(rxL.shape[0]/2)] = 0;
+    rxL = np.fft.ifft(rxL);
+    rxR = np.fft.fft(rxR);
+    rxR[0:int(rxR.shape[0]/2)] = 0;
+    rxR = np.fft.ifft(rxR);
+    phase_shift_diff_est = np.mean(np.angle(rxL * np.conjugate(rxR)));
+    return phase_shift_diff_est
+
+
 #######################################################################################
 ### rtof measurement -> bechadergue
 
