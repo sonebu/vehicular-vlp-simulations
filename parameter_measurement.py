@@ -47,20 +47,6 @@ def aoa_measurement(sigA_buffer, sigB_buffer, sigC_buffer, sigD_buffer, wav_buff
     return aoa
 
 #######################################################################################
-### pdoa measurement -> roberts
-
-def pdoa_deld_measure(rxL, rxR):
-    rxL = np.fft.fft(rxL);
-    rxL[0:int(rxL.shape[0]/2)] = 0;
-    rxL = np.fft.ifft(rxL);
-    rxR = np.fft.fft(rxR);
-    rxR[0:int(rxR.shape[0]/2)] = 0;
-    rxR = np.fft.ifft(rxR);
-    phase_shift_diff_est = np.mean(np.angle(rxL * np.conjugate(rxR)));
-    return phase_shift_diff_est
-
-
-#######################################################################################
 ### rtof measurement -> bechadergue
 
 # taken from: https://stackoverflow.com/a/23291658
@@ -95,6 +81,7 @@ def dflipflop_vec(inp_x, clock):
     return out_t
 
 # custom
+@njit(parallel=True, fastmath=True)
 def counter_simulation_vec(signal, gate):
     gate_lead = gate[1:]
     gate_lag  = gate[0:-1]
@@ -156,23 +143,28 @@ def gen_s_gate_sin(f_e, rtof_r, rtof_N, s_simulation, rr):
     s_gate_zc_thd = (np.amax(s_gate_sin) - np.amin(s_gate_sin))/rr;
     return s_gate_sin, s_gate_zc_thd 
 
-#@njit(parallel=True, fastmath=True)
+@njit(parallel=True, fastmath=True)
 def rtof_d_measure(s_simulation, s_adc_clock_re, rx, rtof_N, rtof_r, f_e, f_adc_clock, c, rr):
     #s_h_sin    = np.sin(2*np.pi* f_e*(rtof_r/(rtof_r+1))     *s_simulation - np.pi/32);
     #s_h_zc_thd = (np.amax(s_h_sin) - np.amin(s_h_sin))/rr;
-    s_h_sin, s_h_zc_thd = gen_s_h_sin(f_e, rtof_r, s_simulation, rr);
-    s_h        = hyst(s_h_sin, -s_h_zc_thd, s_h_zc_thd)
+    #s_h_sin, s_h_zc_thd = gen_s_h_sin(f_e, rtof_r, s_simulation, rr);
+    #s_h        = hyst(s_h_sin, -s_h_zc_thd, s_h_zc_thd)
+    s_h_sin = np.sin(2*np.pi* f_e*(rtof_r/(rtof_r+1))*s_simulation - np.pi/32);
+    s_h     = s_h_sin>0
     #del s_h_sin
 
     #s_e_sin    = np.sin(2*np.pi* f_e               *s_simulation - np.pi/32);
     #s_e_zc_thd = (np.amax(s_e_sin) - np.amin(s_e_sin))/rr;
-    s_e_sin, s_e_zc_thd = gen_s_e_sin(f_e, s_simulation, rr);
-    s_e        = hyst(s_e_sin, -s_e_zc_thd, s_e_zc_thd)
+    #s_e_sin, s_e_zc_thd = gen_s_e_sin(f_e, s_simulation, rr);
+    #s_e        = hyst(s_e_sin, -s_e_zc_thd, s_e_zc_thd)
+    s_e_sin    = np.sin(2*np.pi* f_e *s_simulation - np.pi/32);
+    s_e = s_e_sin>0
     #del s_e_sin
 
     # burdan önce heralde bandpass filtre olcak, yoksa halay çeker bu alttaki hysteresis
-    s_r_zc_thd = (np.amax(rx) - np.amin(rx))/rr;
-    s_r        = hyst(rx, -s_r_zc_thd, s_r_zc_thd)
+    #s_r_zc_thd = (np.amax(rx) - np.amin(rx))/rr;
+    #s_r        = hyst(rx, -s_r_zc_thd, s_r_zc_thd)
+    s_r = rx>0
     #del rx
     
     s_eh = dflipflop_vec(s_e, s_h)[s_adc_clock_re]
@@ -181,8 +173,10 @@ def rtof_d_measure(s_simulation, s_adc_clock_re, rx, rtof_N, rtof_r, f_e, f_adc_
     
     #s_gate_sin = np.sin(2*np.pi* f_e*(1/(rtof_N*(rtof_r+1))) *s_simulation - np.pi/32);
     #s_gate_zc_thd = (np.amax(s_gate_sin) - np.amin(s_gate_sin))/rr;
-    s_gate_sin, s_gate_zc_thd = gen_s_gate_sin(f_e, rtof_r, rtof_N, s_simulation, rr);
-    s_gate = hyst(s_gate_sin, -s_gate_zc_thd, s_gate_zc_thd)
+    #s_gate_sin, s_gate_zc_thd = gen_s_gate_sin(f_e, rtof_r, rtof_N, s_simulation, rr);
+    #s_gate = hyst(s_gate_sin, -s_gate_zc_thd, s_gate_zc_thd)
+    s_gate_sin = np.sin(2*np.pi* f_e*(1/(rtof_N*(rtof_r+1))) *s_simulation - np.pi/32);
+    s_gate = s_gate_sin>0
     s_gate = s_gate[s_adc_clock_re]
     #del s_gate_sin
 
@@ -199,3 +193,33 @@ def rtof_d_measure(s_simulation, s_adc_clock_re, rx, rtof_N, rtof_r, f_e, f_adc_
     d_est = c*(phase_shift_est/(2*np.pi*2*f_e))
 
     return d_est
+
+
+#######################################################################################
+### pdoa measurement -> roberts
+
+def pdoa_deld_measure(rxL, rxR):
+    rxL = np.fft.fft(rxL);
+    rxL[0:int(rxL.shape[0]/2)] = 0;
+    rxL = np.fft.ifft(rxL);
+    rxR = np.fft.fft(rxR);
+    rxR[0:int(rxR.shape[0]/2)] = 0;
+    rxR = np.fft.ifft(rxR);
+    phase_shift_diff_est = np.mean(np.angle(rxL * np.conjugate(rxR)));
+    return phase_shift_diff_est
+
+#######################################################################################
+### rtof measurement -> ama bechadergue değil roberts metodu ile
+def rtof_d_roberts_measure(s_simulation, rx, f_e, c):
+    tx = np.sin(2*np.pi* f_e *s_simulation - np.pi/32);
+
+    tx = np.fft.fft(tx);
+    tx[0:int(tx.shape[0]/2)] = 0;
+    tx = np.fft.ifft(tx);
+    rx = np.fft.fft(rx);
+    rx[0:int(rx.shape[0]/2)] = 0;
+    rx = np.fft.ifft(rx);
+    phase_shift_diff_est = np.mean(np.angle(tx * np.conjugate(rx)));
+    d_est = c*(phase_shift_diff_est/(2*np.pi*2*f_e))
+    return d_est
+
