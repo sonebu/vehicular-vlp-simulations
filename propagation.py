@@ -126,8 +126,14 @@ def radSymSrc3dIntegral( rad_pat, eps1_xy, eps2_xy, eps1_zy, eps2_zy ):
 
 def find_closest_linear_fit(fqrx_samples, actual_angle):
     fqrx_samples_rep = np.expand_dims(fqrx_samples, axis=0)
-    fqrx_samples_rep = np.repeat(fqrx_samples_rep, actual_angle.shape[0], axis=0)
-    actual_angle_exp = np.expand_dims(actual_angle, axis=1)
+
+    # sadece tek eleman olunca "neyi repeat edeyim" diye hata veriyor.
+    # tek eleman da buraya boş tuple olarak geliyor o yüzden şunu koyduk -> ()
+    if(actual_angle.shape != ()):
+        fqrx_samples_rep = np.repeat(fqrx_samples_rep, actual_angle.shape[0], axis=0)
+        actual_angle_exp = np.expand_dims(actual_angle, axis=1)
+    else:
+        actual_angle_exp = actual_angle;
 
     fqrx_angles_rep = fqrx_samples_rep[:,:,0]
     diff_angle    = np.abs(fqrx_angles_rep - actual_angle_exp)

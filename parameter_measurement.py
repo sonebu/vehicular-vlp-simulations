@@ -49,15 +49,19 @@ def aoa_measurement(sigA_buffer, sigB_buffer, sigC_buffer, sigD_buffer, wav_buff
 #######################################################################################
 ### rtof measurement -> bechadergue
 
+###############################################################
+### DUMP: THIS IS NOT USED, check note in rtof measure fcn
 # taken from: https://stackoverflow.com/a/23291658
-def hyst(x, th_lo, th_hi, initial = False):
-    hi = x >= th_hi
-    lo_or_hi = (x <= th_lo) | hi
-    ind = np.nonzero(lo_or_hi)[0]
-    if not ind.size: # prevent index error if ind is empty
-        return np.zeros_like(x, dtype=bool) | initial
-    cnt = np.cumsum(lo_or_hi) # from 0 to len(x)
-    return np.where(cnt, hi[ind[cnt-1]], initial)
+#def hyst(x, th_lo, th_hi, initial = False):
+#    hi = x >= th_hi
+#    lo_or_hi = (x <= th_lo) | hi
+#    ind = np.nonzero(lo_or_hi)[0]
+#    if not ind.size: # prevent index error if ind is empty
+#        return np.zeros_like(x, dtype=bool) | initial
+#    cnt = np.cumsum(lo_or_hi) # from 0 to len(x)
+#    return np.where(cnt, hi[ind[cnt-1]], initial)
+### DUMP: THIS IS NOT USED, check note in rtof measure fcn
+###############################################################
 
 # custom
 @njit(parallel=True, fastmath=True)
@@ -97,33 +101,37 @@ def counter_simulation_vec(signal, gate):
 
     return count
 
+###############################################################
+### DUMP: THIS IS NOT USED, check vector implementation above
 # custom (does a bit of debouncing, super slow)
-def counter_simulation_iterative(signal, state_prev, state_ctr, count):
-    if(   (signal[-1]==0) and (np.sum(signal[0:4])==0) ):
-        state_curr = 0;
-    elif( (signal[-1]==1) and (np.sum(signal[0:4])!=4) and (state_prev==0) ):
-        state_curr = 1;
-    elif( (signal[-1]==1) and (np.sum(signal[0:4])==4) ):
-        state_curr = 2;
-    elif( (signal[-1]==0) and (np.sum(signal[0:4])!=0) and (state_prev==2) ):
-        state_curr = 3;
-    else:
-        state_curr = state_prev;
-
-    # state ops:
-    if(state_curr==2):
-        state_ctr = state_ctr + 1; 
-    elif(state_curr==1):
-        state_ctr = state_ctr + 0.5;
-    elif(state_curr==3):
-        state_ctr = state_ctr + 0.5;
-    elif(state_curr==0):
-        pass
-        #state_ctr = 0;
-    
-    state_prev = state_curr;
-    
-    return state_prev, state_ctr
+#def counter_simulation_iterative(signal, state_prev, state_ctr, count):
+#    if(   (signal[-1]==0) and (np.sum(signal[0:4])==0) ):
+#        state_curr = 0;
+#    elif( (signal[-1]==1) and (np.sum(signal[0:4])!=4) and (state_prev==0) ):
+#        state_curr = 1;
+#    elif( (signal[-1]==1) and (np.sum(signal[0:4])==4) ):
+#        state_curr = 2;
+#    elif( (signal[-1]==0) and (np.sum(signal[0:4])!=0) and (state_prev==2) ):
+#        state_curr = 3;
+#    else:
+#        state_curr = state_prev;
+#
+#    # state ops:
+#    if(state_curr==2):
+#        state_ctr = state_ctr + 1; 
+#    elif(state_curr==1):
+#        state_ctr = state_ctr + 0.5;
+#    elif(state_curr==3):
+#        state_ctr = state_ctr + 0.5;
+#    elif(state_curr==0):
+#        pass
+#        #state_ctr = 0;
+#    
+#    state_prev = state_curr;
+#    
+#    return state_prev, state_ctr
+### DUMP: THIS IS NOT USED, check vector implementation above
+###############################################################
 
 @njit(parallel=True, fastmath=True)
 def gen_s_h_sin(f_e, rtof_r, s_simulation, rr):
@@ -144,47 +152,48 @@ def gen_s_gate_sin(f_e, rtof_r, rtof_N, s_simulation, rr):
     return s_gate_sin, s_gate_zc_thd 
 
 @njit(parallel=True, fastmath=True)
-def rtof_d_measure(s_simulation, s_adc_clock_re, rx, rtof_N, rtof_r, f_e, f_adc_clock, c, rr):
+def rtof_d_measure(s_simulation, s_adc_clock_re, rx, rtof_N, rtof_r, f_e, f_adc_clock, c):
+    ### DUMP: bechadergue's hardware uses a "high-speed comparator", no details, 
+    ###       but it seems like this is NOT a hysteresis device since there's no mention of 
+    ###       either a debouncing function/circuit or a hysteresis threshold
+    ###       note -> the hysteresis used in VLR filtering is not used in HW AFAICS.
+    ###       check: "Vehicle-to-Vehicle Visible Light Phase-Shift Rangefinder Based on the Automotive Lighting"
+    ###
+    ### Therefore, I'm commenting all hysteresis functionality below
     #s_h_sin    = np.sin(2*np.pi* f_e*(rtof_r/(rtof_r+1))     *s_simulation - np.pi/32);
     #s_h_zc_thd = (np.amax(s_h_sin) - np.amin(s_h_sin))/rr;
     #s_h_sin, s_h_zc_thd = gen_s_h_sin(f_e, rtof_r, s_simulation, rr);
     #s_h        = hyst(s_h_sin, -s_h_zc_thd, s_h_zc_thd)
-    s_h_sin = np.sin(2*np.pi* f_e*(rtof_r/(rtof_r+1))*s_simulation - np.pi/32);
-    s_h     = s_h_sin>0
     #del s_h_sin
-
     #s_e_sin    = np.sin(2*np.pi* f_e               *s_simulation - np.pi/32);
     #s_e_zc_thd = (np.amax(s_e_sin) - np.amin(s_e_sin))/rr;
     #s_e_sin, s_e_zc_thd = gen_s_e_sin(f_e, s_simulation, rr);
     #s_e        = hyst(s_e_sin, -s_e_zc_thd, s_e_zc_thd)
-    s_e_sin    = np.sin(2*np.pi* f_e *s_simulation - np.pi/32);
-    s_e = s_e_sin>0
     #del s_e_sin
-
-    # burdan önce heralde bandpass filtre olcak, yoksa halay çeker bu alttaki hysteresis
     #s_r_zc_thd = (np.amax(rx) - np.amin(rx))/rr;
     #s_r        = hyst(rx, -s_r_zc_thd, s_r_zc_thd)
-    s_r = rx>0
     #del rx
-    
-    s_eh = dflipflop_vec(s_e, s_h)[s_adc_clock_re]
-    s_rh = dflipflop_vec(s_r, s_h)[s_adc_clock_re]
     #del s_e, s_h
-    
     #s_gate_sin = np.sin(2*np.pi* f_e*(1/(rtof_N*(rtof_r+1))) *s_simulation - np.pi/32);
     #s_gate_zc_thd = (np.amax(s_gate_sin) - np.amin(s_gate_sin))/rr;
     #s_gate_sin, s_gate_zc_thd = gen_s_gate_sin(f_e, rtof_r, rtof_N, s_simulation, rr);
     #s_gate = hyst(s_gate_sin, -s_gate_zc_thd, s_gate_zc_thd)
-    s_gate_sin = np.sin(2*np.pi* f_e*(1/(rtof_N*(rtof_r+1))) *s_simulation - np.pi/32);
-    s_gate = s_gate_sin>0
-    s_gate = s_gate[s_adc_clock_re]
     #del s_gate_sin
+    #del s_rh, s_eh
+    #del s_phi
+
+    s_h = np.sin(2*np.pi* f_e*(rtof_r/(rtof_r+1))*s_simulation - np.pi/32)>0;
+    s_e = np.sin(2*np.pi* f_e *s_simulation - np.pi/32)>0;
+    s_r = rx>0
+    
+    s_eh = dflipflop_vec(s_e, s_h)[s_adc_clock_re]
+    s_rh = dflipflop_vec(s_r, s_h)[s_adc_clock_re]
+    s_gate = np.sin(2*np.pi* f_e*(1/(rtof_N*(rtof_r+1))) *s_simulation - np.pi/32)>0;
+    s_gate = s_gate[s_adc_clock_re]
 
     s_phi    = np.logical_xor(s_eh, s_rh);
-    #del s_rh, s_eh
 
-    s_phi_pp  = s_phi*s_gate # clock applied implicitly
-    #del s_phi
+    s_phi_pp  = s_phi*s_gate # clock applied implicitly with adc_clock_re
 
     count = counter_simulation_vec(s_phi_pp, s_gate)
 
@@ -193,7 +202,6 @@ def rtof_d_measure(s_simulation, s_adc_clock_re, rx, rtof_N, rtof_r, f_e, f_adc_
     d_est = c*(phase_shift_est/(2*np.pi*2*f_e))
 
     return d_est
-
 
 #######################################################################################
 ### pdoa measurement -> roberts
