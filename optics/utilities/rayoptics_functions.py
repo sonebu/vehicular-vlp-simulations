@@ -2,6 +2,7 @@ from rayoptics.environment import *
 from rayoptics.raytr import sampler
 import numpy as np
 import os
+from tqdm import tqdm
 
 
 ## initializations specific to _ray-optics_ for a given setup. 
@@ -34,7 +35,7 @@ def get_ray_lists(num_rays_sqrt, limits, osp, opm, draw_spots=False):
     us = limits
     ray_lists = []
     on_axis_pt = np.array([0.0, 0.0])
-    for f in range(num_flds):
+    for f in tqdm(range(num_flds)):
         fld, wvl, foc = osp.lookup_fld_wvl_focus(f)
 
         r2g      = (sampler.create_generator, (sampler.R_2_quasi_random_generator, num_rays**2), dict(mapper=sampler.concentric_sample_disk))
@@ -148,7 +149,7 @@ def calc_fqrx(osp, raylist, aoa_list, rndx, draw_fqrx=False, with_fresnel=False)
     phi_AB_list    = []
     phi_AB_wf_list = []
     total_list = []
-    for i in range(0, num_flds):
+    for i in tqdm(range(0, num_flds)):
         ray_list_for_aoa = raylist[i].ray_list;
         
         # just compute the horizontal response, that's enough, system is radially symmetric, so drop ACs

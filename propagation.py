@@ -3,31 +3,36 @@ from numba import njit
 import time
 
 ##############################################################################
+### propagation delay
+
+def propagation_delay(x,y,c):
+    # we ignore z
+    delay = np.sqrt(x**2 + y**2)/c;
+    return delay
+
+
+##############################################################################
 ### Method 1 - Approximate the 3D Lambertian pattern with a rectangular prism  
 ###            for very small angular intervals (fast, but biased/approximate)
-def tx_solidangles(x, y, z, dim):
-    # note that axis xz is not used since roads are assumed to be flat
-    psi1_xy = np.arctan2(y,x + dim/2);
-    psi2_xy = np.arctan2(y,x - dim/2);
-    psi3_xy = psi2_xy - psi1_xy;
-    eps1_xy = np.rad2deg((np.deg2rad(90)-psi2_xy));
-    eps2_xy = np.rad2deg(np.deg2rad(eps1_xy) + psi3_xy);
+def tx_solidangles(x, y, z, heading, dim):
+    p1_xy = np.arctan2(y,x - dim/2);
+    p2_xy = np.arctan2(y,x + dim/2);
+    e1_xy = np.rad2deg((np.deg2rad(90) - p1_xy - np.deg2rad(heading)));
+    e2_xy = np.rad2deg((np.deg2rad(90) - p2_xy - np.deg2rad(heading)));
 
-    psi1_zy = np.arctan2(y,z + dim/2);
-    psi2_zy = np.arctan2(y,z - dim/2);
-    psi3_zy = psi2_zy - psi1_zy;
-    eps1_zy = np.rad2deg((np.deg2rad(90)-psi2_zy));
-    eps2_zy = np.rad2deg(np.deg2rad(eps1_zy) + psi3_zy);
+    p1_xz = np.arctan2(y,z - dim/2);
+    p2_xz = np.arctan2(y,z + dim/2);
+    e1_xz = np.rad2deg((np.deg2rad(90) - p1_xz)) # - np.deg2rad(pitch)));, flat roads
+    e2_xz = np.rad2deg((np.deg2rad(90) - p2_xz)) # - np.deg2rad(pitch)));, flat roads
     
-    return eps1_xy, eps2_xy, eps1_zy, eps2_zy
+    return e1_xy, e2_xy, e1_xz, e2_xz
 
-def received_power(x, y, z, dim, tx_pwr, tx_norm, tx_lambertian_order, attenuation_factor):
+def received_power(x, y, z, dim, hdg, tx_pwr, tx_norm, tx_lambertian_order, attenuation_factor):
     # the portion of the lambertian pattern staying within these angles is a rectangular prism with a "wavy" top. 
     # prism is smooth though, + we always check veeery small solidangle portions, so we can assume
     # the top is close to being a linear slump that is so smooth, it's nearly a rectangular prism
     # with height = average height of the four corners. This should bring very small error. 
-    angles = tx_solidangles(x, y, z, dim)
-    #angles = (eps1_xy, eps2_xy, eps1_zy, eps2_zy)
+    angles = tx_solidangles(x, y, z, hdg, dim)
         
     # since the pattern is radially symmetric, we can keep just one (x,y) pattern, 
     # where the x values can be computed as such, using xy and zy angles (think Pythagorean):
@@ -58,7 +63,7 @@ def received_power(x, y, z, dim, tx_pwr, tx_norm, tx_lambertian_order, attenuati
     return pwr
 
 ##############################################################################
-### Method 2 - Numerical integration (very slow, but unbiased) 
+### Method 2 - Numerical integration (very slow, but asymptotically unbiased) 
 
 def find_nearest(array, value):
     array = np.asarray(array)
@@ -166,59 +171,52 @@ def quad_shares_power(x,y,z,fqrx):
     A_sh = 1-B_sh;
     C_sh = 1-D_sh;
 
-    A_sh = A_sh/2;
-    B_sh = B_sh/2;
-    C_sh = C_sh/2;
-    D_sh = D_sh/2;
-    return A_sh, B_sh, C_sh, D_sh
+    A_sh = np.expand_dims(A_sh/2, axis=1);
+    B_sh = np.expand_dims(B_sh/2, axis=1);
+    C_sh = np.expand_dims(C_sh/2, axis=1);
+    D_sh = np.expand_dims(D_sh/2, axis=1);
+
+    return np.concatenate((A_sh, B_sh, C_sh, D_sh), axis=1)
     
 def quad_distribute_power(x,y,z,fqrx, power):
-    A_sh, B_sh, C_sh, D_sh = quad_shares_power(x,y,z,fqrx);
-    A_pwr = power*A_sh;
-    B_pwr = power*B_sh;
-    C_pwr = power*C_sh;
-    D_pwr = power*D_sh;
-    return A_pwr, B_pwr, C_pwr, D_pwr
+    shares = quad_shares_power(x,y,z,fqrx);
+    shares_pwr = np.zeros_like(shares)
+    shares_pwr[:,0] = power*shares[:,0];
+    shares_pwr[:,1] = power*shares[:,1];
+    shares_pwr[:,2] = power*shares[:,2];
+    shares_pwr[:,3] = power*shares[:,3];
+    return shares_pwr
 
 ##############################################################################
-### propagation delay
+### generating sinusoidal rx signals from qrx
 
-def propagation_delay(x,y,z):
-    # we ignore z
-    speed_of_light    = 299792458 # [m/s]
-    delay = np.sqrt(x**2 + y**2)/speed_of_light;
-    return delay
-
-##############################################################################
-### generating sinusoidal rx signals 
-
-def gen_qrx_signals_onlyclocked(shared_pwr_txL_to_rxL, shared_pwr_txL_to_rxR, shared_pwr_txR_to_rxL, shared_pwr_txR_to_rxR,
-                                delay_txL_to_rxL, delay_txL_to_rxR, delay_txR_to_rxL, delay_txR_to_rxR,
-                                f_eL, f_eR, pd_snst, pd_gain, thermal_and_bg_curr, rx_P_rx_factor,
-                                step_time, simulation_time, smp_lo, smp_hi,
-                                add_noise):
+def gen_qrx_onlyclocked(shared_pwr_txL_to_rxL, shared_pwr_txL_to_rxR, shared_pwr_txR_to_rxL, shared_pwr_txR_to_rxR,
+                        delay_txL_to_rxL, delay_txL_to_rxR, delay_txR_to_rxL, delay_txR_to_rxR,
+                        f_eL, f_eR, pd_snst, pd_gain, thermal_and_bg_curr, rx_P_rx_factor,
+                        step_time, simulation_time, smp_lo, smp_hi,
+                        add_noise):
     ### for simplicity, let's just assume a simple sine wave for each TX. 
     ### Roberts wants 10-50 MHz with higher=better, but that's not feasible. 
     ### Bechadergue ideally wants something on the order of MHz, and SonerColeri doesn't care, 
     ### so let's stick to 1 MHz / 0.9 MHz, which is feasible
 
     ### noiseless waveforms first
-    rxLA_txL_peakAmps = shared_pwr_txL_to_rxL[0][smp_lo:smp_hi]*pd_snst
-    rxLC_txL_peakAmps = shared_pwr_txL_to_rxL[1][smp_lo:smp_hi]*pd_snst
-    rxLB_txL_peakAmps = shared_pwr_txL_to_rxL[2][smp_lo:smp_hi]*pd_snst
-    rxLD_txL_peakAmps = shared_pwr_txL_to_rxL[3][smp_lo:smp_hi]*pd_snst
-    rxRA_txL_peakAmps = shared_pwr_txL_to_rxR[0][smp_lo:smp_hi]*pd_snst
-    rxRC_txL_peakAmps = shared_pwr_txL_to_rxR[1][smp_lo:smp_hi]*pd_snst
-    rxRB_txL_peakAmps = shared_pwr_txL_to_rxR[2][smp_lo:smp_hi]*pd_snst
-    rxRD_txL_peakAmps = shared_pwr_txL_to_rxR[3][smp_lo:smp_hi]*pd_snst
-    rxLA_txR_peakAmps = shared_pwr_txR_to_rxL[0][smp_lo:smp_hi]*pd_snst
-    rxLC_txR_peakAmps = shared_pwr_txR_to_rxL[1][smp_lo:smp_hi]*pd_snst
-    rxLB_txR_peakAmps = shared_pwr_txR_to_rxL[2][smp_lo:smp_hi]*pd_snst
-    rxLD_txR_peakAmps = shared_pwr_txR_to_rxL[3][smp_lo:smp_hi]*pd_snst
-    rxRA_txR_peakAmps = shared_pwr_txR_to_rxR[0][smp_lo:smp_hi]*pd_snst
-    rxRC_txR_peakAmps = shared_pwr_txR_to_rxR[1][smp_lo:smp_hi]*pd_snst
-    rxRB_txR_peakAmps = shared_pwr_txR_to_rxR[2][smp_lo:smp_hi]*pd_snst
-    rxRD_txR_peakAmps = shared_pwr_txR_to_rxR[3][smp_lo:smp_hi]*pd_snst
+    rxLA_txL_peakAmps = shared_pwr_txL_to_rxL[smp_lo:smp_hi,0]*pd_snst
+    rxLC_txL_peakAmps = shared_pwr_txL_to_rxL[smp_lo:smp_hi,1]*pd_snst
+    rxLB_txL_peakAmps = shared_pwr_txL_to_rxL[smp_lo:smp_hi,2]*pd_snst
+    rxLD_txL_peakAmps = shared_pwr_txL_to_rxL[smp_lo:smp_hi,3]*pd_snst
+    rxRA_txL_peakAmps = shared_pwr_txL_to_rxR[smp_lo:smp_hi,0]*pd_snst
+    rxRC_txL_peakAmps = shared_pwr_txL_to_rxR[smp_lo:smp_hi,1]*pd_snst
+    rxRB_txL_peakAmps = shared_pwr_txL_to_rxR[smp_lo:smp_hi,2]*pd_snst
+    rxRD_txL_peakAmps = shared_pwr_txL_to_rxR[smp_lo:smp_hi,3]*pd_snst
+    rxLA_txR_peakAmps = shared_pwr_txR_to_rxL[smp_lo:smp_hi,0]*pd_snst
+    rxLC_txR_peakAmps = shared_pwr_txR_to_rxL[smp_lo:smp_hi,1]*pd_snst
+    rxLB_txR_peakAmps = shared_pwr_txR_to_rxL[smp_lo:smp_hi,2]*pd_snst
+    rxLD_txR_peakAmps = shared_pwr_txR_to_rxL[smp_lo:smp_hi,3]*pd_snst
+    rxRA_txR_peakAmps = shared_pwr_txR_to_rxR[smp_lo:smp_hi,0]*pd_snst
+    rxRC_txR_peakAmps = shared_pwr_txR_to_rxR[smp_lo:smp_hi,1]*pd_snst
+    rxRB_txR_peakAmps = shared_pwr_txR_to_rxR[smp_lo:smp_hi,2]*pd_snst
+    rxRD_txR_peakAmps = shared_pwr_txR_to_rxR[smp_lo:smp_hi,3]*pd_snst
 
     dLL_sigTime  = np.interp(simulation_time, step_time, delay_txL_to_rxL[smp_lo:smp_hi])
     dLR_sigTime  = np.interp(simulation_time, step_time, delay_txL_to_rxR[smp_lo:smp_hi])
@@ -228,65 +226,49 @@ def gen_qrx_signals_onlyclocked(shared_pwr_txL_to_rxL, shared_pwr_txL_to_rxR, sh
     ### /2 because sin is -1 to +1, which is 2 A_pp, we want nominal 1 A_pp since we're mapping to 
     ### full intensity of the TX beam, and the pre-amp at the TIA is AC-coupled 
     rxLA_txL_peakAmps_sigTime = np.interp(simulation_time, step_time, rxLA_txL_peakAmps) 
-    rxLA_txL_wavAmps          = rxLA_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - dLL_sigTime) - np.pi/32)) / 2; 
-    del rxLA_txL_peakAmps_sigTime
+    rxLA_txL_wavAmps          = rxLA_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - dLL_sigTime) )) / 2; 
     rxLB_txL_peakAmps_sigTime = np.interp(simulation_time, step_time, rxLB_txL_peakAmps) 
-    rxLB_txL_wavAmps          = rxLB_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - dLL_sigTime) - np.pi/32)) / 2; 
-    del rxLB_txL_peakAmps_sigTime
+    rxLB_txL_wavAmps          = rxLB_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - dLL_sigTime) )) / 2; 
     rxLC_txL_peakAmps_sigTime = np.interp(simulation_time, step_time, rxLC_txL_peakAmps) 
-    rxLC_txL_wavAmps          = rxLC_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - dLL_sigTime) - np.pi/32)) / 2; 
-    del rxLC_txL_peakAmps_sigTime
+    rxLC_txL_wavAmps          = rxLC_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - dLL_sigTime) )) / 2; 
     rxLD_txL_peakAmps_sigTime = np.interp(simulation_time, step_time, rxLD_txL_peakAmps) 
-    rxLD_txL_wavAmps          = rxLD_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - dLL_sigTime) - np.pi/32)) / 2; 
-    del rxLD_txL_peakAmps_sigTime 
+    rxLD_txL_wavAmps          = rxLD_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - dLL_sigTime) )) / 2; 
 
     rxRA_txL_peakAmps_sigTime = np.interp(simulation_time, step_time, rxRA_txL_peakAmps) 
-    rxRA_txL_wavAmps          = rxRA_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - dLR_sigTime) - np.pi/32)) / 2; 
-    del rxRA_txL_peakAmps_sigTime
+    rxRA_txL_wavAmps          = rxRA_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - dLR_sigTime) )) / 2; 
     rxRB_txL_peakAmps_sigTime = np.interp(simulation_time, step_time, rxRB_txL_peakAmps) 
-    rxRB_txL_wavAmps          = rxRB_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - dLR_sigTime) - np.pi/32)) / 2; 
-    del rxRB_txL_peakAmps_sigTime
+    rxRB_txL_wavAmps          = rxRB_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - dLR_sigTime) )) / 2; 
     rxRC_txL_peakAmps_sigTime = np.interp(simulation_time, step_time, rxRC_txL_peakAmps) 
-    rxRC_txL_wavAmps          = rxRC_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - dLR_sigTime) - np.pi/32)) / 2; 
-    del rxRC_txL_peakAmps_sigTime
+    rxRC_txL_wavAmps          = rxRC_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - dLR_sigTime) )) / 2; 
     rxRD_txL_peakAmps_sigTime = np.interp(simulation_time, step_time, rxRD_txL_peakAmps) 
-    rxRD_txL_wavAmps          = rxRD_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - dLR_sigTime) - np.pi/32)) / 2; 
-    del rxRD_txL_peakAmps_sigTime 
+    rxRD_txL_wavAmps          = rxRD_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - dLR_sigTime) )) / 2; 
 
     rxLA_txR_peakAmps_sigTime = np.interp(simulation_time, step_time, rxLA_txR_peakAmps) 
-    rxLA_txR_wavAmps          = rxLA_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - dRL_sigTime) - np.pi/32)) / 2; 
-    del rxLA_txR_peakAmps_sigTime
+    rxLA_txR_wavAmps          = rxLA_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - dRL_sigTime) )) / 2; 
     rxLB_txR_peakAmps_sigTime = np.interp(simulation_time, step_time, rxLB_txR_peakAmps) 
-    rxLB_txR_wavAmps          = rxLB_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - dRL_sigTime) - np.pi/32)) / 2; 
-    del rxLB_txR_peakAmps_sigTime
+    rxLB_txR_wavAmps          = rxLB_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - dRL_sigTime) )) / 2; 
     rxLC_txR_peakAmps_sigTime = np.interp(simulation_time, step_time, rxLC_txR_peakAmps) 
-    rxLC_txR_wavAmps          = rxLC_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - dRL_sigTime) - np.pi/32)) / 2; 
-    del rxLC_txR_peakAmps_sigTime
+    rxLC_txR_wavAmps          = rxLC_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - dRL_sigTime) )) / 2; 
     rxLD_txR_peakAmps_sigTime = np.interp(simulation_time, step_time, rxLD_txR_peakAmps) 
-    rxLD_txR_wavAmps          = rxLD_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - dRL_sigTime) - np.pi/32)) / 2; 
-    del rxLD_txR_peakAmps_sigTime 
+    rxLD_txR_wavAmps          = rxLD_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - dRL_sigTime) )) / 2; 
 
     rxRA_txR_peakAmps_sigTime = np.interp(simulation_time, step_time, rxRA_txR_peakAmps) 
-    rxRA_txR_wavAmps          = rxRA_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - dRR_sigTime) - np.pi/32)) / 2; 
-    del rxRA_txR_peakAmps_sigTime
+    rxRA_txR_wavAmps          = rxRA_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - dRR_sigTime) )) / 2; 
     rxRB_txR_peakAmps_sigTime = np.interp(simulation_time, step_time, rxRB_txR_peakAmps) 
-    rxRB_txR_wavAmps          = rxRB_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - dRR_sigTime) - np.pi/32)) / 2; 
-    del rxRB_txR_peakAmps_sigTime
+    rxRB_txR_wavAmps          = rxRB_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - dRR_sigTime) )) / 2; 
     rxRC_txR_peakAmps_sigTime = np.interp(simulation_time, step_time, rxRC_txR_peakAmps) 
-    rxRC_txR_wavAmps          = rxRC_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - dRR_sigTime) - np.pi/32)) / 2; 
-    del rxRC_txR_peakAmps_sigTime
+    rxRC_txR_wavAmps          = rxRC_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - dRR_sigTime) )) / 2; 
     rxRD_txR_peakAmps_sigTime = np.interp(simulation_time, step_time, rxRD_txR_peakAmps) 
-    rxRD_txR_wavAmps          = rxRD_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - dRR_sigTime) - np.pi/32)) / 2; 
-    del rxRD_txR_peakAmps_sigTime
+    rxRD_txR_wavAmps          = rxRD_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - dRR_sigTime) )) / 2; 
 
-    rxLA_total_pwr = shared_pwr_txR_to_rxL[0][smp_lo:smp_hi] + shared_pwr_txL_to_rxL[0][smp_lo:smp_hi] 
-    rxLB_total_pwr = shared_pwr_txR_to_rxL[1][smp_lo:smp_hi] + shared_pwr_txL_to_rxL[1][smp_lo:smp_hi] 
-    rxLC_total_pwr = shared_pwr_txR_to_rxL[2][smp_lo:smp_hi] + shared_pwr_txL_to_rxL[2][smp_lo:smp_hi] 
-    rxLD_total_pwr = shared_pwr_txR_to_rxL[3][smp_lo:smp_hi] + shared_pwr_txL_to_rxL[3][smp_lo:smp_hi]
-    rxRA_total_pwr = shared_pwr_txR_to_rxR[0][smp_lo:smp_hi] + shared_pwr_txL_to_rxR[0][smp_lo:smp_hi] 
-    rxRB_total_pwr = shared_pwr_txR_to_rxR[1][smp_lo:smp_hi] + shared_pwr_txL_to_rxR[1][smp_lo:smp_hi] 
-    rxRC_total_pwr = shared_pwr_txR_to_rxR[2][smp_lo:smp_hi] + shared_pwr_txL_to_rxR[2][smp_lo:smp_hi] 
-    rxRD_total_pwr = shared_pwr_txR_to_rxR[3][smp_lo:smp_hi] + shared_pwr_txL_to_rxR[3][smp_lo:smp_hi]
+    rxLA_total_pwr = shared_pwr_txR_to_rxL[smp_lo:smp_hi,0] + shared_pwr_txL_to_rxL[smp_lo:smp_hi,0] 
+    rxLB_total_pwr = shared_pwr_txR_to_rxL[smp_lo:smp_hi,1] + shared_pwr_txL_to_rxL[smp_lo:smp_hi,1] 
+    rxLC_total_pwr = shared_pwr_txR_to_rxL[smp_lo:smp_hi,2] + shared_pwr_txL_to_rxL[smp_lo:smp_hi,2] 
+    rxLD_total_pwr = shared_pwr_txR_to_rxL[smp_lo:smp_hi,3] + shared_pwr_txL_to_rxL[smp_lo:smp_hi,3]
+    rxRA_total_pwr = shared_pwr_txR_to_rxR[smp_lo:smp_hi,0] + shared_pwr_txL_to_rxR[smp_lo:smp_hi,0] 
+    rxRB_total_pwr = shared_pwr_txR_to_rxR[smp_lo:smp_hi,1] + shared_pwr_txL_to_rxR[smp_lo:smp_hi,1] 
+    rxRC_total_pwr = shared_pwr_txR_to_rxR[smp_lo:smp_hi,2] + shared_pwr_txL_to_rxR[smp_lo:smp_hi,2] 
+    rxRD_total_pwr = shared_pwr_txR_to_rxR[smp_lo:smp_hi,3] + shared_pwr_txL_to_rxR[smp_lo:smp_hi,3]
 
     rxLA_noise_var = rx_P_rx_factor*rxLA_total_pwr + thermal_and_bg_curr; 
     rxLB_noise_var = rx_P_rx_factor*rxLB_total_pwr + thermal_and_bg_curr; 
@@ -309,22 +291,13 @@ def gen_qrx_signals_onlyclocked(shared_pwr_txL_to_rxL, shared_pwr_txL_to_rxR, sh
     rxLD_noise_std = np.interp(simulation_time, step_time, np.sqrt(rxLD_noise_var));
 
     rxLA_txL = (rxLA_txL_wavAmps + add_noise * rxLA_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rxLA_txL_wavAmps
     rxLB_txL = (rxLB_txL_wavAmps + add_noise * rxLB_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rxLB_txL_wavAmps
     rxLC_txL = (rxLC_txL_wavAmps + add_noise * rxLC_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rxLC_txL_wavAmps
     rxLD_txL = (rxLD_txL_wavAmps + add_noise * rxLD_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rxLD_txL_wavAmps
     rxLA_txR = (rxLA_txR_wavAmps + add_noise * rxLA_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rxLA_txR_wavAmps
     rxLB_txR = (rxLB_txR_wavAmps + add_noise * rxLB_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rxLB_txR_wavAmps
     rxLC_txR = (rxLC_txR_wavAmps + add_noise * rxLC_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rxLC_txR_wavAmps
     rxLD_txR = (rxLD_txR_wavAmps + add_noise * rxLD_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rxLD_txR_wavAmps
-    del rxLA_noise_std, rxLB_noise_std, rxLC_noise_std, rxLD_noise_std
 
     rxRA_noise_std = np.interp(simulation_time, step_time, np.sqrt(rxRA_noise_var));
     rxRB_noise_std = np.interp(simulation_time, step_time, np.sqrt(rxRB_noise_var));
@@ -332,71 +305,18 @@ def gen_qrx_signals_onlyclocked(shared_pwr_txL_to_rxL, shared_pwr_txL_to_rxR, sh
     rxRD_noise_std = np.interp(simulation_time, step_time, np.sqrt(rxRD_noise_var));
 
     rxRA_txL = (rxRA_txL_wavAmps + add_noise * rxRA_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rxRA_txL_wavAmps
     rxRB_txL = (rxRB_txL_wavAmps + add_noise * rxRB_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rxRB_txL_wavAmps
     rxRC_txL = (rxRC_txL_wavAmps + add_noise * rxRC_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rxRC_txL_wavAmps
     rxRD_txL = (rxRD_txL_wavAmps + add_noise * rxRD_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rxRD_txL_wavAmps
     rxRA_txR = (rxRA_txR_wavAmps + add_noise * rxRA_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rxRA_txR_wavAmps
     rxRB_txR = (rxRB_txR_wavAmps + add_noise * rxRB_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rxRB_txR_wavAmps
     rxRC_txR = (rxRC_txR_wavAmps + add_noise * rxRC_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rxRC_txR_wavAmps
     rxRD_txR = (rxRD_txR_wavAmps + add_noise * rxRD_noise_std * np.random.randn(numsamples))*pd_gain;
-    del rxRD_txR_wavAmps
-    del rxRA_noise_std, rxRB_noise_std, rxRC_noise_std, rxRD_noise_std
 
     return (rxLA_txL, rxLB_txL, rxLC_txL, rxLD_txL), (rxLA_txR, rxLB_txR, rxLC_txR, rxLD_txR), (rxRA_txL, rxRB_txL, rxRC_txL, rxRD_txL), (rxRA_txR, rxRB_txR, rxRC_txR, rxRD_txR), (dLL_sigTime, dLR_sigTime, dRL_sigTime, dRR_sigTime)
 
-
-@njit(parallel=True, fastmath=True)
-def gen_rtof_rx_signals(pwr_txL_to_rx, pwr_txR_to_rx, delay_txL_to_rx, delay_txR_to_rx,
-                            f_eL, f_eR, pd_snst, pd_gain, thermal_and_bg_curr, rx_P_rx_factor,
-                            step_time, simulation_time, smp_lo, smp_hi,
-                            add_noise):
-    ### for simplicity, let's just assume a simple sine wave for each TX. 
-    ### Roberts wants 10-50 MHz with higher=better, but that's not feasible. 
-    ### Bechadergue ideally wants something on the order of MHz, and SonerColeri doesn't care, 
-    ### so let's stick to 1 MHz / 0.9 MHz, which is feasible
-
-    ### noiseless waveforms first
-    rx_txL_peakAmps = pwr_txL_to_rx[smp_lo:smp_hi]*pd_snst
-    rx_txR_peakAmps = pwr_txR_to_rx[smp_lo:smp_hi]*pd_snst
-
-    delayL_sigTime  = np.interp(simulation_time, step_time, delay_txL_to_rx[smp_lo:smp_hi])
-    delayR_sigTime  = np.interp(simulation_time, step_time, delay_txR_to_rx[smp_lo:smp_hi])
-
-    ### /2 because sin is -1 to +1, which is 2 A_pp, we want nominal 1 A_pp since we're mapping to 
-    ### full intensity of the TX beam, and the pre-amp at the TIA is AC-coupled 
-    ###
-    ### different than aoa2 -> there's a x2 in the delay because this is emulating roundtrip time of flight
-    rx_txL_peakAmps_sigTime = np.interp(simulation_time, step_time, rx_txL_peakAmps) 
-    rx_txR_peakAmps_sigTime = np.interp(simulation_time, step_time, rx_txR_peakAmps) 
-
-    rx_total_pwr = pwr_txR_to_rx[smp_lo:smp_hi] + pwr_txL_to_rx[smp_lo:smp_hi] 
-    rx_noise_var = rx_P_rx_factor*rx_total_pwr + thermal_and_bg_curr; 
-
-    ### add noise, get received signals at each quadrant in sig_time
-    ### note that the signals are separate for the two TX units -> this is 
-    ### because we assume that the two TX signals are kept at different frequency bands, 
-    ### thus, they can be easily extracted from the actual received signal via bandpass filtering. 
-    numsamples = len(rx_txL_peakAmps_sigTime)
-
-    rx_noise_std = np.interp(simulation_time, step_time, np.sqrt(rx_noise_var));
-    ns = np.random.randn(numsamples)
-    rx_txL = ((rx_txL_peakAmps_sigTime*(np.sin(2*np.pi*f_eL*(simulation_time - 2*delayL_sigTime) - np.pi/32)) / 2) + add_noise * rx_noise_std * ns)*pd_gain;
-    #del rx_txL_peakAmps_sigTime, delayL_sigTime
-    ns = np.random.randn(numsamples)
-    rx_txR = ((rx_txR_peakAmps_sigTime*(np.sin(2*np.pi*f_eR*(simulation_time - 2*delayR_sigTime) - np.pi/32)) / 2) + add_noise * rx_noise_std * ns)*pd_gain;
-    #del rx_txR_peakAmps_sigTime, delayR_sigTime, rx_noise_std
-
-    return rx_txL, rx_txR
-
 ##############################################################################
-### not-so-important utility functions
+### utility functions
 
 def map_rx_config(input_dict):
     f_QRX    = input_dict['f_QRX']
