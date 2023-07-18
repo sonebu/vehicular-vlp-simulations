@@ -5,3 +5,4 @@
 *.log
 *.seq
 recorded_INTERACTION_collisionthreat.npz
+radiationPatterns.txt
