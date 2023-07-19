@@ -62,6 +62,25 @@ def received_power(x, y, z, dim, hdg, tx_pwr, tx_norm, tx_lambertian_order, atte
 
     return pwr
 
+def received_power_nonlambertian(x, y, z, dim, hdg, tx_pwr, tx_norm, tx_pattern, tx_thetaarray, tx_phiarray, attenuation_factor):
+    # the portion of the lambertian pattern staying within these angles is a rectangular prism with a "wavy" top. 
+    # prism is smooth though, + we always check veeery small solidangle portions, so we can assume
+    # the top is close to being a linear slump that is so smooth, it's nearly a rectangular prism
+    # with height = average height of the four corners. This should bring very small error. 
+    eps1_xy, eps2_xy, eps1_zy, eps2_zy = tx_solidangles(x, y, z, hdg, dim)
+
+    val = asymmetricSrc3dIntegral_smallangle(tx_pattern, tx_thetaarray, tx_phiarray, 
+                                             eps1_xy, eps2_xy, eps1_zy, eps2_zy)
+
+    pwr = tx_pwr*val/tx_norm;
+
+    # on top of this, we need to apply weather-dependent attenuation
+    tx_rx_distance = np.sqrt(x**2 + y**2)
+    attenuation    = 10**(tx_rx_distance*attenuation_factor/10);
+    pwr = pwr*attenuation
+
+    return pwr
+
 ##############################################################################
 ### Method 2 - Numerical integration (very slow, but asymptotically unbiased) 
 
@@ -125,6 +144,103 @@ def radSymSrc3dIntegral( rad_pat, eps1_xy, eps2_xy, eps1_zy, eps2_zy ):
     # the oversampling process with an average over neighbor samples (and their gradients actually).
     vol = (vol_fwd+vol_bwd)/2;
     return vol
+
+##############################################################################
+### Method 4 - Numerical integration for asymmetric patterns, see optics/utlities for more info
+
+# ref: https://stackoverflow.com/a/23734295
+@njit(parallel=True, fastmath=True)
+def find_k_nearest(array, value, k):
+    array = np.asarray(array)
+    vals  = np.abs(array - value)
+    idx   = vals.argsort()[:k]
+    #idx   = idx[np.argsort(vals[idx])]
+    return idx
+
+@njit(parallel=True, fastmath=True)
+def getinterp(y2,y1,x2,x1,xnew):
+    return (xnew-x1)*(y2-y1)/(x2-x1)+y1
+
+@njit(parallel=True, fastmath=True)
+def asymmetricSrc3dIntegral_smallangle( pat, theta_anglearray, phi_anglearray, eps1_xy, eps2_xy, eps1_zy, eps2_zy ):
+    ids_eps1_xy   = find_k_nearest(theta_anglearray, eps1_xy, 2) # we get 2 values since an exact hit is improbable
+    idtop_eps1_xy = ids_eps1_xy.max() # closest top point
+    idbot_eps1_xy = ids_eps1_xy.min() # closest bottom point
+    eps1_xy_top = theta_anglearray[idtop_eps1_xy]
+    eps1_xy_bot = theta_anglearray[idbot_eps1_xy]
+    
+    # same for other 3 quantities
+    ids_eps2_xy   = find_k_nearest(theta_anglearray, eps2_xy, 2);
+    idtop_eps2_xy = ids_eps2_xy.max()
+    idbot_eps2_xy = ids_eps2_xy.min()
+    eps2_xy_top = theta_anglearray[idtop_eps2_xy]
+    eps2_xy_bot = theta_anglearray[idbot_eps2_xy]
+    
+    ids_eps1_zy   = find_k_nearest(phi_anglearray, eps1_zy, 2);
+    idtop_eps1_zy = ids_eps1_zy.max()
+    idbot_eps1_zy = ids_eps1_zy.min()
+    eps1_zy_top = phi_anglearray[idtop_eps1_zy]
+    eps1_zy_bot = phi_anglearray[idbot_eps1_zy]
+    
+    ids_eps2_zy   = find_k_nearest(phi_anglearray, eps2_zy, 2);
+    idtop_eps2_zy = ids_eps2_zy.max()
+    idbot_eps2_zy = ids_eps2_zy.min()
+    eps2_zy_top = phi_anglearray[idtop_eps2_zy]
+    eps2_zy_bot = phi_anglearray[idbot_eps2_zy]
+    
+    # first compute the interp heights on the two sides of the plane,
+    # then use their height vals for a final interp over the other axis.
+    eps1xy1zy_z_bot_bot = pat[idbot_eps1_xy, idbot_eps1_zy]
+    eps1xy1zy_z_bot_top = pat[idbot_eps1_xy, idtop_eps1_zy]
+    eps1xy1zy_z_top_bot = pat[idtop_eps1_xy, idbot_eps1_zy]
+    eps1xy1zy_z_top_top = pat[idtop_eps1_xy, idtop_eps1_zy]
+    eps1xy1zy_z_interp_right = getinterp(eps1xy1zy_z_top_top, eps1xy1zy_z_top_bot, 
+                                         eps1_zy_top, eps1_zy_bot, eps1_zy)
+    eps1xy1zy_z_interp_left  = getinterp(eps1xy1zy_z_bot_top, eps1xy1zy_z_bot_bot, 
+                                         eps1_zy_top, eps1_zy_bot, eps1_zy)
+    eps1xy1zy_z_interp_final = getinterp(eps1xy1zy_z_interp_right, eps1xy1zy_z_interp_left, 
+                                         eps1_xy_top, eps1_xy_bot, eps1_xy)
+
+    # repeat for the other 3 eps points  
+    eps1xy2zy_z_bot_bot = pat[idbot_eps1_xy, idbot_eps2_zy]
+    eps1xy2zy_z_bot_top = pat[idbot_eps1_xy, idtop_eps2_zy]
+    eps1xy2zy_z_top_bot = pat[idtop_eps1_xy, idbot_eps2_zy]
+    eps1xy2zy_z_top_top = pat[idtop_eps1_xy, idtop_eps2_zy]
+    eps1xy2zy_z_interp_right = getinterp(eps1xy2zy_z_top_top, eps1xy2zy_z_top_bot, 
+                                         eps2_zy_top, eps2_zy_bot, eps2_zy)
+    eps1xy2zy_z_interp_left  = getinterp(eps1xy2zy_z_bot_top, eps1xy2zy_z_bot_bot, 
+                                         eps2_zy_top, eps2_zy_bot, eps2_zy)
+    eps1xy2zy_z_interp_final = getinterp(eps1xy2zy_z_interp_right, eps1xy2zy_z_interp_left, 
+                                         eps1_xy_top, eps1_xy_bot, eps1_xy)
+
+    eps2xy1zy_z_bot_bot = pat[idbot_eps2_xy, idbot_eps1_zy]
+    eps2xy1zy_z_bot_top = pat[idbot_eps2_xy, idtop_eps1_zy]
+    eps2xy1zy_z_top_bot = pat[idtop_eps2_xy, idbot_eps1_zy]
+    eps2xy1zy_z_top_top = pat[idtop_eps2_xy, idtop_eps1_zy]
+    eps2xy1zy_z_interp_right = getinterp(eps2xy1zy_z_top_top, eps2xy1zy_z_top_bot, 
+                                         eps1_zy_top, eps1_zy_bot, eps1_zy)
+    eps2xy1zy_z_interp_left  = getinterp(eps2xy1zy_z_bot_top, eps2xy1zy_z_bot_bot, 
+                                         eps1_zy_top, eps1_zy_bot, eps1_zy)
+    eps2xy1zy_z_interp_final = getinterp(eps2xy1zy_z_interp_right, eps2xy1zy_z_interp_left, 
+                                         eps2_xy_top, eps2_xy_bot, eps2_xy)
+    
+    eps2xy2zy_z_bot_bot = pat[idbot_eps2_xy, idbot_eps2_zy]
+    eps2xy2zy_z_bot_top = pat[idbot_eps2_xy, idtop_eps2_zy]
+    eps2xy2zy_z_top_bot = pat[idtop_eps2_xy, idbot_eps2_zy]
+    eps2xy2zy_z_top_top = pat[idtop_eps2_xy, idtop_eps2_zy]
+    eps2xy2zy_z_interp_right = getinterp(eps2xy2zy_z_top_top, eps2xy2zy_z_top_bot, 
+                                         eps2_zy_top, eps2_zy_bot, eps2_zy)
+    eps2xy2zy_z_interp_left  = getinterp(eps2xy2zy_z_bot_top, eps2xy2zy_z_bot_bot, 
+                                         eps2_zy_top, eps2_zy_bot, eps2_zy)
+    eps2xy2zy_z_interp_final = getinterp(eps2xy2zy_z_interp_right, eps2xy2zy_z_interp_left, 
+                                         eps2_xy_top, eps2_xy_bot, eps2_xy)
+    
+    vol = (eps2_xy - eps1_xy)*(eps2_zy - eps1_zy) * \
+          (eps1xy1zy_z_interp_final + eps1xy2zy_z_interp_final +\
+           eps2xy1zy_z_interp_final + eps2xy2zy_z_interp_final)/4
+    
+    return vol
+
 
 ##############################################################################
 ### Quad detector function fit
@@ -337,3 +453,12 @@ def map_tx_config(input_dict):
     tx_lambertian_order = int(-np.log(2)/np.log(np.cos(np.deg2rad(tx_ha))));
 
     return tx_ha, tx_pwr, tx_norm, tx_lambertian_order
+
+def map_tx_config_nonlambertian(input_dict):
+    tx_pattern    = input_dict['pattern']
+    tx_phiarray   = input_dict['phi_array']
+    tx_thetaarray = input_dict['theta_array']
+    tx_pwr        = input_dict['power']
+    tx_norm       = input_dict['normalization_factor']
+    
+    return tx_pattern, tx_phiarray, tx_thetaarray, tx_pwr, tx_norm
