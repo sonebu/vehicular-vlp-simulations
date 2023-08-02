@@ -12,5 +12,8 @@
   we provide the full filtering and resampling procedure in a notebook under utilities/, but we cannot provide the .npz file here due to distribution limitations. 
   contact the INTERACTION team for access to the dataset, and use the provided notebook for generating "recorded_INTERACTION_collisionthreat.npz" for use in the simulations.
 
+  to understand what the trajectory looks like, see the video at utilities/recorded_collisionthreat_veh24veh25.avi , vehicles 24 and 25 are the ones that are used in simulation. 
+
 - "generated_*.npz" trajectories are from the v1 MATLAB repo: 
-  https://github.com/sonebu/v2lc_sim
+  https://github.com/sonebu/v2lc_sim 
+  or equivalently --> https://github.com/sonebu/vehicular-vlp-simulations/tree/main/archive/v1_matlab

@@ -1,0 +1,11 @@
+- the qrx configuration is used for all methods (methods that require 1 pd take an average over qrx cells)
+
+- both lambertian and non-lambertian ("real") light patterns are supported, they have different formats, check the two examples 
+  (the LbSedan one is a real pattern) 
+
+- all tx units are assumed to be point sources (vs extended), so their angular radiation patterns are 
+  assumed to be valid for all distances, see related assumption on the article in Section II
+
+- the https://github.com/mjhoptics/ray-optics library is used for obtaining qrx patterns with different lenses
+
+- we wrote custom numerical integrators to compute real headlight patterns, see notebooks under utilities/ for more info
