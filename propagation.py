@@ -27,59 +27,61 @@ def tx_solidangles(x, y, z, heading, dim):
     
     return e1_xy, e2_xy, e1_xz, e2_xz
 
-def received_power(x, y, z, dim, hdg, tx_pwr, tx_norm, tx_lambertian_order, attenuation_factor):
-    # the portion of the lambertian pattern staying within these angles is a rectangular prism with a "wavy" top. 
-    # prism is smooth though, + we always check veeery small solidangle portions, so we can assume
-    # the top is close to being a linear slump that is so smooth, it's nearly a rectangular prism
-    # with height = average height of the four corners. This should bring very small error. 
-    angles = tx_solidangles(x, y, z, hdg, dim)
+def received_power(x, y, z, dim, hdg, simconfig):
+    if(simconfig.istxlambertian):
+        # the portion of the pattern staying within these angles is a rectangular prism with a "wavy" top. 
+        # prism is smooth though, + we always check veeery small solidangle portions, so we can assume
+        # the top is close to being a linear slump that is so smooth, it's nearly a rectangular prism
+        # with height = average height of the four corners. This should bring very small error. 
+        angles = tx_solidangles(x, y, z, hdg, dim)
+            
+        # since the pattern is radially symmetric, we can keep just one (x,y) pattern, 
+        # where the x values can be computed as such, using xy and zy angles (think Pythagorean):
+        pattern_angle_xy1_zy1 = np.sqrt(angles[0]**2 + angles[2]**2)
+        pattern_angle_xy1_zy2 = np.sqrt(angles[0]**2 + angles[3]**2)
+        pattern_angle_xy2_zy1 = np.sqrt(angles[1]**2 + angles[2]**2)
+        pattern_angle_xy2_zy2 = np.sqrt(angles[1]**2 + angles[3]**2)
         
-    # since the pattern is radially symmetric, we can keep just one (x,y) pattern, 
-    # where the x values can be computed as such, using xy and zy angles (think Pythagorean):
-    pattern_angle_xy1_zy1 = np.sqrt(angles[0]**2 + angles[2]**2)
-    pattern_angle_xy1_zy2 = np.sqrt(angles[0]**2 + angles[3]**2)
-    pattern_angle_xy2_zy1 = np.sqrt(angles[1]**2 + angles[2]**2)
-    pattern_angle_xy2_zy2 = np.sqrt(angles[1]**2 + angles[3]**2)
-    
-    val_xy1_zy1 = np.cos(np.deg2rad(pattern_angle_xy1_zy1))**tx_lambertian_order # lambertian
-    val_xy1_zy2 = np.cos(np.deg2rad(pattern_angle_xy1_zy2))**tx_lambertian_order # lambertian
-    val_xy2_zy1 = np.cos(np.deg2rad(pattern_angle_xy2_zy1))**tx_lambertian_order # lambertian
-    val_xy2_zy2 = np.cos(np.deg2rad(pattern_angle_xy2_zy2))**tx_lambertian_order # lambertian
-    
-    # length and width of the prism
-    angle_dist_xy = np.abs(angles[0] - angles[1])
-    angle_dist_zy = np.abs(angles[2] - angles[3])
+        val_xy1_zy1 = np.cos(np.deg2rad(pattern_angle_xy1_zy1))**simconfig.tx_config_bundle["tx_lambertian_order"] # lambertian
+        val_xy1_zy2 = np.cos(np.deg2rad(pattern_angle_xy1_zy2))**simconfig.tx_config_bundle["tx_lambertian_order"] # lambertian
+        val_xy2_zy1 = np.cos(np.deg2rad(pattern_angle_xy2_zy1))**simconfig.tx_config_bundle["tx_lambertian_order"] # lambertian
+        val_xy2_zy2 = np.cos(np.deg2rad(pattern_angle_xy2_zy2))**simconfig.tx_config_bundle["tx_lambertian_order"] # lambertian
+        
+        # length and width of the prism
+        angle_dist_xy = np.abs(angles[0] - angles[1])
+        angle_dist_zy = np.abs(angles[2] - angles[3])
 
-    # average height of the prism
-    avg_val = (val_xy1_zy1 + val_xy1_zy2 + val_xy2_zy1 + val_xy2_zy2)/4 # average height of that rectangular prism with wavy top
-    
-    pwr = tx_pwr*angle_dist_xy*angle_dist_zy*avg_val/tx_norm;
+        # average height of the prism
+        avg_val = (val_xy1_zy1 + val_xy1_zy2 + val_xy2_zy1 + val_xy2_zy2)/4 # average height of that rectangular prism with wavy top
+        
+        pwr = simconfig.tx_config_bundle["tx_pwr"]*angle_dist_xy*angle_dist_zy*avg_val/simconfig.tx_config_bundle["tx_norm"];
 
-    # on top of this, we need to apply weather-dependent attenuation
-    tx_rx_distance = np.sqrt(x**2 + y**2)
-    attenuation    = 10**(tx_rx_distance*attenuation_factor/10);
-    pwr = pwr*attenuation
+        # on top of this, we need to apply weather-dependent attenuation
+        tx_rx_distance = np.sqrt(x**2 + y**2)
+        attenuation    = 10**(tx_rx_distance*simconfig.attenuation_factor/10);
+        pwr = pwr*attenuation
 
-    return pwr
+        return pwr
 
-def received_power_nonlambertian(x, y, z, dim, hdg, tx_pwr, tx_norm, tx_pattern, tx_thetaarray, tx_phiarray, attenuation_factor):
-    # the portion of the lambertian pattern staying within these angles is a rectangular prism with a "wavy" top. 
-    # prism is smooth though, + we always check veeery small solidangle portions, so we can assume
-    # the top is close to being a linear slump that is so smooth, it's nearly a rectangular prism
-    # with height = average height of the four corners. This should bring very small error. 
-    eps1_xy, eps2_xy, eps1_zy, eps2_zy = tx_solidangles(x, y, z, hdg, dim)
+    else: 
+        # non-lambertian, real pattern, same "wavy top" assumption holds
+        pwr = np.zeros(x.shape[0]);
+        for i in tqdm(range(x.shape[0])):
+            eps1_xy, eps2_xy, eps1_zy, eps2_zy = tx_solidangles(x[i], y[i], z[i], hdg[i], dim)
 
-    val = asymmetricSrc3dIntegral_smallangle(tx_pattern, tx_thetaarray, tx_phiarray, 
-                                             eps1_xy, eps2_xy, eps1_zy, eps2_zy)
+            val = asymmetricSrc3dIntegral_smallangle(simconfig.tx_config_bundle["tx_pattern"], 
+                                                     simconfig.tx_config_bundle["tx_thetaarray"], 
+                                                     simconfig.tx_config_bundle["tx_phiarray"], 
+                                                     eps1_xy, eps2_xy, eps1_zy, eps2_zy)
 
-    pwr = tx_pwr*val/tx_norm;
+            pwr[i] = simconfig.tx_config_bundle["tx_pwr"]*val/simconfig.tx_config_bundle["tx_norm"];
 
-    # on top of this, we need to apply weather-dependent attenuation
-    tx_rx_distance = np.sqrt(x**2 + y**2)
-    attenuation    = 10**(tx_rx_distance*attenuation_factor/10);
-    pwr = pwr*attenuation
+            # on top of this, we need to apply weather-dependent attenuation
+            tx_rx_distance = np.sqrt(x**2 + y**2)
+            attenuation    = 10**(tx_rx_distance*simconfig.attenuation_factor/10);
+            pwr[i] = pwr[i]*attenuation
 
-    return pwr
+        return pwr
 
 ##############################################################################
 ### Method 2 - Numerical integration (very slow, but asymptotically unbiased) 
@@ -430,35 +432,3 @@ def gen_qrx_onlyclocked(shared_pwr_txL_to_rxL, shared_pwr_txL_to_rxR, shared_pwr
     rxRD_txR = (rxRD_txR_wavAmps + add_noise * rxRD_noise_std * np.random.randn(numsamples))*pd_gain;
 
     return (rxLA_txL, rxLB_txL, rxLC_txL, rxLD_txL), (rxLA_txR, rxLB_txR, rxLC_txR, rxLD_txR), (rxRA_txL, rxRB_txL, rxRC_txL, rxRD_txL), (rxRA_txR, rxRB_txR, rxRC_txR, rxRD_txR), (dLL_sigTime, dLR_sigTime, dRL_sigTime, dRR_sigTime)
-
-##############################################################################
-### utility functions
-
-def map_rx_config(input_dict):
-    f_QRX    = input_dict['f_QRX']
-    pd_snst  = input_dict['tia_gamma']
-    pd_gain  = input_dict['tia_R_F']
-    pd_dim   = input_dict['detecting_area'] # square detector dimension in milimeters. needs a /1000 in calcs
-    rx_P_rx_factor     = input_dict['tia_shot_P_r_factor']
-    rx_I_bg_factor     = input_dict['tia_shot_I_bg_factor']
-    rx_thermal_factor1 = input_dict['tia_thermal_factor1']
-    rx_thermal_factor2 = input_dict['tia_thermal_factor2']
-
-    return f_QRX, pd_snst, pd_gain, pd_dim, rx_P_rx_factor, rx_I_bg_factor, rx_thermal_factor1, rx_thermal_factor2
-
-def map_tx_config(input_dict):
-    tx_ha   = input_dict['half_angle']
-    tx_pwr  = input_dict['power']
-    tx_norm = input_dict['normalization_factor']
-    tx_lambertian_order = int(-np.log(2)/np.log(np.cos(np.deg2rad(tx_ha))));
-
-    return tx_ha, tx_pwr, tx_norm, tx_lambertian_order
-
-def map_tx_config_nonlambertian(input_dict):
-    tx_pattern    = input_dict['pattern']
-    tx_phiarray   = input_dict['phi_array']
-    tx_thetaarray = input_dict['theta_array']
-    tx_pwr        = input_dict['power']
-    tx_norm       = input_dict['normalization_factor']
-    
-    return tx_pattern, tx_phiarray, tx_thetaarray, tx_pwr, tx_norm
