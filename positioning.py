@@ -179,7 +179,3 @@ def runningfix_directrange_mle(d_t0, d_t1, dv, av):
     est_x_t0 = est_x_t1 - dv*np.cos(av)
     return est_x_t0, est_y_t0, est_x_t1, est_y_t1
 
-
-
-#############################################
-### 2*rtof, L -> xu

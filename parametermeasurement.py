@@ -48,6 +48,35 @@ def measure_bearing(sigA_buffer, sigB_buffer, sigC_buffer, sigD_buffer, wav_buff
 
     return aoa
 
+
+#######################################################################################
+### range measurement -> bechadergue
+
+### It's not really feasible to use the bechadergue range meas function as is during the simulations, 
+### i.e., without pre-computing what can be precomputed, because it takes ages to simulate + hogs memory
+###
+### Therefore, we implement parts of this using the njit'ted functions below within the notebooks
+### and precompute what can be precomputed there.
+###
+###def measure_range_bechadergue(sqr1, sqr2, sqrh, sqr_adc_s_gate, adc_re, f_adc_clock, c, r, N, f_e):
+###    ### DUMP: bechadergue's hardware uses a "high-speed comparator", no details, 
+###    ###       but it seems like this is NOT a hysteresis device since there's no mention of 
+###    ###       either a debouncing function/circuit or a hysteresis threshold
+###    ###       note -> the hysteresis used in VLR filtering is not used in HW AFAICS.
+###    ###       check: "Vehicle-to-Vehicle Visible Light Phase-Shift Rangefinder Based on the Automotive Lighting"
+###    ###
+###    ###       Therefore, the signals below just accept >0 zero crossing detected signals
+###    ###
+###    s_1h      = dflipflop_vec(sqr1, sqrh)[adc_re]
+###    s_2h      = dflipflop_vec(sqr2, sqrh)[adc_re]
+###    s_phi     = np.logical_xor(s_1h, s_2h);
+###    s_phi_pp  = s_phi*sqr_adc_s_gate
+###    count     = counter_simulation_vec(s_phi_pp, s_gate)
+###    f_i       = f_e/(r+1);
+###    phase_shift_est = 2*np.pi*(np.asarray(count)*f_i/(N*f_adc_clock))
+###    d_est = c*(phase_shift_est/(2*np.pi*2*f_e))
+###    return d_est
+
 # custom
 @njit(parallel=True, fastmath=True)
 def measure_range_bechadergue_dflipflop(inp_x, clock):
@@ -86,33 +115,11 @@ def measure_range_bechadergue_counter(signal, gate):
 
     return count
 
-### It's not really feasible to use this function as is during the simulations, 
-### i.e., without pre-computing what can be precomputed, because it takes ages to simulate + hogs memory
-###
-### Therefore, we implement parts of this using the njit'ted functions above within the notebooks
-### and precompute what can be precomputed there.
-###
-###def measure_range_bechadergue(sqr1, sqr2, sqrh, sqr_adc_s_gate, adc_re, f_adc_clock, c, r, N, f_e):
-###    ### DUMP: bechadergue's hardware uses a "high-speed comparator", no details, 
-###    ###       but it seems like this is NOT a hysteresis device since there's no mention of 
-###    ###       either a debouncing function/circuit or a hysteresis threshold
-###    ###       note -> the hysteresis used in VLR filtering is not used in HW AFAICS.
-###    ###       check: "Vehicle-to-Vehicle Visible Light Phase-Shift Rangefinder Based on the Automotive Lighting"
-###    ###
-###    ###       Therefore, the signals below just accept >0 zero crossing detected signals
-###    ###
-###    s_1h      = dflipflop_vec(sqr1, sqrh)[adc_re]
-###    s_2h      = dflipflop_vec(sqr2, sqrh)[adc_re]
-###    s_phi     = np.logical_xor(s_1h, s_2h);
-###    s_phi_pp  = s_phi*sqr_adc_s_gate
-###    count     = counter_simulation_vec(s_phi_pp, s_gate)
-###    f_i       = f_e/(r+1);
-###    phase_shift_est = 2*np.pi*(np.asarray(count)*f_i/(N*f_adc_clock))
-###    d_est = c*(phase_shift_est/(2*np.pi*2*f_e))
-###    return d_est
-
-### This can be used as is since the signals will be clocked at say 10 MHz or something like that, 
-### not 10 GHz like the square waves used in bechadergue's method
+#######################################################################################
+### range measurement -> roberts
+### In contrast with the bechadergue method, this method can be used as is since the 
+### signals will be clocked at say 10 MHz or something like that, not 10 GHz 
+### like the square waves used in bechadergue's method
 def measure_range_roberts(signal1, signal2, c, f_e):
     signal1 = sp.fft.fft(signal1);
     signal1[0:int(signal1.shape[0]/2)] = 0;
