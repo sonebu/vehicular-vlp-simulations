@@ -50,15 +50,25 @@ def generate_clocksampler_from_s_simulation(f_desired_clock, f_simulation, s_sim
     # signal_to_sample and s_desired_clock_re are of size len(s_simulation), that's why this works
     return s_desired_clock_re
 
-def generate_simulation_clocks(t_sim_stop, f_simulation, f_desired_clock):
-    t_sim_dt     = 1/f_simulation; # [s] , simulation clock period
-    t_sim_start  = t_sim_dt; # [s], t_simulation rather than 0 avoids artifacts and sim ends at t_sim_stop this way
-    sim_length   = int(t_sim_stop/t_sim_dt)
-    s_simulation = np.linspace(t_sim_start, t_sim_stop, sim_length)
-                        
-    s_desired_clock_re = generate_clocksampler_from_s_simulation(f_desired_clock, f_simulation, s_simulation)
+def generate_simulation_clocks(t_sim_stop, f_simulation, f_desired_clock, gen_clocked_only=False):
+    if(gen_clocked_only):
+        t_sim_dt           = 1/f_desired_clock; # [s] , simulation clock period
+        t_sim_start        = t_sim_dt; # [s], t_simulation rather than 0 avoids artifacts and sim ends at t_sim_stop this way
+        sim_length         = int(t_sim_stop/t_sim_dt)
+        s_desired_clock_re = np.linspace(t_sim_start, t_sim_stop, sim_length)
 
-    return s_simulation, s_desired_clock_re
+        # NOTE that f_simulation is ignored in this path, and there's only 1 clock output
+
+        return s_desired_clock_re
+    else:
+        t_sim_dt     = 1/f_simulation; # [s] , simulation clock period
+        t_sim_start  = t_sim_dt; # [s], t_simulation rather than 0 avoids artifacts and sim ends at t_sim_stop this way
+        sim_length   = int(t_sim_stop/t_sim_dt)
+        s_simulation = np.linspace(t_sim_start, t_sim_stop, sim_length)
+                            
+        s_desired_clock_re = generate_clocksampler_from_s_simulation(f_desired_clock, f_simulation, s_simulation)
+
+        return s_simulation, s_desired_clock_re
 
 
 ##############################################################################
