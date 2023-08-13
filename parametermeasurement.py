@@ -41,7 +41,7 @@ def measure_bearing(sigA_buffer, sigB_buffer, sigC_buffer, sigD_buffer, wav_buff
     # so that they don't appear on the plot. It's just extra clutter when
     # they're plotted.
     if( ((qC + qD) < thd) or ((qA + qB) < thd) ):
-        aoa = 0;
+        aoa = 0.0001; # arbitrary value
     else:
         phi_hrz_est = ((qC+qD)-(qA+qB))/qpwr;
         aoa = measure_bearing_angle_fQRX(f_QRX, phi_hrz_est);

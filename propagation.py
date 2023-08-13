@@ -57,7 +57,7 @@ def received_power(x, y, z, hdg, simconfig):
         pwr = simconfig.tx_config_bundle["tx_pwr"]*angle_dist_xy*angle_dist_zy*avg_val/simconfig.tx_config_bundle["tx_norm"];
 
         # on top of this, we need to apply weather-dependent attenuation
-        tx_rx_distance = np.sqrt(x**2 + y**2)
+        tx_rx_distance = np.sqrt(x**2 + y**2 + z**2)
         attenuation    = 10**(tx_rx_distance*simconfig.attenuation_factor/10);
         pwr = pwr*attenuation
 
@@ -66,7 +66,7 @@ def received_power(x, y, z, hdg, simconfig):
     else: 
         # non-lambertian, real pattern, same "wavy top" assumption holds
         pwr = np.zeros(x.shape[0]);
-        for i in tqdm(range(x.shape[0])):
+        for i in range(x.shape[0]):
             eps1_xy, eps2_xy, eps1_zy, eps2_zy = tx_solidangles(x[i], y[i], z[i], hdg[i], simconfig.rx_config_bundle["pd_dimension"]/1000)
 
             val = asymmetricSrc3dIntegral_smallangle(simconfig.tx_config_bundle["tx_pattern"], 
@@ -77,7 +77,7 @@ def received_power(x, y, z, hdg, simconfig):
             pwr[i] = simconfig.tx_config_bundle["tx_pwr"]*val/simconfig.tx_config_bundle["tx_norm"];
 
             # on top of this, we need to apply weather-dependent attenuation
-            tx_rx_distance = np.sqrt(x**2 + y**2)
+            tx_rx_distance = np.sqrt(x[i]**2 + y[i]**2 + z[i]**2)
             attenuation    = 10**(tx_rx_distance*simconfig.attenuation_factor/10);
             pwr[i] = pwr[i]*attenuation
 
@@ -159,7 +159,7 @@ def find_k_nearest(array, value, k):
     #idx   = idx[np.argsort(vals[idx])]
     return idx
 
-@njit(parallel=True, fastmath=True)
+@njit(fastmath=True)
 def getinterp(y2,y1,x2,x1,xnew):
     return (xnew-x1)*(y2-y1)/(x2-x1)+y1
 
